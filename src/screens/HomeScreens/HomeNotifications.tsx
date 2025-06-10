@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Image,
+  RefreshControl,
 } from 'react-native';
 import MainContainer from '../../components/MainContainer';
 import {useNotifications} from '../../api/notification/notificationFunc';
@@ -32,13 +33,14 @@ const NotificationItem = ({item}: any) => {
 };
 
 const HomeNotifications = () => {
-  const {data, isLoading, isError, refetch} = useNotifications();
+  const {data, isLoading, isError, refetch, isFetching} = useNotifications();
   const notifications = data?.data?.notifications ?? [];
   const isEmpty = notifications.length === 0;
+
   return (
     <MainContainer title="Notifications" isBack>
       <View style={styles.container}>
-        {isLoading ? (
+        {isLoading && !isFetching ? (
           <ActivityIndicator size="large" color={color.mainColor} />
         ) : isError ? (
           <Text style={styles.errorText}>
@@ -52,6 +54,14 @@ const HomeNotifications = () => {
             keyExtractor={item => item._id}
             renderItem={({item}) => <NotificationItem item={item} />}
             contentContainerStyle={{paddingBottom: 20}}
+            refreshControl={
+              <RefreshControl
+                refreshing={isFetching}
+                onRefresh={refetch}
+                colors={[color.mainColor]}
+                tintColor={color.mainColor}
+              />
+            }
           />
         )}
       </View>

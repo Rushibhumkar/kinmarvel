@@ -17,9 +17,12 @@ import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
 import {useQueryClient} from '@tanstack/react-query';
 import OnlyLoader from '../../components/LoadingCompo/OnlyLoader';
 import {myStyle} from '../../sharedStyles';
+import {useGetUserById} from '../../api/user/userFunc';
+import {getValue} from '../../utils/commonFunction';
 
 const UsersProfileDetails = ({navigation, route}: any) => {
   const {
+    id,
     data,
     showBasicDetails = false,
     showFullInfo = false,
@@ -27,6 +30,7 @@ const UsersProfileDetails = ({navigation, route}: any) => {
     showRelation = false,
     showHierarchy = false,
     request = false,
+    showChatIcon = true,
   } = route.params;
   const queryClient = useQueryClient();
   const {
@@ -36,6 +40,14 @@ const UsersProfileDetails = ({navigation, route}: any) => {
   } = useIsFollowerIsFollowing(data?._id);
   const [followReqLoading, setFollowReqLoading] = useState(false);
   const [cancelReqLoad, setCancelReqLoad] = useState(false);
+
+  const {
+    data: userData,
+    isLoading: userDataLoad,
+    isError: userDataErr,
+    refetch: userDataRefetch,
+  } = useGetUserById(id ? id : null);
+  myConsole('userDataaa', userData);
 
   // const handleSendFollowRequest = async () => {
   //   setFollowReqLoading(true);
@@ -50,25 +62,20 @@ const UsersProfileDetails = ({navigation, route}: any) => {
   //     setFollowReqLoading(false);
   //   }
   // };
+
   const handleFollowAction = async () => {
     setFollowReqLoading(true);
     try {
-      // Check if the user is already following or has a pending follow request
       if (isFollowerIsFollowingData?.data?.following?.status === 'accepted') {
-        // If already following, show success message
         showSuccessToast({description: 'You are following back'});
       } else if (
         isFollowerIsFollowingData?.data?.following?.status === 'pending'
       ) {
-        // If the follow request is pending, show "Request Sent"
         showSuccessToast({description: 'Follow request sent'});
       } else {
-        // Otherwise, send a follow request
-        await sendFollowRequest(data?._id); // Sending the follow request using the API
-        // Invalidate relevant queries to refresh data
+        await sendFollowRequest(data?._id);
         queryClient.invalidateQueries({queryKey: ['pendingFollowRequests']});
         queryClient.invalidateQueries({queryKey: ['isFollowerIsFollowing']});
-        // Show success message once the request is sent
         showSuccessToast({description: 'Follow request sent successfully'});
       }
     } catch (error) {
@@ -77,32 +84,43 @@ const UsersProfileDetails = ({navigation, route}: any) => {
         description: 'An error occurred while sending the follow request.',
       });
     } finally {
-      setFollowReqLoading(false); // Reset the loading state
+      setFollowReqLoading(false);
     }
   };
   const cancelFollReqFun = async () => {
-    setCancelReqLoad(true); // Set loading state
+    setCancelReqLoad(true);
     try {
-      await cancelFollowRequest(data?._id); // Call the cancel follow request function
-      // Invalidate relevant queries to update data after cancellation
+      await cancelFollowRequest(data?._id);
       queryClient.invalidateQueries({queryKey: ['isFollowerIsFollowing']});
       queryClient.invalidateQueries({queryKey: ['pendingFollowRequests']});
-      showSuccessToast({description: 'Follow request canceled successfully'}); // Success toast
+      showSuccessToast({description: 'Follow request canceled successfully'});
     } catch (error) {
       console.error('Error cancelling follow request:', error);
-      showErrorToast({description: 'Error cancelling follow request.'}); // Error toast
+      showErrorToast({description: 'Error cancelling follow request.'});
     } finally {
-      setCancelReqLoad(false); // Reset loading state after completion
+      setCancelReqLoad(false);
     }
   };
 
   const [basicDetailsPopup, setBasicDetailsPopup] = useState(true);
   const [fullInfoPopup, setFullInfoPopup] = useState(false);
   const basecDetails = [
-    {label: 'First Name', value: data.firstName ?? 'N/A'},
-    {label: 'Middle Name', value: data.middleName ?? 'N/A'},
-    {label: 'Last Name', value: data.lastName ?? 'N/A'},
-    {label: 'Gender', value: data.gender ?? 'N/A'},
+    {
+      label: 'First Name',
+      value: getValue(data?.firstName, userData?.data?.firstName),
+    },
+    {
+      label: 'Middle Name',
+      value: getValue(data?.middleName, userData?.data?.middleName),
+    },
+    {
+      label: 'Last Name',
+      value: getValue(data?.lastName, userData?.data?.lastName),
+    },
+    {
+      label: 'Gender',
+      value: getValue(data?.gender, userData?.data?.gender),
+    },
   ];
 
   const fullDetails = [
@@ -134,11 +152,23 @@ const UsersProfileDetails = ({navigation, route}: any) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {showBasicDetails && (
           <View style={styles.header}>
-            <CustomAvatar name={data.firstName ?? ''} style={styles.avatar} />
-            <CustomText style={styles.nameText}>{`${data.firstName ?? ''} ${
-              data.middleName ?? ''
-            } ${data.lastName ?? ''}`}</CustomText>
-            {/* <CustomText style={styles.phoneText}>+91 7972755589</CustomText> */}
+            <CustomAvatar
+              name={getValue(data?.firstName, userData?.data?.firstName, '')}
+              style={styles.avatar}
+            />
+
+            <CustomText style={styles.nameText}>
+              {`${getValue(
+                data?.firstName,
+                userData?.data?.firstName,
+                '',
+              )} ${getValue(
+                data?.middleName,
+                userData?.data?.middleName,
+                '',
+              )} ${getValue(data?.lastName, userData?.data?.lastName, '')}`}
+            </CustomText>
+
             {isFollowerIsFollowingData?.data?.following?.status ===
               'accepted' && (
               <View
@@ -151,11 +181,10 @@ const UsersProfileDetails = ({navigation, route}: any) => {
                   backgroundColor: '#e4e6eb',
                   paddingVertical: 12,
                   borderRadius: 8,
-                  // paddingTop: 10,
                 }}>
                 <TouchableOpacity
                   onPress={() => {
-                    const phoneNumber = data.phone;
+                    const phoneNumber = data?.phone;
                     Linking.openURL(`tel:${phoneNumber}`);
                   }}>
                   <Image
@@ -166,9 +195,8 @@ const UsersProfileDetails = ({navigation, route}: any) => {
                 <TouchableOpacity
                   onPress={() =>
                     navigation.navigate(chatRoute.ChatStack, {
-                      // Navigate to the ChatStack tab first
-                      screen: chatRoute.ChattingScreen, // Then navigate to ChattingScreen inside ChatStack
-                      params: {data: data}, // Pass data to ChattingScreen
+                      screen: chatRoute.ChattingScreen,
+                      params: {data: data},
                     })
                   }>
                   <Image
@@ -176,10 +204,6 @@ const UsersProfileDetails = ({navigation, route}: any) => {
                     style={{height: 32, width: 32}}
                   />
                 </TouchableOpacity>
-
-                {/* <CustomText>lskdfj</CustomText>
-                <CustomText>lskdfj</CustomText>
-                <CustomText>lskdfj</CustomText> */}
               </View>
             )}
           </View>
@@ -234,34 +258,36 @@ const UsersProfileDetails = ({navigation, route}: any) => {
             )}
           </View>
         )}
-        <View style={styles.premiumMainCont}>
-          <View style={styles.premiumCont}>
-            <Image
-              source={require('../../assets/icons/premium.png')}
-              style={{height: 22, width: 22}}
-            />
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-              <CustomText style={styles.premiumText}>Premium</CustomText>
-              <CustomText style={{fontSize: 15, color: 'green'}}>
-                Free
-              </CustomText>
+        {showChatIcon && (
+          <View style={styles.premiumMainCont}>
+            <View style={styles.premiumCont}>
+              <Image
+                source={require('../../assets/icons/premium.png')}
+                style={{height: 22, width: 22}}
+              />
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                <CustomText style={styles.premiumText}>Premium</CustomText>
+                <CustomText style={{fontSize: 15, color: 'green'}}>
+                  Free
+                </CustomText>
+              </View>
             </View>
+            <TouchableOpacity
+              style={styles.msgCont}
+              onPress={() =>
+                navigation.navigate(chatRoute.ChatStack, {
+                  screen: chatRoute.ChattingScreen,
+                  params: {data: data},
+                })
+              }>
+              <Image
+                source={require('../../assets/bottomIcons/messageActive.png')}
+                style={{height: 26, width: 26}}
+              />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={styles.msgCont}
-            onPress={() =>
-              navigation.navigate(chatRoute.ChatStack, {
-                // Navigate to the ChatStack tab first
-                screen: chatRoute.ChattingScreen, // Then navigate to ChattingScreen inside ChatStack
-                params: {data: data}, // Pass data to ChattingScreen
-              })
-            }>
-            <Image
-              source={require('../../assets/bottomIcons/messageActive.png')}
-              style={{height: 26, width: 26}}
-            />
-          </TouchableOpacity>
-        </View>
+        )}
         {showRelation && (
           <View style={styles.button}>
             <CustomText style={styles.buttonText}>

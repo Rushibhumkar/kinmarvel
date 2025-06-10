@@ -103,6 +103,7 @@ const getRouteName = (route: any) => {
     routeName === homeRoute.AddStory ||
     routeName === profileRoute.ProfileSetup ||
     routeName === profileRoute.RateUs ||
+    routeName === profileRoute.AddMember ||
     routeName === homeRoute.ViewStory ||
     routeName === homeRoute.HomeNotifications ||
     routeName === homeRoute.PendingRequests ||

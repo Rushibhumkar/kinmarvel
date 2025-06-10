@@ -181,6 +181,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 16,
     color: '#000',
+    height: 40,
   },
   inputWithCountryCode: {
     flex: 1,

@@ -11,6 +11,7 @@ import {
   Image,
   LogBox,
   PermissionsAndroid,
+  StatusBar,
   View,
 } from 'react-native';
 import {getData} from './src/hooks/useAsyncStorage';
@@ -149,6 +150,7 @@ const App = () => {
   if (isLoading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <StatusBar barStyle={'dark-content'} backgroundColor={'#fff'} />
         <Image
           source={require('./src/assets/images/splashscreen.png')}
           style={{width: sizes.width, height: sizes.height + 54}}

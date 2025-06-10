@@ -52,6 +52,7 @@ interface DropdownRNEProps {
     refetch: () => void;
   };
   // onChange?: any;
+  onChange?: (item: Item) => void; // ✅ Add this to props
   onChangeText?: (value: string) => void;
   debounceTime?: number;
   search?: boolean;
@@ -75,13 +76,13 @@ const DropdownRNE: React.FC<DropdownRNEProps> = ({
   valueFieldKey = 'value',
   placeholder = field?.placeholder,
   val,
-  mb = 10,
-  mt = 10,
+  mb = 4,
+  mt = 4,
   customStyle,
   dropdownStyle,
   isMultiSelect = field?.type === 'multi-select',
   query,
-  // onChange,
+  onChange,
   onChangeText,
   debounceTime = 500,
   search = false,
@@ -165,6 +166,7 @@ const DropdownRNE: React.FC<DropdownRNEProps> = ({
                   borderColor: '#ccc',
                   borderWidth: 1,
                   borderRadius: 8,
+                  height: 42,
                 },
             dropdownStyle,
             disable && {backgroundColor: '#f0f0f0'},
@@ -173,10 +175,11 @@ const DropdownRNE: React.FC<DropdownRNEProps> = ({
           labelField={labelFieldKey}
           valueField={valueFieldKey}
           placeholder={placeholder || label || 'Select an option'}
-          placeholderStyle={[{fontSize: 16, color: '#ccc'}, placeholderStyle]}
+          placeholderStyle={[{fontSize: 14, color: '#ccc'}, placeholderStyle]}
           value={formik?.values[name] || val}
           onChange={item => {
             formik?.setFieldValue(name, item[valueFieldKey]);
+            onChange?.(item);
           }}
           search={showSingleSelectSearchbar ?? type !== 'primary'}
           searchPlaceholder="Search..."

@@ -11,6 +11,7 @@ import FollowersCard from '../screens/ProfileScreens/components/FollowersCard';
 import FollowersFollowing from '../screens/ProfileScreens/FollowersFollowing';
 import RateUs from '../screens/ProfileScreens/RateUs';
 import Hierarchy from '../screens/CommonScreens/Hierarchy';
+import AddMember from '../screens/CommonScreens/AddMember';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +34,7 @@ const ProfileStack = () => {
       />
       <Stack.Screen name={profileRoute.RateUs} component={RateUs} />
       <Stack.Screen name={profileRoute.TermsAndCond} component={TermsAndCond} />
+      <Stack.Screen name={profileRoute.AddMember} component={AddMember} />
       <Stack.Screen
         name={profileRoute.AccountDetails}
         component={AccountDetails}

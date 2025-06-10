@@ -62,42 +62,65 @@ const MessageComponent = ({senderId, data}: any) => {
       key={data?._id}>
       {/* If text exists, show text and timestamp in the same row */}
       {hasAttachments &&
-        data.attachments.map((attachment: any, index: number) => {
-          if (attachment.mimeType.includes('video')) {
-            return (
-              <TouchableOpacity
-                key={index}
-                onPress={() =>
-                  handleImageClick(`${fileViewURL}${attachment.path}`)
-                }>
-                <Video
-                  source={{uri: `${fileViewURL}${attachment.path}`}}
-                  style={{height: 220, width: 220}}
-                  resizeMode="cover"
-                  paused={true} // Keep video paused for thumbnail preview
-                  poster={`${fileViewURL}${attachment.path}`} // Display thumbnail of video
-                  onError={(error: any) =>
-                    myConsole('Error loading video:', error)
-                  }
-                />
-              </TouchableOpacity>
-            );
-          }
-          return (
+        data.attachments.map((attachment: any, index: number) => (
+          <View key={index} style={{position: 'relative', marginBottom: 6}}>
             <TouchableOpacity
               onPress={() =>
                 handleImageClick(`${fileViewURL}${attachment.path}`)
-              }
-              key={index}>
-              <Image
-                source={{uri: `${fileViewURL}${attachment.path}`}}
-                style={{height: 220, width: 220}}
-                resizeMode="cover"
-                onError={error => myConsole('Error loading image:', error)}
-              />
+              }>
+              {attachment.mimeType.includes('video') ? (
+                <View style={{position: 'relative'}}>
+                  <Video
+                    source={{uri: `${fileViewURL}${attachment.path}`}}
+                    style={{height: 220, width: 220}}
+                    resizeMode="cover"
+                    paused={true}
+                    poster={`${fileViewURL}${attachment.path}`}
+                    onError={(error: any) =>
+                      myConsole('Error loading video:', error)
+                    }
+                  />
+
+                  {/* Centered Play Icon */}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: [{translateX: -20}, {translateY: -20}],
+                      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                      padding: 10,
+                      borderRadius: 30,
+                    }}>
+                    <Image
+                      source={require('../../../assets/icons/play.png')} // your downloaded PNG
+                      style={{width: 30, height: 30, tintColor: '#fff'}}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <Image
+                  source={{uri: `${fileViewURL}${attachment.path}`}}
+                  style={{height: 220, width: 220}}
+                  resizeMode="cover"
+                  onError={error => myConsole('Error loading image:', error)}
+                />
+              )}
             </TouchableOpacity>
-          );
-        })}
+
+            {/* Time and Ticks on media */}
+            <View style={styles.attachmentTickTime}>
+              <CustomText style={{color: '#fff', fontSize: 10}}>
+                {formatTime24Hour(data.createdAt)}
+              </CustomText>
+              <MessageStatusTicks
+                isSeen={data.isSeen}
+                isDelivered={data.isDelivered}
+                isSender={data.sender === senderId}
+              />
+            </View>
+          </View>
+        ))}
 
       {viewFullImg && (
         <Modal
@@ -155,8 +178,8 @@ const MessageComponent = ({senderId, data}: any) => {
               <Image
                 source={
                   isPaused
-                    ? require('../../../assets/icons/play.png') // Play icon
-                    : require('../../../assets/icons/pause.png') // Pause icon
+                    ? require('../../../assets/icons/play.png')
+                    : require('../../../assets/icons/pause.png')
                 }
                 style={{width: 30, height: 30}}
               />
@@ -313,9 +336,8 @@ const MessageComponent = ({senderId, data}: any) => {
       )}
 
       {/* Show timestamp below if attachments exist */}
-      {hasAttachments && (
+      {/* {hasAttachments && (
         <View style={styles.ifAttachmentsMsgView}>
-          {/* Show Ticks for Sent Messages (Only for Sender) */}
           <CustomText
             style={
               data.sender === senderId ? styles.myMsgTime : styles.otherMsgTime
@@ -328,7 +350,7 @@ const MessageComponent = ({senderId, data}: any) => {
             isSender={data.sender === senderId}
           />
         </View>
-      )}
+      )} */}
     </View>
   );
 };
@@ -367,13 +389,26 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
+  // ifAttachmentsMsgView: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   gap: 4,
+  //   alignSelf: 'flex-end',
+  //   backgroundColor: 'red',
+  // },
   ifAttachmentsMsgView: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     alignSelf: 'flex-end',
     backgroundColor: 'red',
+    borderBottomRightRadius: 8,
+    borderBottomLeftRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 2,
   },
+
   otherMessageContainer: {
     flexDirection: 'column', // Stack messages and attachments properly
     alignItems: 'flex-start',
@@ -461,5 +496,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  attachmentTickTime: {
+    position: 'absolute',
+    bottom: 4,
+    right: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
 });

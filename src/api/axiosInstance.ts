@@ -11,7 +11,7 @@ export const fileViewURL =
 let isLive = false;
 export const baseUrl: string = isLive
   ? ''
-  : 'https://fameely-backend.onrender.com/api';
+  : 'https://fameely-backend-973m.onrender.com/api';
 
 // Standard Axios Instance
 const API_AXIOS: AxiosInstance = axios.create({

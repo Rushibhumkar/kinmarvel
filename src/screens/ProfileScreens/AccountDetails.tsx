@@ -27,17 +27,18 @@ import CustomErrorMessage from '../../components/CustomErrorMessage';
 
 const AccountDetails = ({navigation}: any) => {
   const queryClient = useQueryClient();
-  const {
-    data: myData,
-    isLoading: myDataLoading,
-    isError: myDataError,
-    refetch,
-  } = useGetMyData();
+  // const {
+  //   data: myData,
+  //   isLoading: myDataLoading,
+  //   isError: myDataError,
+  //   refetch,
+  // } = useGetMyData();
 
   const {
-    data: mydata,
+    data: myData,
     isLoading: myDataLoad,
     isError: myDataErr,
+    refetch: myDataRefetch,
   } = useGetMyData();
 
   const user = myData?.data || {};
@@ -138,7 +139,7 @@ const AccountDetails = ({navigation}: any) => {
       {myDataErr && (
         <CustomErrorMessage
           message="Failed to fetch data. Please try again."
-          onRetry={refetch}
+          onRetry={myDataRefetch}
         />
       )}
       <ScrollView
@@ -161,7 +162,7 @@ const AccountDetails = ({navigation}: any) => {
           </TouchableOpacity> */}
         </View>
 
-        {mydata?.data && (
+        {myData?.data && (
           <View style={styles.countContainer}>
             <Text
               style={styles.countText}
@@ -273,5 +274,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 40,
     borderRadius: 50,
+    color: '#000',
   },
 });

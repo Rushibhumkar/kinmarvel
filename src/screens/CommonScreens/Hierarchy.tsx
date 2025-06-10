@@ -7,67 +7,114 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  ScrollView,
+  RefreshControl,
+  Image,
 } from 'react-native';
 import RelativesTree from 'react-native-relatives-tree';
 import HierarchyHeader from './components/HierarchyHeader';
 import {color} from '../../const/color';
+import {myConsole} from '../../utils/myConsole';
+import {
+  addMemberToTree,
+  useGetMyTree,
+  useGetTreeByUserId,
+} from '../../api/userTree/userTreeFunc';
+import {getTextWithLength2} from '../../utils/commonFunction';
+import moment from 'moment';
+import FullHeightLoader from '../../components/LoadingCompo/FullHeightLoader';
+import CustomErrorMessage from '../../components/CustomErrorMessage';
+import CustomModal from '../../components/CustomModal';
+import CustomText from '../../components/CustomText';
+import {homeRoute, profileRoute} from '../AuthScreens/routeName';
+import {useQueryClient} from '@tanstack/react-query';
+import {popUpConfToast, showSuccessToast} from '../../utils/toastModalFunction';
+import {useGetMyData} from '../../api/profile/profileFunc';
 
-const relatives = [
-  {
-    name: 'John',
-    relation: 'Grandfather',
-    spouse: {name: 'Anne', dob: '04/05/2007'},
-    dob: '01/05/2004',
-    children: [
-      {
-        name: 'Dan',
-        relation: 'Father',
-        spouse: {name: 'Ella', dob: '04/05/2007', relation: 'Mother'},
-        dob: '01/05/2004',
-        children: [
-          {name: 'Olivia', relation: 'Daughter', dob: '01/05/2004'},
-          {name: 'Mary', relation: 'Daughter', dob: '01/05/2004'},
-        ],
-      },
-      {
-        name: 'Jack',
-        relation: 'Uncle',
-        spouse: {name: 'Rachel', dob: '04/05/2007'},
-        dob: '01/05/2004',
-        dod: '03/03/2017',
-      },
-    ],
-  },
-];
-
-const RelativeItem = ({level, info, style, matchedName}: any) => {
+const RelativeItem = ({
+  level,
+  info,
+  style,
+  matchedName,
+  onSelectPerson,
+  showingParent,
+  myData,
+  myDataLoad,
+}: any) => {
   const isMatch =
     matchedName && info.name.toLowerCase() === matchedName.toLowerCase();
-
+  const isMe = myData?.data?._id === 's';
   return (
     <TouchableOpacity
-      style={[
-        styles.item,
-        style,
-        isMatch && {backgroundColor: '#ffa'}, // highlight match
-      ]}
-      onPress={() =>
-        Alert.alert(
-          'Person Clicked',
-          `${info.name} (${info.relation || 'N/A'})`,
-        )
-      }>
-      <Text>{info.name}</Text>
-      <Text style={{fontSize: 12}}>{info.relation || '....'}</Text>
-      <Text style={{fontSize: 12}}>({level})</Text>
+      style={[styles.item, style, isMatch && {backgroundColor: '#4a5'}]}
+      // disabled={showingParent}
+      onPress={() => onSelectPerson(info)}>
+      <Text style={{color: '#fff', fontWeight: 'bold'}}>
+        {getTextWithLength2(info.name || '', 12)}
+      </Text>
+      <Text style={{fontSize: 12, color: '#fff'}}>
+        {info.relation ? `(${info.relation})` : '....'}
+      </Text>
+      {/* <Text style={{fontSize: 12, color: '#fff'}}>({level})</Text> */}
     </TouchableOpacity>
   );
 };
 
-const Hierarchy = () => {
+const Hierarchy = ({navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [matchedName, setMatchedName] = useState<string | null>(null);
   const [searchResult, setSearchResult] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState<any>(null);
+  const [pendingNewMember, setPendingNewMember] = useState<any>(null);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showingParent, setShowingParent] = useState(false);
+
+  const {data: myData, isLoading: myDataLoad} = useGetMyData();
+
+  const queryClient = useQueryClient();
+
+  const {
+    data: myTreeData,
+    isLoading: myTreeLoad,
+    isError: myTreeErr,
+    refetch: refetchMyTree,
+  } = useGetMyTree();
+
+  const parentTreeId = myTreeData?.data?.parentTreeId;
+
+  const {
+    data: treeByIdData,
+    isLoading: treeByIdLoad,
+    isError: treeByIdErr,
+    refetch: treeByIdRefetch,
+  } = useGetTreeByUserId(showingParent ? parentTreeId : null);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    if (showingParent) {
+      await treeByIdRefetch();
+    } else {
+      await refetchMyTree();
+    }
+    setRefreshing(false);
+  };
+  const transformTreeData = (node: any): any => {
+    return {
+      _id: node.userId || node.memberTreeId?.userId?._id || '',
+      name: node.name || '',
+      relation: node.relation || '',
+      dob: node.dob || node.memberId?.dob || '',
+      gender: node.gender || node.memberId?.gender || '',
+      spouse: node.spouse?.length ? node.spouse[0] : null,
+      children:
+        node.children?.map((child: any) => transformTreeData(child)) || [],
+    };
+  };
+
+  const activeTree = showingParent ? treeByIdData?.data : myTreeData?.data;
+  const parsedTreeData = transformTreeData(activeTree || {});
 
   const searchTree = (nodes: any[]): boolean => {
     for (const node of nodes) {
@@ -93,7 +140,8 @@ const Hierarchy = () => {
       setSearchResult(null);
       return;
     }
-    const found = searchTree(relatives);
+    const found = searchTree([parsedTreeData]);
+
     setSearchResult(found ? 'Found' : 'Not found');
     if (!found) setMatchedName(null);
   };
@@ -101,6 +149,113 @@ const Hierarchy = () => {
   return (
     <SafeAreaView style={styles.main}>
       <HierarchyHeader />
+
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}>
+        <View style={{gap: 16, justifyContent: 'center', alignItems: 'center'}}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: color.mainColor,
+              paddingHorizontal: 16,
+              paddingVertical: 6,
+              borderRadius: 12,
+            }}
+            activeOpacity={0.6}
+            onPress={() => {
+              setModalVisible(false);
+              if (selectedPerson?._id) {
+                navigation.navigate(homeRoute.HomeStack, {
+                  screen: homeRoute.UsersProfileDetails,
+                  params: {
+                    id: selectedPerson._id,
+                    showBasicDetails: true,
+                    showChatIcon: false,
+                  },
+                });
+              }
+            }}>
+            <CustomText
+              style={{color: '#fff', fontSize: 15, fontWeight: '500'}}>
+              Show User Details
+            </CustomText>
+          </TouchableOpacity>
+
+          {!showingParent && (
+            <TouchableOpacity
+              style={{
+                backgroundColor: color.mainColor,
+                paddingHorizontal: 16,
+                paddingVertical: 6,
+                borderRadius: 12,
+              }}
+              activeOpacity={0.6}
+              onPress={() => {
+                navigation.navigate(profileRoute.AddMember, {
+                  onSubmit: (data: any) => {
+                    setPendingNewMember(data);
+                    setModalVisible(false);
+                    setConfirmModalVisible(true);
+                  },
+                });
+              }}>
+              <CustomText
+                style={{color: '#fff', fontSize: 15, fontWeight: '500'}}>
+                Add User in Tree
+              </CustomText>
+            </TouchableOpacity>
+          )}
+        </View>
+      </CustomModal>
+      <CustomModal
+        visible={confirmModalVisible}
+        onClose={() => setConfirmModalVisible(false)}>
+        {pendingNewMember ? (
+          <View style={{padding: 16, gap: 12, alignItems: 'center'}}>
+            <CustomText style={{fontSize: 16, fontWeight: '600'}}>
+              Confirm Member Details
+            </CustomText>
+            <CustomText>Relation: {pendingNewMember.relation}</CustomText>
+            <CustomText>Gender: {pendingNewMember.gender}</CustomText>
+            {pendingNewMember.userId ? (
+              <CustomText>User ID: {pendingNewMember.userId}</CustomText>
+            ) : (
+              <>
+                <CustomText>Name: {pendingNewMember.fName}</CustomText>
+                <CustomText>Phone: {pendingNewMember.phone}</CustomText>
+              </>
+            )}
+            <TouchableOpacity
+              style={styles.addNewMemberBtn}
+              onPress={async () => {
+                try {
+                  await addMemberToTree(pendingNewMember);
+                  queryClient.invalidateQueries({queryKey: ['myTree']});
+                  queryClient.invalidateQueries({queryKey: ['treeByUser']});
+                  setConfirmModalVisible(false);
+                  setPendingNewMember(null);
+                  navigation.goBack();
+                  showSuccessToast({
+                    description: 'Member Added Successfully !',
+                  });
+                } catch (err) {
+                  console.log('Failed to add member:', err);
+                  const errorMessage =
+                    err?.response?.data?.message ||
+                    'Failed to add member to tree.';
+                  Alert.alert('Error', errorMessage);
+                  // popUpConfToast.errorMessage(errorMessage);
+                }
+              }}>
+              <CustomText style={{color: '#fff'}}>Add</CustomText>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <CustomText style={{textAlign: 'center'}}>
+            No member data found to add.
+          </CustomText>
+        )}
+      </CustomModal>
 
       <View style={styles.searchBar}>
         <TextInput
@@ -115,6 +270,34 @@ const Hierarchy = () => {
           <Text style={{color: '#fff'}}>Search</Text>
         </TouchableOpacity>
       </View>
+      {parentTreeId && (
+        <TouchableOpacity
+          onPress={() => setShowingParent(prev => !prev)}
+          style={styles.showParentTreeBtn}>
+          <Text style={{color: '#fff'}}>
+            {showingParent ? 'Hide Parent Tree' : 'Show Parent Tree'}
+          </Text>
+        </TouchableOpacity>
+      )}
+      {/* <TouchableOpacity
+        onPress={() => null}
+        style={{
+          alignSelf: 'flex-end',
+          marginHorizontal: 10,
+          marginBottom: 10,
+          backgroundColor: color.mainColor,
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: 8,
+          padding: 12,
+          zIndex: 10,
+        }}>
+        <Image
+          source={require('../../assets/icons/add.png')}
+          style={{height: 24, width: 24}}
+          tintColor={'#fff'}
+        />
+      </TouchableOpacity> */}
 
       {searchResult && (
         <Text style={styles.status}>
@@ -123,16 +306,40 @@ const Hierarchy = () => {
             : '❌ Not found'}
         </Text>
       )}
-
-      <RelativesTree
-        data={relatives}
-        spouseKey="spouse"
-        cardWidth={80}
-        gap={10}
-        relativeItem={(props: any) => (
-          <RelativeItem {...props} matchedName={matchedName} />
-        )}
-      />
+      {myTreeLoad || (showingParent && treeByIdLoad) ? (
+        <FullHeightLoader />
+      ) : myTreeErr || (showingParent && treeByIdErr) ? (
+        <CustomErrorMessage
+          message={'Failed to load tree.'}
+          onRetry={onRefresh}
+        />
+      ) : (
+        <ScrollView
+          contentContainerStyle={{flexGrow: 1}}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <RelativesTree
+            data={[parsedTreeData]}
+            spouseKey="spouse"
+            cardWidth={80}
+            gap={10}
+            relativeItem={props => (
+              <RelativeItem
+                showingParent={showingParent}
+                myData={myData?.data}
+                myDataLoad={myDataLoad}
+                {...props}
+                matchedName={matchedName}
+                onSelectPerson={person => {
+                  setSelectedPerson(person);
+                  setModalVisible(true);
+                }}
+              />
+            )}
+          />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -156,6 +363,13 @@ const styles = StyleSheet.create({
     margin: 10,
     gap: 10,
   },
+  addNewMemberBtn: {
+    marginTop: 12,
+    backgroundColor: color.mainColor,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   input: {
     flex: 1,
     borderWidth: 1,
@@ -163,6 +377,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     height: 40,
+    color: '#000',
   },
   searchBtn: {
     backgroundColor: '#4a5',
@@ -175,6 +390,18 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     fontSize: 14,
     color: '#555',
+  },
+  showParentTreeBtn: {
+    alignSelf: 'flex-end',
+    marginHorizontal: 10,
+    marginBottom: 10,
+    backgroundColor: color.mainColor,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    zIndex: 10,
   },
 });
 

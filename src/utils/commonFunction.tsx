@@ -22,6 +22,9 @@ export const capitalizeFirstLetter = (name: string): string => {
 
   return `${firstName} ${lastName}`;
 };
+export const getTextWithLength2 = (name: string = '', maxLength: number) => {
+  return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
+};
 
 export const capitalizeFirstLetterWithSpace = (input: any): string => {
   if (!input) return '';
@@ -147,3 +150,6 @@ export const getLastSeen = (updatedAt: string): string => {
   const years = Math.floor(diffDays / 365);
   return `last seen ${years} year(s) ago`;
 };
+
+export const getValue = (primary: any, fallback: any, defaultVal = 'N/A') =>
+  primary ?? fallback ?? defaultVal;

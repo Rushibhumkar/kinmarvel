@@ -42,6 +42,7 @@ export const profileRoute = {
   FollowersFollowing: 'FollowersFollowing',
   FollowersCard: 'FollowersCard',
   Hierarchy: 'Hierarchy',
+  AddMember: 'AddMember',
 };
 
 export const commonRoute = {
