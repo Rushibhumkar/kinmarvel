@@ -13,14 +13,13 @@ import {color} from '../../const/color';
 import CustomText from '../../components/CustomText';
 import {fileViewURL} from '../../api/axiosInstance';
 import CustomAvatar from '../../components/CustomAvatar';
-import {commonRoute, homeRoute} from '../AuthScreens/routeName';
+import {homeRoute} from '../AuthScreens/routeName';
 import {shadow} from '../../sharedStyles';
 import CustomErrorMessage from '../../components/CustomErrorMessage';
-import FullHeightLoader from '../../components/LoadingCompo/FullHeightLoader';
 import {sizes} from '../../const';
-import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
 import {useNotifications} from '../../api/notification/notificationFunc';
-import {myConsole} from '../../utils/myConsole';
+import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
+import SwitchName from '../../components/LoadingCompo/SwitchName';
 
 const AllStories = ({navigation}: any) => {
   const {
@@ -83,7 +82,7 @@ const AllStories = ({navigation}: any) => {
       {allStoriesErr && (
         <CustomErrorMessage message="Something went wrong" onRetry={refetch} />
       )}
-
+      {/* <SwitchName /> */}
       {(myData || allStories?.data?.length > 0) && (
         <ScrollView
           horizontal

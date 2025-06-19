@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -15,6 +15,8 @@ import {commonRoute, profileRoute} from '../AuthScreens/routeName';
 import {useQueryClient} from '@tanstack/react-query';
 import {myStyle} from '../../sharedStyles';
 import {sizes} from '../../const';
+import DeviceInfo from 'react-native-device-info';
+import {myConsole} from '../../utils/myConsole';
 
 const ProfileMain: React.FC = ({navigation}: any) => {
   const queryClient = useQueryClient();
@@ -33,6 +35,18 @@ const ProfileMain: React.FC = ({navigation}: any) => {
       console.error('Error logging out:', error);
       showErrorToast({description: 'Error logging out. Please try again.'});
     }
+  };
+
+  const [deviceInfo, setDeviceInfo] = useState({});
+  useEffect(() => {
+    getDeviceInfo();
+  }, []);
+
+  const getDeviceInfo = async () => {
+    const readableVersion = await DeviceInfo.getReadableVersion();
+    const bundleId = await DeviceInfo.getBundleId();
+    const version = await DeviceInfo.getVersion();
+    setDeviceInfo({readableVersion, bundleId, version});
   };
   return (
     <View style={styles.container}>
@@ -107,7 +121,7 @@ const ProfileMain: React.FC = ({navigation}: any) => {
           ) : null}
         </TouchableOpacity>
         <CustomText style={{color: 'grey', textAlign: 'right'}}>
-          version 2.0.1
+          version {deviceInfo?.version ?? ''}
         </CustomText>
       </View>
     </View>

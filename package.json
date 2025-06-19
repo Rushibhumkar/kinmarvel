@@ -29,6 +29,7 @@
     "react-native-camera-kit": "^15.0.1",
     "react-native-contacts": "^6.0.5",
     "react-native-date-picker": "^5.0.13",
+    "react-native-device-info": "^14.0.4",
     "react-native-element-dropdown": "^2.12.4",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.25.0",

@@ -44,6 +44,7 @@ const RelativeItem = ({
   const isMatch =
     matchedName && info.name.toLowerCase() === matchedName.toLowerCase();
   const isMe = myData?.data?._id === 's';
+  // myConsole('infooooo', info);
   return (
     <TouchableOpacity
       style={[styles.item, style, isMatch && {backgroundColor: '#4a5'}]}
