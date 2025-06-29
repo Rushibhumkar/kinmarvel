@@ -132,7 +132,9 @@ const ChatsList = ({navigation}: any) => {
               />
               <View style={styles.chatContent}>
                 <Text style={styles.chatName}>
-                  {`${item.receiver.firstName} ${item.receiver.lastName}`}
+                  {`${item?.receiver?.firstName || ''} ${
+                    item?.receiver?.lastName || ''
+                  }`}
                 </Text>
                 <Text style={styles.lastMessage}>
                   {getLastSeen(item?.receiver?.updatedAt)}

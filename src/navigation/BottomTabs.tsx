@@ -110,7 +110,8 @@ const getRouteName = (route: any) => {
     routeName === homeRoute.AddUsers ||
     routeName === commonRoute.NotiDetails ||
     routeName === commonRoute.SelectContacts ||
-    routeName === chatRoute.ChattingScreen
+    routeName === chatRoute.ChattingScreen ||
+    routeName === chatRoute.MapScreen
   ) {
     return 'none';
   } else {

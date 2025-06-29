@@ -54,7 +54,7 @@ const RelativeItem = ({
         {getTextWithLength2(info.name || '', 12)}
       </Text>
       <Text style={{fontSize: 12, color: '#fff'}}>
-        {info.relation ? `(${info.relation})` : '....'}
+        {info.relation ? `(${info.relation})` : ''}
       </Text>
       {/* <Text style={{fontSize: 12, color: '#fff'}}>({level})</Text> */}
     </TouchableOpacity>
@@ -73,7 +73,6 @@ const Hierarchy = ({navigation}: any) => {
   const [showingParent, setShowingParent] = useState(false);
 
   const {data: myData, isLoading: myDataLoad} = useGetMyData();
-
   const queryClient = useQueryClient();
 
   const {
@@ -91,7 +90,6 @@ const Hierarchy = ({navigation}: any) => {
     isError: treeByIdErr,
     refetch: treeByIdRefetch,
   } = useGetTreeByUserId(showingParent ? parentTreeId : null);
-
   const onRefresh = async () => {
     setRefreshing(true);
     if (showingParent) {
@@ -104,25 +102,42 @@ const Hierarchy = ({navigation}: any) => {
   const transformTreeData = (node: any): any => {
     return {
       _id: node.userId || node.memberTreeId?.userId?._id || '',
-      name: node.name || '',
+      name:
+        node.name ||
+        node.memberTreeId?.userId?.fullName ||
+        node.memberTreeId?.userId?.firstName ||
+        node.memberTreeId?.fullName ||
+        node.memberTreeId?.firstName ||
+        '',
       relation: node.relation || '',
       dob: node.dob || node.memberId?.dob || '',
       gender: node.gender || node.memberId?.gender || '',
       spouse: node.spouse?.length ? node.spouse[0] : null,
-      children:
-        node.children?.map((child: any) => transformTreeData(child)) || [],
+      children: (node.children || node.memberTreeId?.children || []).map(
+        (child: any) => transformTreeData(child),
+      ),
     };
   };
 
   const activeTree = showingParent ? treeByIdData?.data : myTreeData?.data;
   const parsedTreeData = transformTreeData(activeTree || {});
-
   const searchTree = (nodes: any[]): boolean => {
     for (const node of nodes) {
-      if (node.name.toLowerCase() === searchQuery.toLowerCase()) {
-        setMatchedName(node.name);
+      if (
+        node.name.toLowerCase() === searchQuery.toLowerCase() ||
+        node.memberTreeId?.userId?.fullName?.toLowerCase() ===
+          searchQuery.toLowerCase() ||
+        node.memberTreeId?.userId?.firstName?.toLowerCase() ===
+          searchQuery.toLowerCase()
+      ) {
+        setMatchedName(
+          node.name ||
+            node.memberTreeId?.userId?.fullName ||
+            node.memberTreeId?.userId?.firstName,
+        );
         return true;
       }
+
       if (
         node.spouse &&
         node.spouse.name?.toLowerCase() === searchQuery.toLowerCase()
@@ -130,6 +145,7 @@ const Hierarchy = ({navigation}: any) => {
         setMatchedName(node.spouse.name);
         return true;
       }
+
       if (node.children && searchTree(node.children)) return true;
     }
     return false;
@@ -147,6 +163,31 @@ const Hierarchy = ({navigation}: any) => {
     if (!found) setMatchedName(null);
   };
 
+  const handleAddMember = async () => {
+    try {
+      myConsole('pendingNewMemberrr', pendingNewMember);
+      const response = await addMemberToTree(pendingNewMember);
+      myConsole('Add Member API Response:', response);
+
+      queryClient.invalidateQueries({queryKey: ['myTree']});
+      queryClient.invalidateQueries({queryKey: ['treeByUser']});
+
+      setConfirmModalVisible(false);
+      setPendingNewMember(null);
+      navigation.goBack();
+
+      showSuccessToast({
+        description: 'Member Added Successfully !',
+      });
+    } catch (err) {
+      console.log('Failed to add member:', err);
+      const errorMessage =
+        err?.response?.data?.message || 'Failed to add member to tree.';
+      Alert.alert('Error', errorMessage);
+    }
+  };
+  myConsole('myData?.data?._id', myData?.data?._id);
+  myConsole('selectedPerson._id', selectedPerson);
   return (
     <SafeAreaView style={styles.main}>
       <HierarchyHeader />
@@ -182,30 +223,36 @@ const Hierarchy = ({navigation}: any) => {
             </CustomText>
           </TouchableOpacity>
 
-          {!showingParent && (
-            <TouchableOpacity
-              style={{
-                backgroundColor: color.mainColor,
-                paddingHorizontal: 16,
-                paddingVertical: 6,
-                borderRadius: 12,
-              }}
-              activeOpacity={0.6}
-              onPress={() => {
-                navigation.navigate(profileRoute.AddMember, {
-                  onSubmit: (data: any) => {
-                    setPendingNewMember(data);
-                    setModalVisible(false);
-                    setConfirmModalVisible(true);
-                  },
-                });
-              }}>
-              <CustomText
-                style={{color: '#fff', fontSize: 15, fontWeight: '500'}}>
-                Add User in Tree
-              </CustomText>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={{
+              backgroundColor: color.mainColor,
+              paddingHorizontal: 16,
+              paddingVertical: 6,
+              borderRadius: 12,
+            }}
+            activeOpacity={0.6}
+            onPress={() => {
+              navigation.navigate(profileRoute.AddMember, {
+                onSubmit: (data: any) => {
+                  const payload = {
+                    ...data,
+                    selectedUserId:
+                      selectedPerson && selectedPerson._id !== myData?.data?._id
+                        ? selectedPerson._id
+                        : undefined,
+                  };
+
+                  setPendingNewMember(payload);
+                  setModalVisible(false);
+                  setConfirmModalVisible(true);
+                },
+              });
+            }}>
+            <CustomText
+              style={{color: '#fff', fontSize: 15, fontWeight: '500'}}>
+              Add User in Tree
+            </CustomText>
+          </TouchableOpacity>
         </View>
       </CustomModal>
       <CustomModal
@@ -228,26 +275,7 @@ const Hierarchy = ({navigation}: any) => {
             )}
             <TouchableOpacity
               style={styles.addNewMemberBtn}
-              onPress={async () => {
-                try {
-                  await addMemberToTree(pendingNewMember);
-                  queryClient.invalidateQueries({queryKey: ['myTree']});
-                  queryClient.invalidateQueries({queryKey: ['treeByUser']});
-                  setConfirmModalVisible(false);
-                  setPendingNewMember(null);
-                  navigation.goBack();
-                  showSuccessToast({
-                    description: 'Member Added Successfully !',
-                  });
-                } catch (err) {
-                  console.log('Failed to add member:', err);
-                  const errorMessage =
-                    err?.response?.data?.message ||
-                    'Failed to add member to tree.';
-                  Alert.alert('Error', errorMessage);
-                  // popUpConfToast.errorMessage(errorMessage);
-                }
-              }}>
+              onPress={handleAddMember}>
               <CustomText style={{color: '#fff'}}>Add</CustomText>
             </TouchableOpacity>
           </View>
@@ -259,18 +287,32 @@ const Hierarchy = ({navigation}: any) => {
       </CustomModal>
 
       <View style={styles.searchBar}>
-        <TextInput
-          placeholder="Search by name..."
-          style={styles.input}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onSubmitEditing={handleSearch}
-          placeholderTextColor={'grey'}
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            placeholder="Search by name..."
+            style={styles.input}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+            placeholderTextColor={'grey'}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              style={styles.clearButton}>
+              <Image
+                source={require('../../assets/icons/close.png')}
+                style={{width: 16, height: 16, tintColor: 'grey'}}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+
         <TouchableOpacity onPress={handleSearch} style={styles.searchBtn}>
           <Text style={{color: '#fff'}}>Search</Text>
         </TouchableOpacity>
       </View>
+
       {parentTreeId && (
         <TouchableOpacity
           onPress={() => setShowingParent(prev => !prev)}
@@ -371,15 +413,27 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
-  input: {
+  inputWrapper: {
     flex: 1,
     borderWidth: 1,
     borderColor: '#888',
     borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 10,
     height: 40,
+    backgroundColor: '#fff',
+  },
+
+  input: {
+    flex: 1,
     color: '#000',
   },
+
+  clearButton: {
+    paddingHorizontal: 6,
+  },
+
   searchBtn: {
     backgroundColor: '#4a5',
     paddingHorizontal: 16,

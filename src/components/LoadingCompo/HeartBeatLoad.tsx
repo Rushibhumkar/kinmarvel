@@ -52,7 +52,6 @@ const HeartBeatLoad = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 100,
     alignItems: 'center',
   },
 });
