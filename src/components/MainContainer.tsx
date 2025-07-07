@@ -7,8 +7,9 @@ import {
   View,
   Image,
   ViewStyle,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import React from 'react';
+import React, {useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {myConsole} from '../utils/myConsole';
 import CustomText from './CustomText';
@@ -17,6 +18,8 @@ import CustomAvatar from './CustomAvatar';
 import {SPSheet} from 'react-native-popup-confirm-toast';
 import CustomFilterComp from './CustomFilterComp';
 import {sizes} from '../const';
+import {TextInput} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 export type HeaderObjType = {
   isBack?: boolean | (() => void);
@@ -77,9 +80,14 @@ const MainContainer: React.FC<HeaderObjType> = ({
       onClose: () => spSheet.close(),
     });
   };
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const searchInputRef = useRef<TextInput>(null);
 
   return (
-    <View style={[styles.container, customStyle]}>
+    <SafeAreaView
+      style={[styles.container, customStyle]}
+      edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={styles.headerContainer}>
         {isBack && (
@@ -139,8 +147,58 @@ const MainContainer: React.FC<HeaderObjType> = ({
                 />
               </TouchableOpacity>
             ))}
+          {searchProps?.showSearchBar && (
+            <TouchableOpacity
+              activeOpacity={0.6}
+              onPress={() => {
+                setShowSearchBar(prev => !prev);
+                setTimeout(() => {
+                  searchInputRef.current?.focus();
+                }, 100);
+              }}
+              style={styles.profileIcon}>
+              <Image
+                source={require('../assets/icons/search.png')} // 🔥 Your search icon
+                style={{width: 24, height: 24, resizeMode: 'contain'}}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
+      {showSearchBar && (
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <TextInput
+              placeholder="Search..."
+              value={searchText}
+              ref={searchInputRef}
+              onChangeText={text => {
+                setSearchText(text);
+                if (searchProps?.onSearch) {
+                  searchProps.onSearch(text);
+                }
+              }}
+              placeholderTextColor={'#ccc'}
+              style={styles.searchInput}
+            />
+            {searchText.length > 0 && (
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  setSearchText('');
+                  if (searchProps?.onSearch) {
+                    searchProps.onSearch('');
+                  }
+                }}>
+                <Image
+                  source={require('../assets/icons/crossWithCircle.png')}
+                  style={styles.clearIcon}
+                />
+              </TouchableWithoutFeedback>
+            )}
+          </View>
+        </View>
+      )}
+
       <View
         style={{
           backgroundColor: bgColor || '#F5F5F5',
@@ -148,7 +206,7 @@ const MainContainer: React.FC<HeaderObjType> = ({
         }}>
         {children}
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -204,5 +262,33 @@ const styles = StyleSheet.create({
     borderWidth: 0.8,
     borderColor: 'lightgrey',
     marginRight: 4,
+  },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 24,
+    paddingHorizontal: 12,
+    // paddingVertical: 4,
+  },
+
+  searchInput: {
+    flex: 1,
+    paddingVertical: 8,
+  },
+
+  clearIcon: {
+    width: 24,
+    height: 24,
+    marginLeft: 8,
+    tintColor: '#999',
   },
 });

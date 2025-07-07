@@ -148,17 +148,27 @@ const AddStory = ({navigation}: any) => {
           hasBackdrop={false}
           showCloseIcon
           containerStyle={{
-            height: keyboardHeight ? sizes.height / 2 : sizes.height / 1.6,
+            height: keyboardHeight ? '60%' : '64%',
             marginTop: 40,
+            paddingBottom: 20,
+            // backgroundColor: 'red',
             width: sizes.width / 1.1,
           }}>
-          <View style={{flex: 1, alignItems: 'center'}}>
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              paddingBottom: 12,
+            }}>
             <CustomText style={styles.fileName}>
               {file?.fileName || 'Selected File'}
             </CustomText>
 
             {uploading ? (
-              <LoadingCompo style={{marginTop: 30}} />
+              <LoadingCompo
+                style={{marginTop: 30}}
+                minHeight={sizes.width / 2}
+              />
             ) : file?.uri ? (
               file.mediaType === 'video' ? (
                 <Video
@@ -252,6 +262,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
     paddingHorizontal: 10,
+    height: 40,
   },
   icon: {
     width: 24,

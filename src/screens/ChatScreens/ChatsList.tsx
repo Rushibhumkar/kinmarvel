@@ -22,6 +22,7 @@ import {SOCKET_SERVER_URL} from '../../api/axiosInstance';
 import {uesGetRecentChats} from '../../api/chats/chatFunc';
 import {sizes} from '../../const';
 import {getLastSeen} from '../../utils/commonFunction';
+import {myConsole} from '../../utils/myConsole';
 
 const ChatsList = ({navigation}: any) => {
   const [refreshing, setRefreshing] = useState(false);
@@ -108,7 +109,11 @@ const ChatsList = ({navigation}: any) => {
         />
       ) : recentChats?.data?.chats?.length > 0 ? (
         <FlatList
-          data={recentChats.data.chats}
+          data={[...recentChats.data.chats].sort(
+            (a, b) =>
+              new Date(b.receiver.updatedAt).getTime() -
+              new Date(a.receiver.updatedAt).getTime(),
+          )}
           keyExtractor={item => item._id}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

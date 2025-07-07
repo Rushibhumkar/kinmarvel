@@ -37,6 +37,7 @@ const {width, height} = Dimensions.get('window');
 
 const ViewStory = ({route, navigation}: any) => {
   const {data, user} = route.params;
+  myConsole('lkjslkdfsdf', data);
   const {data: myData} = useGetMyData();
   const {
     data: userData,
@@ -429,50 +430,17 @@ const ViewStory = ({route, navigation}: any) => {
           ) : (
             <Text style={styles.unsupportedText}>Unsupported media type</Text>
           )}
-
+          {item.caption ? (
+            <View style={styles.captionContainer}>
+              <Text style={styles.captionText}>{item.caption}</Text>
+            </View>
+          ) : null}
           <View style={styles.bottomInfo}>
             <Text style={styles.timeText}>
               Posted at: {formatTime24Hour(item.createdAt)}
             </Text>
           </View>
-          {/* <TouchableOpacity
-            style={styles.viewsButton}
-            onPress={() => {
-              setIsViewsModalVisible(true);
-              setIsPaused(true);
-              progressAnim.stopAnimation();
-              if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            }}>
-            <Text style={styles.viewsButtonText}>
-              Views ({item.views.length})
-            </Text>
-          </TouchableOpacity> */}
         </View>
-
-        {/* <CustomBottomModal
-          visible={isViewsModalVisible}
-          onClose={() => {
-            setIsViewsModalVisible(false);
-            setIsPaused(false);
-          }}>
-          <Text style={styles.modalTitle}>Views</Text>
-          {item.views.length === 0 ? (
-            <Text style={styles.noViewsText}>No views yet.</Text>
-          ) : (
-            <FlatList
-              data={item.views}
-              keyExtractor={(viewer: any) => viewer._id}
-              renderItem={({item: viewer}: any) => (
-                <View style={styles.viewerItem}>
-                  <Text style={styles.viewerName}>
-                    {viewer.firstName} {viewer.middleName} {viewer.lastName}
-                  </Text>
-                  <Text style={styles.viewerPhone}>{viewer.phone}</Text>
-                </View>
-              )}
-            />
-          )}
-        </CustomBottomModal> */}
       </View>
     );
   };
@@ -682,17 +650,12 @@ const styles = StyleSheet.create({
   },
   panResponderContainer: {
     width: width,
-    height: height * 0.75,
+    height: height, // 🔥 Change this to full screen height
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: '#000', // This is correct, already black background
   },
-  image: {
-    // marginTop: 120,
-    width: '100%', // Use 100% of parent container (panResponderContainer)
-    height: '100%', // Use 100% of parent container (panResponderContainer)
-    // backgroundColor: 'red',
-  },
+
   noStoryAvilView: {
     height: sizes.height,
     width: sizes.width,
@@ -728,7 +691,7 @@ const styles = StyleSheet.create({
   },
   bottomInfo: {
     position: 'absolute',
-    bottom: 30,
+    top: 80,
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -736,17 +699,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: width * 0.9,
-    alignSelf: 'center',
+    // width: width * 0.9,
+    alignSelf: 'flex-end',
   },
   timeText: {
     color: '#fff',
     fontSize: 14,
   },
-  video: {
-    width: '100%', // Use 100% of parent container (panResponderContainer)
-    height: '100%', // Use 100% of parent container (panResponderContainer)
+  image: {
+    width: width, // 🔥 Change this to cover full width
+    height: height, // 🔥 Change this to cover full height
   },
+
+  video: {
+    width: width, // 🔥 Change this to cover full width
+    height: height, // 🔥 Change this to cover full height
+  },
+
   playPauseButton: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     // borderRadius: 15,
@@ -824,5 +793,22 @@ const styles = StyleSheet.create({
     height: height * 0.85,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  captionContainer: {
+    position: 'absolute', // 🔥 Add this
+    bottom: 100, // 🔥 Move it above the bottom info
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    // borderRadius: 8,
+    alignSelf: 'center',
+    // maxWidth: '90%',
+    width: sizes.width,
+  },
+
+  captionText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

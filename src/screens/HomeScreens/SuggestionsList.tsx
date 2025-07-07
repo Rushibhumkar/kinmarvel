@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 10,
+    backgroundColor: 'red',
   },
   userItem: {
     padding: 12,

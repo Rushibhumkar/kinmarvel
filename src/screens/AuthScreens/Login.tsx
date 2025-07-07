@@ -82,6 +82,7 @@ const Login = ({navigation, onLogin}: any) => {
         title="LOGIN"
         onPress={formik.handleSubmit}
         loading={loading}
+        disabled={loading}
       />
 
       <View style={styles.footer}>

@@ -56,7 +56,7 @@ export const authVerifyLoginOtp = async (passcode: string, otp: string) => {
     const {data} = await API_AXIOS.post(`/auth/login/${passcode}/verify-otp`, {
       otp,
     });
-    console.log('Login OTP Verification API Response:', data);
+    // console.log('Login OTP Verification API Response:', data);
     return data;
   } catch (error: any) {
     console.error(

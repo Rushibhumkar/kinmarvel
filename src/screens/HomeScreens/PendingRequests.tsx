@@ -43,7 +43,7 @@ const PendingRequests = () => {
       setLoadingStates(prev => ({...prev, [userId]: false}));
     }
   };
-
+  myConsole('skdlfjd', pendingReqData?.data);
   return (
     <MainContainer title="Pending requests" isBack>
       <View style={styles.container}>
@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 14,
     fontWeight: 'bold',
+    color: '#000',
   },
   timeAgo: {
     fontSize: 12,

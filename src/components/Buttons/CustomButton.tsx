@@ -33,8 +33,8 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   onPress,
   textStyle,
   customStyling,
-  disabled = false,
   loading = false,
+  disabled = loading,
   mt = 40,
 }) => {
   return (

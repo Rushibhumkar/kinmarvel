@@ -47,7 +47,6 @@ const UsersProfileDetails = ({navigation, route}: any) => {
     isError: userDataErr,
     refetch: userDataRefetch,
   } = useGetUserById(id ? id : null);
-  myConsole('userDataaa', userData);
 
   // const handleSendFollowRequest = async () => {
   //   setFollowReqLoading(true);

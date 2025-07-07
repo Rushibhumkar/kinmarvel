@@ -46,7 +46,6 @@ const AddUsers = () => {
     }, 300);
     return () => clearTimeout(delayDebounce);
   }, [searchValue]);
-
   const renderItem = ({item}: {item: UserType}) => (
     <TouchableOpacity
       style={styles.userItem}
@@ -101,6 +100,7 @@ const AddUsers = () => {
       ) : (
         <FlatList
           data={users}
+          style={{backgroundColor: '#fff'}}
           renderItem={renderItem}
           keyExtractor={item => item._id}
           onEndReached={() => {

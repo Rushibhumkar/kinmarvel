@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
 import MainContainer from '../../components/MainContainer';
 import {useGetMyData} from '../../api/profile/profileFunc';
 import {useGetAllStories, useGetUserStories} from '../../api/story/storyFunc';
@@ -19,7 +19,9 @@ import CustomErrorMessage from '../../components/CustomErrorMessage';
 import {sizes} from '../../const';
 import {useNotifications} from '../../api/notification/notificationFunc';
 import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
+import {RefreshControl} from 'react-native';
 import SwitchName from '../../components/LoadingCompo/SwitchName';
+import {myConsole} from '../../utils/myConsole';
 
 const AllStories = ({navigation}: any) => {
   const {
@@ -39,13 +41,27 @@ const AllStories = ({navigation}: any) => {
     isLoading: myStoryLoad,
     isError: myStoryErr,
   } = useGetUserStories(senderId);
-
   const {
     data: pushNotis,
     isLoading: pushNotiLoad,
     isError: pushNotiErr,
   } = useNotifications();
   // myConsole('storyById', storyById);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const filteredStories = allStories?.data?.filter(
+    storyGroup => storyGroup.user._id !== senderId,
+  );
+
   return (
     <MainContainer
       title="Stories"
@@ -87,6 +103,9 @@ const AllStories = ({navigation}: any) => {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           contentContainerStyle={styles.statusContent}
           style={styles.statusContainer}>
           {myData && (
@@ -136,7 +155,7 @@ const AllStories = ({navigation}: any) => {
 
           {/* Other Stories */}
           {allStories?.data?.length > 0 &&
-            allStories.data.map((storyGroup: any) => {
+            filteredStories.map((storyGroup: any) => {
               const user = storyGroup.user;
               return (
                 <View key={user._id} style={styles.statusItem}>
