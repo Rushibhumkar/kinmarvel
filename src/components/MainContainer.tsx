@@ -30,6 +30,7 @@ export type HeaderObjType = {
     imageSource: any;
     onPress: () => void;
     size?: number;
+    color?: string;
   }>;
   searchProps?: {
     showSearchBar: boolean;
@@ -102,7 +103,7 @@ const MainContainer: React.FC<HeaderObjType> = ({
           </TouchableOpacity>
         )}
         {showAvatar && (
-          <CustomAvatar name="Rushi" style={{height: 34, width: 34}} />
+          <CustomAvatar name={showAvatar} style={{height: 34, width: 34}} />
         )}
         <View
           style={[
@@ -143,6 +144,7 @@ const MainContainer: React.FC<HeaderObjType> = ({
                     width: icon?.size || 24,
                     height: icon?.size || 24,
                     resizeMode: 'contain',
+                    tintColor: icon?.color,
                   }}
                 />
               </TouchableOpacity>

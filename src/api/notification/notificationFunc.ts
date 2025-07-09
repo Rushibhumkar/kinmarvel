@@ -10,11 +10,11 @@ export const registerDevice = async (deviceToken: string, platform: string) => {
       platform: platform,
     };
     const {data} = await API_AXIOS.post('/notification/devices', requestData);
-    showSuccessToast({description: 'Device registered successfully'});
+    // showSuccessToast({description: 'Device registered successfully'});
     // myConsole('lsdkjflkdsf', data);
     return data;
   } catch (error: any) {
-    showErrorToast({description: 'Error registering device'});
+    // showErrorToast({description: 'Error registering device'});
     console.log('Error:', error);
     throw error?.response?.data;
   }

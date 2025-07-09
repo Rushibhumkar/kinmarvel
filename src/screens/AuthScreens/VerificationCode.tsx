@@ -66,7 +66,8 @@ const VerificationCode = ({navigation, route}: any) => {
         const {authToken, refreshToken} = verifyResponse?.data;
         await storeData('authToken', authToken);
         await storeData('refreshToken', refreshToken);
-        popUpConfToast.successMessage('OTP Verified Successfully');
+        // popUpConfToast.successMessage('OTP Verified Successfully');
+        showSuccessToast({description: 'OTP Verified Successfully'});
         navigation.reset({
           index: 0,
           routes: [{name: 'Main'}],

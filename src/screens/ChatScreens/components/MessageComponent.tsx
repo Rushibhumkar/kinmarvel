@@ -19,7 +19,12 @@ import {fileViewURL} from '../../../api/axiosInstance';
 import Video from 'react-native-video';
 import {sizes} from '../../../const';
 
-const MessageComponent = ({senderId, data}: any) => {
+const MessageComponent = ({
+  senderId,
+  data,
+  selectedMessages,
+  onToggleSelect,
+}: any) => {
   const [viewFullImg, setViewFullImg] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [isPaused, setIsPaused] = useState(false); // To handle play/pause functionality
@@ -47,16 +52,29 @@ const MessageComponent = ({senderId, data}: any) => {
 
   const isSender = data.sender === senderId;
 
+  const isSelected = selectedMessages?.includes?.(data._id);
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={() => {
+        if (isSelected) {
+          onToggleSelect(data._id); // unselect on single tap if already selected
+        }
+      }}
+      onLongPress={() => onToggleSelect(data._id)} // toggle on long press
       style={[
-        data.sender === senderId && hasAttachments
+        data.sender === senderId && data.attachments?.length > 0
           ? styles.myMsgAttachment
           : data.sender === senderId
           ? styles.myMessageContainer
           : styles.otherMessageContainer,
         {
           alignSelf: data.sender === senderId ? 'flex-end' : 'flex-start',
+          backgroundColor: isSelected
+            ? '#B2DFDB'
+            : data.sender === senderId
+            ? color.mainColorFade
+            : '#E0E0E0',
         },
       ]}
       key={data?._id}>
@@ -65,9 +83,14 @@ const MessageComponent = ({senderId, data}: any) => {
         data.attachments.map((attachment: any, index: number) => (
           <View key={index} style={{position: 'relative', marginBottom: 6}}>
             <TouchableOpacity
-              onPress={() =>
-                handleImageClick(`${fileViewURL}${attachment.path}`)
-              }>
+              onPress={() => {
+                if (isSelected) {
+                  onToggleSelect(data._id); // Unselect on single tap
+                } else {
+                  handleImageClick(`${fileViewURL}${attachment.path}`); // Open preview
+                }
+              }}
+              onLongPress={() => onToggleSelect(data._id)}>
               {attachment.mimeType.includes('video') ? (
                 <View style={{position: 'relative'}}>
                   <Video
@@ -150,7 +173,25 @@ const MessageComponent = ({senderId, data}: any) => {
                 resizeMode="contain"
               />
             )}
-
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: 20,
+                left: 20,
+                backgroundColor: '#000',
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderRadius: 50,
+                padding: 12,
+              }}
+              activeOpacity={0.6}
+              onPress={() => setViewFullImg(false)}>
+              <Image
+                source={require('../../../assets/icons/back.png')}
+                style={{height: 32, width: 32}}
+                tintColor={'#fff'}
+              />
+            </TouchableOpacity>
             {/* Show error message if the video fails to load */}
             {loadError && (
               <CustomText
@@ -164,26 +205,27 @@ const MessageComponent = ({senderId, data}: any) => {
               </CustomText>
             )}
 
-            {/* Play/Pause Button */}
-            <TouchableOpacity
-              onPress={() => setIsPaused(!isPaused)} // Toggle play/pause on press
-              style={{
-                position: 'absolute',
-                top: '50%',
-                zIndex: 20,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                padding: 10,
-                borderRadius: 50,
-              }}>
-              <Image
-                source={
-                  isPaused
-                    ? require('../../../assets/icons/play.png')
-                    : require('../../../assets/icons/pause.png')
-                }
-                style={{width: 30, height: 30}}
-              />
-            </TouchableOpacity>
+            {selectedImage.endsWith('.mp4') && (
+              <TouchableOpacity
+                onPress={() => setIsPaused(!isPaused)}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  zIndex: 20,
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  padding: 10,
+                  borderRadius: 50,
+                }}>
+                <Image
+                  source={
+                    isPaused
+                      ? require('../../../assets/icons/play.png')
+                      : require('../../../assets/icons/pause.png')
+                  }
+                  style={{width: 30, height: 30}}
+                />
+              </TouchableOpacity>
+            )}
           </View>
         </Modal>
       )}
@@ -351,7 +393,7 @@ const MessageComponent = ({senderId, data}: any) => {
           />
         </View>
       )} */}
-    </View>
+    </TouchableOpacity>
   );
 };
 

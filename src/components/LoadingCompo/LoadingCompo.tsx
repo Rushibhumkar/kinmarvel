@@ -1,6 +1,5 @@
-import {ActivityIndicator, StyleSheet, View, ViewStyle} from 'react-native';
+import {StyleSheet, View, ViewStyle} from 'react-native';
 import React from 'react';
-import {color} from '../../const/color';
 import {sizes} from '../../const';
 import HeartBeatLoad from './HeartBeatLoad';
 

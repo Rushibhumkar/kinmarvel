@@ -4,6 +4,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import RootNavigator from './src/navigation/RootNavigator';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {Root as PopupRootProvider} from 'react-native-popup-confirm-toast';
+import DeviceInfo from 'react-native-device-info';
 import {
   Alert,
   Image,
@@ -53,6 +54,19 @@ const App = () => {
     };
 
     checkLoginStatus();
+  }, []);
+
+  useEffect(() => {
+    const fetchDeviceId = async () => {
+      try {
+        const uniqueId = await DeviceInfo.getUniqueId();
+        // console.log('🔥 Unique Device ID:', uniqueId);
+      } catch (error) {
+        console.error('Error getting Device ID:', error);
+      }
+    };
+
+    fetchDeviceId();
   }, []);
 
   useEffect(() => {
