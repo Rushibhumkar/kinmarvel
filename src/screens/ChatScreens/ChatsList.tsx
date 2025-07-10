@@ -100,7 +100,7 @@ const ChatsList = ({navigation}: any) => {
             ]
           : []),
       ]}>
-      {isLoading ? (
+      {recentChatsLoad ? (
         <LoadingCompo minHeight={sizes.height / 1.1} />
       ) : isError ? (
         <CustomErrorMessage

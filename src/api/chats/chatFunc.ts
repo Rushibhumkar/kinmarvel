@@ -111,3 +111,25 @@ export const uesGetRecentChats = (searchValue = '') => {
     refetchOnWindowFocus: false,
   });
 };
+
+export const deleteChatWithUser = async (oppositeUserId: string) => {
+  try {
+    const {data} = await API_AXIOS.delete(`/chat/all/${oppositeUserId}`);
+    return data;
+  } catch (error: any) {
+    console.error('Error deleting full chat:', error.response || error);
+    throw error;
+  }
+};
+
+export const deleteMessagesByIds = async (messageIds: string[]) => {
+  try {
+    const params = new URLSearchParams();
+    messageIds.forEach(id => params.append('id', id));
+    const {data} = await API_AXIOS.delete(`/chat/?${params.toString()}`);
+    return data;
+  } catch (error: any) {
+    console.error('Error deleting messages:', error.response || error);
+    throw error;
+  }
+};

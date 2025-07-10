@@ -43,6 +43,7 @@ export type HeaderObjType = {
   bgColor?: any;
   titleOnpress?: any;
   customStyle?: ViewStyle;
+  showRightTxt?: string | number;
 };
 const noop = () => {};
 
@@ -59,6 +60,7 @@ const MainContainer: React.FC<HeaderObjType> = ({
   showAvatar,
   bgColor,
   customStyle,
+  showRightTxt,
 }) => {
   const navigation = useNavigation();
   const handleBackPress = () => {
@@ -129,6 +131,12 @@ const MainContainer: React.FC<HeaderObjType> = ({
               Filter
             </CustomText>
           </TouchableOpacity>
+        )}
+        {showRightTxt && (
+          <CustomText
+            style={{color: color.mainColor, fontSize: 22, marginRight: 8}}>
+            {showRightTxt}
+          </CustomText>
         )}
         <View style={styles.rightIconsContainer}>
           {Array.isArray(showRightIcon) &&

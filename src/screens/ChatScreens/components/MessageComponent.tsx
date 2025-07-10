@@ -52,16 +52,18 @@ const MessageComponent = ({
 
   const isSender = data.sender === senderId;
 
-  const isSelected = selectedMessages?.includes?.(data._id);
+  const isSelected = selectedMessages?.some?.(m => m._id === data._id);
+
   return (
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={() => {
         if (isSelected) {
-          onToggleSelect(data._id); // unselect on single tap if already selected
+          onToggleSelect(data);
+          // unselect on single tap if already selected
         }
       }}
-      onLongPress={() => onToggleSelect(data._id)} // toggle on long press
+      onLongPress={() => onToggleSelect(data)} // toggle on long press
       style={[
         data.sender === senderId && data.attachments?.length > 0
           ? styles.myMsgAttachment
@@ -85,12 +87,12 @@ const MessageComponent = ({
             <TouchableOpacity
               onPress={() => {
                 if (isSelected) {
-                  onToggleSelect(data._id); // Unselect on single tap
+                  onToggleSelect(data);
                 } else {
-                  handleImageClick(`${fileViewURL}${attachment.path}`); // Open preview
+                  handleImageClick(`${fileViewURL}${attachment.path}`);
                 }
               }}
-              onLongPress={() => onToggleSelect(data._id)}>
+              onLongPress={() => onToggleSelect(data)}>
               {attachment.mimeType.includes('video') ? (
                 <View style={{position: 'relative'}}>
                   <Video

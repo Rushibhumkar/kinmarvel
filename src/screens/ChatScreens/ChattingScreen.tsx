@@ -7,8 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-  Text,
-  Modal,
+  Alert,
 } from 'react-native';
 import MainContainer from '../../components/MainContainer';
 import {useGetMyData} from '../../api/profile/profileFunc';
@@ -24,9 +23,9 @@ import CustomModal from '../../components/CustomModal';
 import CustomText from '../../components/CustomText';
 import {MsgDataType} from '../../utils/typescriptInterfaces';
 import {useFocusEffect} from '@react-navigation/native';
-import {showErrorToast} from '../../utils/toastModalFunction';
+import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
 import MessageComponent from './components/MessageComponent';
-import {Camera, CameraType} from 'react-native-camera-kit';
+import {CameraType} from 'react-native-camera-kit';
 import RNFS from 'react-native-fs';
 import {chatRoute, commonRoute} from '../AuthScreens/routeName';
 import EmptyChatPlaceholder from './components/EmptyChatPlaceholder';
@@ -37,13 +36,15 @@ import {pickFileHelper} from './components/pickFileHelper';
 import CameraCaptureView from './components/CameraCaptureView';
 import {sendCapturedImageHelper} from './components/sendCapturedImageHelper';
 import CapturedImagePreviewModal from './components/CapturedImagePreviewModal';
-import CallModalBase, {callstyles} from './components/CallModalBase';
-import {sizes} from '../../const';
-import CustomAvatar from '../../components/CustomAvatar';
+import CallModalBase from './components/CallModalBase';
 import {getTextWithLength} from '../../utils/commonFunction';
+import {deleteMessagesByIds} from '../../api/chats/chatFunc';
+import CustomForwardModal from './components/CustomForwardModal';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const ChattingScreen = ({navigation, route}: any) => {
   const {data} = route.params;
+  const {forwardedMessages, forwardedToUserId} = route.params || {};
   const {data: myData} = useGetMyData();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<any>>([]);
@@ -65,8 +66,27 @@ const ChattingScreen = ({navigation, route}: any) => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [callingModal, setCallingModal] = useState<boolean>(false);
   const [videoCallModal, setVideoCallModal] = useState<boolean>(false);
-  const [selectedMessages, setSelectedMessages] = useState<Array<string>>([]);
-  const cameraRef = useRef(null); // Reference to the camera
+  const [selectedMessages, setSelectedMessages] = useState<Array<MsgDataType>>(
+    [],
+  );
+
+  const [forwardModal, setForwardModal] = useState<boolean>(false);
+  const cameraRef = useRef(null);
+  if (forwardedMessages && forwardedToUserId && socket) {
+    forwardedMessages.forEach((msg: any) => {
+      const forwardMsg: MsgDataType = {
+        sender: senderId,
+        receiver: forwardedToUserId,
+        text: msg.text,
+        ...(msg.attachments?.length ? {attachments: msg.attachments} : {}),
+        ...(msg.contact ? {contact: msg.contact} : {}),
+        ...(msg.location ? {location: msg.location} : {}),
+      };
+      socket.emit('sendMessage', forwardMsg);
+    });
+    showSuccessToast({description: 'Message forwarded successfully!'});
+  }
+
   useFocusEffect(
     useCallback(() => {
       if (messages.length > 0) {
@@ -160,11 +180,18 @@ const ChattingScreen = ({navigation, route}: any) => {
       } else {
         setMessages(prevMessages => [...prevMessages, ...newMessages]);
       }
-
+      myConsole('newMessagesss', newMessages);
       setPage(nextPage);
-    } catch (error) {
-      console.error('Failed to fetch messages:', error);
-      setFetchError('Failed to load messages. Please try again.');
+    } catch (error: any) {
+      if (error?.response?.status === 429) {
+        console.error('Rate limit exceeded:', error);
+        setFetchError(
+          'You are sending too many requests. Please wait a moment and try again.',
+        );
+      } else {
+        console.error('Failed to fetch messages:', error);
+        setFetchError('Failed to load messages. Please try again.');
+      }
     } finally {
       setIsFetching(false);
     }
@@ -298,6 +325,46 @@ const ChattingScreen = ({navigation, route}: any) => {
       },
     });
   };
+  const handleDeleteMessages = () => {
+    Alert.alert(
+      'Confirm Delete',
+      'Do you want to delete selected messages?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              await deleteMessagesByIds(selectedMessages.map(msg => msg._id));
+
+              setSelectedMessages([]);
+              fetchMessages(1);
+              showSuccessToast({
+                description: 'Message(s) are deleted successfully!',
+              });
+            } catch (err) {
+              showErrorToast({
+                description: 'Failed to delete messages',
+              });
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const copyMessageToClipboard = () => {
+    console.log('skdfld');
+    if (selectedMessages.length === 1) {
+      Clipboard.setString(selectedMessages[0]?.text || '');
+      showSuccessToast({description: 'Copied to clipboard!'});
+    }
+  };
 
   useEffect(() => {
     if (contact) {
@@ -313,34 +380,41 @@ const ChattingScreen = ({navigation, route}: any) => {
   const userFullName = `${data?.receiver?.firstName || data?.firstName || ''} ${
     data?.receiver?.lastName || data?.lastName || ''
   }`;
-  myConsole('selectedMessages', selectedMessages);
-  myConsole('messages', messages);
+  // myConsole('selectedMessages', selectedMessages);
+  // myConsole('messages', messages);
   return (
     <MainContainer
-      title={getTextWithLength(userFullName.trim(), 14) || 'Chat'}
-      showAvatar={
-        (data?.receiver?.firstName || data?.firstName) && userFullName
+      title={
+        selectedMessages.length > 0
+          ? ''
+          : getTextWithLength(userFullName.trim(), 14) || 'Chat'
       }
+      showAvatar={
+        selectedMessages.length > 0
+          ? ''
+          : (data?.receiver?.firstName || data?.firstName) && userFullName
+      }
+      showRightTxt={selectedMessages.length > 0 ? selectedMessages.length : ''}
       showRightIcon={
         selectedMessages.length > 0
           ? [
               {
-                imageSource: require('../../assets/icons/delete.png'),
-                onPress: () => {},
+                imageSource: require('../../assets/animatedIcons/deleteAni.png'),
+                onPress: handleDeleteMessages,
                 size: 22,
               },
               ...(selectedMessages.length === 1
                 ? [
                     {
-                      imageSource: require('../../assets/icons/copy.png'),
-                      onPress: () => {},
+                      imageSource: require('../../assets/animatedIcons/copyAni.png'),
+                      onPress: copyMessageToClipboard,
                       size: 22,
                     },
                   ]
                 : []),
               {
-                imageSource: require('../../assets/icons/forward.png'),
-                onPress: () => {}, // Optional future action
+                imageSource: require('../../assets/animatedIcons/forwardAni.png'),
+                onPress: () => setForwardModal(true),
                 size: 22,
               },
             ]
@@ -406,11 +480,11 @@ const ChattingScreen = ({navigation, route}: any) => {
                   data={item}
                   senderId={senderId}
                   selectedMessages={selectedMessages}
-                  onToggleSelect={(msgId: any) => {
+                  onToggleSelect={(msg: any) => {
                     setSelectedMessages(prev =>
-                      prev.includes(msgId)
-                        ? prev.filter(id => id !== msgId)
-                        : [...prev, msgId],
+                      prev.some(m => m._id === msg._id)
+                        ? prev.filter(m => m._id !== msg._id)
+                        : [...prev, msg],
                     );
                   }}
                 />
@@ -481,53 +555,12 @@ const ChattingScreen = ({navigation, route}: any) => {
           avatarUrl={data?.profilePicture}
           showVideoToggle={false}
         />
-        {videoCallModal && (
-          <View
-            style={{
-              backgroundColor: 'black',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 999,
-            }}>
-            <Text style={{color: '#fff', fontSize: 20, marginBottom: 20}}>
-              📹 Video Calling...
-            </Text>
-            <TouchableOpacity
-              style={{padding: 12, backgroundColor: '#fff', borderRadius: 8}}
-              onPress={() => setVideoCallModal(false)}>
-              <Text style={{color: 'red'}}>End Video Call</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
-        {callingModal && (
-          <View
-            style={{
-              backgroundColor: '#222',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 999,
-            }}>
-            <Text style={{color: '#fff', fontSize: 20, marginBottom: 20}}>
-              📞 Voice Calling...
-            </Text>
-            <TouchableOpacity
-              style={{padding: 12, backgroundColor: '#fff', borderRadius: 8}}
-              onPress={() => setCallingModal(false)}>
-              <Text style={{color: 'red'}}>End Call</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <CustomForwardModal
+          visible={forwardModal}
+          onClose={() => setForwardModal(false)}
+          selectedMessages={selectedMessages}
+        />
 
         <CustomModal
           visible={attachmentsPopup}

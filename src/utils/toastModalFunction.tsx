@@ -337,6 +337,34 @@ export const confModal = ({
   });
 };
 
+interface TIsConfirm {
+  onConfirm: () => void;
+  title?: string;
+}
+
+const wantDelete = ({
+  onConfirm,
+  title = 'Do you want to Delete!',
+}: TIsConfirm): void =>
+  Popup.show({
+    type: 'confirm',
+    title: title,
+    buttonText: 'Yes',
+    confirmText: 'No',
+    callback: () => {
+      onConfirm && onConfirm();
+    },
+    cancelCallback: () => {
+      Popup.hide();
+    },
+    buttonContentStyle: {
+      flexDirection: 'row',
+      gap: 20,
+    },
+    okButtonStyle: {backgroundColor: color.red},
+    confirmButtonStyle: {backgroundColor: color.grayBtn},
+  });
+
 const popUpClose = (): void => {
   Popup.hide();
 };
@@ -351,6 +379,7 @@ export const popUpConfToast = {
   confFormValidation,
   subTypeValidation,
   confModal,
+  wantDelete,
 };
 
 export const showSuccess = successMessage;
