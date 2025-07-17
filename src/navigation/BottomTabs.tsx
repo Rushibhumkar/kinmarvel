@@ -8,11 +8,13 @@ import {
   chatRoute,
   commonRoute,
   homeRoute,
+  postRoute,
   profileRoute,
 } from '../screens/AuthScreens/routeName';
 import ProfileStack from './ProfileStack';
 import HomeStack from './HomeStack';
 import ChatStack from './ChatStack';
+import PostStack from './PostStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -29,6 +31,25 @@ const BottomTabs = () => {
         tabBarActiveTintColor: color.mainColor,
         tabBarInactiveTintColor: '#A0A0A0',
       })}>
+      <Tab.Screen
+        name="PostStack"
+        component={PostStack}
+        options={{
+          tabBarLabel: 'Add post',
+          tabBarIcon: ({focused, size}) =>
+            focused ? (
+              <Image
+                source={require('../assets/bottomIcons/plusActive.png')}
+                style={{height: 24, width: 24}}
+              />
+            ) : (
+              <Image
+                source={require('../assets/bottomIcons/plusInactive.png')}
+                style={{height: 24, width: 24}}
+              />
+            ),
+        }}
+      />
       <Tab.Screen
         name="HomeStack"
         component={HomeStack}
@@ -111,6 +132,8 @@ const getRouteName = (route: any) => {
     routeName === commonRoute.NotiDetails ||
     routeName === commonRoute.SelectContacts ||
     routeName === chatRoute.ChattingScreen ||
+    routeName === postRoute.AddPostMedia ||
+    routeName === postRoute.ComposePost ||
     routeName === chatRoute.MapScreen
   ) {
     return 'none';

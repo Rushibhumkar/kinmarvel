@@ -180,7 +180,6 @@ const ChattingScreen = ({navigation, route}: any) => {
       } else {
         setMessages(prevMessages => [...prevMessages, ...newMessages]);
       }
-      myConsole('newMessagesss', newMessages);
       setPage(nextPage);
     } catch (error: any) {
       if (error?.response?.status === 429) {

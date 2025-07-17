@@ -22,6 +22,8 @@ import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
 import {RefreshControl} from 'react-native';
 import SwitchName from '../../components/LoadingCompo/SwitchName';
 import {myConsole} from '../../utils/myConsole';
+import {dummyPosts} from '../../const/data';
+import PostCard from '../PostStack/components/PostCard';
 
 const AllStories = ({navigation}: any) => {
   const {
@@ -101,60 +103,96 @@ const AllStories = ({navigation}: any) => {
       {/* <SwitchName /> */}
       {(myData || allStories?.data?.length > 0) && (
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{paddingBottom: 120}}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          contentContainerStyle={styles.statusContent}
-          style={styles.statusContainer}>
-          {myData && (
-            <View style={styles.statusItem}>
-              <View
-                style={{
-                  position: 'relative',
-                  marginTop: 4,
-                }}>
-                <CustomAvatar
-                  onPress={() =>
-                    navigation.navigate(homeRoute.ViewStory, {
-                      data: storyById?.data,
-                    })
-                  }
-                  name={`${myData.data.firstName} ${myData.data.lastName}`}
-                  imgUrl={myData.data.profileImageUrl}
-                  imgStyle={{
-                    height: 70,
-                    width: 70,
-                    borderWidth: 3,
-                    borderColor: color.mainColor,
-                  }}
-                  style={[
-                    styles.avatarLarge,
-                    {borderWidth: 3, borderColor: color.mainColor, padding: 4},
-                  ]}
-                />
-                <TouchableOpacity
-                  style={styles.addIconCont}
-                  activeOpacity={0.6}
-                  onPress={() => navigation.navigate(homeRoute.AddStory)}>
-                  <Image
-                    source={require('../../assets/icons/add.png')}
-                    style={{height: 22, width: 22}}
-                    tintColor={color.titleColor}
-                  />
-                </TouchableOpacity>
-              </View>
-              <CustomText style={styles.statusText}>
-                {myData.data.firstName.length > 12
-                  ? `${myData.data.firstName.slice(0, 12)}...`
-                  : myData.data.firstName}
-              </CustomText>
-            </View>
-          )}
+          }>
+          <View style={styles.statusContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.statusContent}>
+              {myData && (
+                <View style={styles.statusItem}>
+                  <View style={{position: 'relative', marginTop: 4}}>
+                    <CustomAvatar
+                      onPress={() =>
+                        navigation.navigate(homeRoute.ViewStory, {
+                          data: storyById?.data,
+                        })
+                      }
+                      name={`${myData.data.firstName} ${myData.data.lastName}`}
+                      imgUrl={myData.data.profileImageUrl}
+                      imgStyle={{
+                        height: 70,
+                        width: 70,
+                        borderWidth: 3,
+                        borderColor: color.mainColor,
+                      }}
+                      style={[
+                        styles.avatarLarge,
+                        {
+                          borderWidth: 3,
+                          borderColor: color.mainColor,
+                          padding: 4,
+                        },
+                      ]}
+                    />
+                    <TouchableOpacity
+                      style={styles.addIconCont}
+                      activeOpacity={0.6}
+                      onPress={() => navigation.navigate(homeRoute.AddStory)}>
+                      <Image
+                        source={require('../../assets/icons/add.png')}
+                        style={{height: 22, width: 22}}
+                        tintColor={color.titleColor}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <CustomText style={styles.statusText}>
+                    {myData.data.firstName.length > 12
+                      ? `${myData.data.firstName.slice(0, 12)}...`
+                      : myData.data.firstName}
+                  </CustomText>
+                </View>
+              )}
+
+              {/* Other Users’ Stories */}
+              {allStories?.data?.length > 0 &&
+                filteredStories.map((storyGroup: any) => {
+                  const user = storyGroup.user;
+                  return (
+                    <View key={user._id} style={styles.statusItem}>
+                      <TouchableOpacity
+                        style={styles.storySelectBtn}
+                        onPress={() =>
+                          navigation.navigate(homeRoute.ViewStory, {
+                            data: storyGroup.stories,
+                            user: allStories?.data[0]?.user,
+                          })
+                        }>
+                        <Image
+                          source={{
+                            uri: `${fileViewURL}${storyGroup.stories[0].mediaKey}`,
+                          }}
+                          style={{height: 60, width: 60, borderRadius: 30}}
+                          blurRadius={2}
+                        />
+                      </TouchableOpacity>
+                      <CustomText style={styles.statusText}>
+                        {user.firstName.length > 12
+                          ? `${user.firstName.slice(0, 12)}...`
+                          : user.firstName}
+                      </CustomText>
+                    </View>
+                  );
+                })}
+            </ScrollView>
+          </View>
 
           {/* Other Stories */}
-          {allStories?.data?.length > 0 &&
+          {/* {allStories?.data?.length > 0 &&
             filteredStories.map((storyGroup: any) => {
               const user = storyGroup.user;
               return (
@@ -182,16 +220,22 @@ const AllStories = ({navigation}: any) => {
                   </CustomText>
                 </View>
               );
-            })}
-        </ScrollView>
-      )}
-      {allStories?.data?.length === 0 && (
+            })} */}
+
+          <View style={{marginTop: 10}}>
+            {dummyPosts.map((item, index) => (
+              <PostCard key={index} post={item} />
+            ))}
+          </View>
+          {/* {allStories?.data?.length === 0 && (
         <View style={styles.noStoriesView}>
           <CustomText style={{fontSize: 32}}>🙄</CustomText>
           <CustomText style={styles.noDataText}>
             No stories available
           </CustomText>
         </View>
+      )} */}
+        </ScrollView>
       )}
     </MainContainer>
   );
@@ -203,7 +247,7 @@ const styles = StyleSheet.create({
   statusContainer: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    height: 100,
+    // height: 100,
     backgroundColor: '#fff',
     // borderBottomWidth: 0.8,
     // borderBottomColor: color.placeholderColor,

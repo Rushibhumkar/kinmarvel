@@ -43,7 +43,6 @@ const PendingRequests = () => {
       setLoadingStates(prev => ({...prev, [userId]: false}));
     }
   };
-  myConsole('skdlfjd', pendingReqData?.data);
   return (
     <MainContainer title="Pending requests" isBack>
       <View style={styles.container}>

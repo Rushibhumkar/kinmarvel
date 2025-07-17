@@ -54,3 +54,8 @@ export const commonRoute = {
   PermissionsScreen: 'PermissionsScreen',
   NotiDetails: 'NotiDetails',
 };
+
+export const postRoute = {
+  ComposePost: 'ComposePost',
+  AddPostMedia: 'AddPostMedia',
+};
