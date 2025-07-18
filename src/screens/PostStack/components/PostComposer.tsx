@@ -18,7 +18,6 @@ const PostComposer = ({onShowHidePress}: any) => {
         style={styles.input}
         multiline
       />
-
       <TouchableOpacity style={styles.linkRow}>
         <Image
           source={require('../../../assets/icons/user.png')}
@@ -26,7 +25,6 @@ const PostComposer = ({onShowHidePress}: any) => {
         />
         <CustomText style={styles.linkText}>Tag People</CustomText>
       </TouchableOpacity>
-
       <TouchableOpacity style={styles.linkRow}>
         <Image
           source={require('../../../assets/icons/location.png')}
@@ -34,13 +32,15 @@ const PostComposer = ({onShowHidePress}: any) => {
         />
         <CustomText style={styles.linkText}>Add Location</CustomText>
       </TouchableOpacity>
-
+      <TouchableOpacity style={styles.linkRow} onPress={onShowHidePress}>
+        <Image
+          source={require('../../../assets/icons/users.png')}
+          style={styles.icon}
+        />
+        <CustomText style={styles.linkText}>Show / Hide</CustomText>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.linkRow}>
         <CustomText style={styles.linkText}># Hashtags</CustomText>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.showHideBtn} onPress={onShowHidePress}>
-        <CustomText style={styles.linkText}>Show / Hide</CustomText>
       </TouchableOpacity>
     </View>
   );

@@ -17,24 +17,33 @@ import {myStyle} from '../../sharedStyles';
 import {sizes} from '../../const';
 import DeviceInfo from 'react-native-device-info';
 import {myConsole} from '../../utils/myConsole';
+import {showConfirmAlert} from '../../utils/alertHelper';
 
 const ProfileMain: React.FC = ({navigation}: any) => {
   const queryClient = useQueryClient();
   const isNewUpdate = false;
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.clear();
-      showSuccessToast({description: 'Logged out successfully'});
+    showConfirmAlert({
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      confirmText: 'Logout',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        try {
+          await AsyncStorage.clear();
+          showSuccessToast({description: 'Logged out successfully'});
 
-      queryClient.invalidateQueries({queryKey: ['myData']});
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'Auth'}],
-      });
-    } catch (error) {
-      console.error('Error logging out:', error);
-      showErrorToast({description: 'Error logging out. Please try again.'});
-    }
+          queryClient.invalidateQueries({queryKey: ['myData']});
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'Auth'}],
+          });
+        } catch (error) {
+          console.error('Error logging out:', error);
+          showErrorToast({description: 'Error logging out. Please try again.'});
+        }
+      },
+    });
   };
 
   const [deviceInfo, setDeviceInfo] = useState({});

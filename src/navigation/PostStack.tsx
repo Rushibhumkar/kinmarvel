@@ -13,7 +13,8 @@ const PostStack = () => {
         headerShown: false,
         statusBarStyle: 'dark',
         statusBarBackgroundColor: '#fff',
-      }}>
+      }}
+      initialRouteName={postRoute.AddPostMedia}>
       <Stack.Screen
         name={postRoute.AddPostMedia}
         component={AddPostMediaScreen}

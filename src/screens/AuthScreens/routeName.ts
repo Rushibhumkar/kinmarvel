@@ -56,6 +56,7 @@ export const commonRoute = {
 };
 
 export const postRoute = {
+  PostStack: 'PostStack',
   ComposePost: 'ComposePost',
   AddPostMedia: 'AddPostMedia',
 };

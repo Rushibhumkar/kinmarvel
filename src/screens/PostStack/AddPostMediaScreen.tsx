@@ -7,6 +7,9 @@ import MediaPicker from './components/MediaPicker';
 import {myConsole} from '../../utils/myConsole';
 import CustomText from '../../components/CustomText';
 import {shadow} from '../../sharedStyles';
+import {popUpConfToast, showWarningToast} from '../../utils/toastModalFunction';
+import {homeRoute} from '../AuthScreens/routeName';
+import {showConfirmAlert} from '../../utils/alertHelper';
 
 type RootStackParamList = {
   ComposePost: {media: {uri: string; type: string}[]};
@@ -29,13 +32,25 @@ const AddPostMediaScreen: React.FC = () => {
         leftIcon={require('../../assets/icons/close.png')}
         leftIconColor="#000"
         onLeftPress={() => {
-          setSelectedMedia([]);
-          navigation.navigate('HomeStack');
+          if (selectedMedia.length > 0) {
+            showConfirmAlert({
+              message:
+                'Are you sure you want to discard selected media and go back?',
+              onConfirm: () => {
+                setSelectedMedia([]);
+                navigation.navigate(homeRoute.HomeStack);
+              },
+            });
+          } else {
+            navigation.navigate(homeRoute.HomeStack);
+          }
         }}
         rightText="Next"
-        onRightPress={() =>
-          navigation.navigate('ComposePost', {media: selectedMedia})
-        }
+        onRightPress={() => {
+          selectedMedia.length > 0
+            ? navigation.navigate('ComposePost', {media: selectedMedia})
+            : showWarningToast({description: 'Please select the media'});
+        }}
       />
 
       <MediaPicker

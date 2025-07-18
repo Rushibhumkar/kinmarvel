@@ -39,60 +39,12 @@ const errorMessage = (message?: string): void => {
     },
   });
 };
-
-// const confirmModal = ({clickOnConfirm}: ConfirmModalProps): void => {
-//   Popup.show({
-//     type: 'confirm',
-//     title: 'Confirm!',
-//     textBody: 'Do you want to delete users',
-//     buttonText: 'Delete',
-//     confirmText: 'Cancel',
-//     callback: () => {
-//       clickOnConfirm();
-//     },
-//     cancelCallback: () => {
-//       Popup.hide();
-//     },
-//     buttonContentStyle: {
-//       flexDirection: 'row',
-//       gap: 20,
-//     },
-//     iconHeaderStyle: {
-//       marginBottom: -10,
-//     },
-//     okButtonStyle: {backgroundColor: '#DC7331'},
-//     confirmButtonStyle: {borderColor: 'black', borderWidth: 1},
-//   });
-// };
-
-// const confirmModal = ({
-//   clickOnConfirm,
-//   textBody = 'Do you want to delete users',
-//   buttonText = 'Confirm',
-// }: ConfirmModalProps & {textBody?: string; buttonText?: string}): void => {
-//   Popup.show({
-//     type: 'confirm',
-//     title: 'Confirm!',
-//     textBody,
-//     buttonText,
-//     confirmText: 'Cancel',
-//     callback: () => {
-//       clickOnConfirm();
-//     },
-//     cancelCallback: () => {
-//       Popup.hide();
-//     },
-//     buttonContentStyle: {
-//       flexDirection: 'row',
-//       gap: 20,
-//     },
-//     iconHeaderStyle: {
-//       marginBottom: -10,
-//     },
-//     okButtonStyle: {backgroundColor: '#DC7331'},
-//     confirmButtonStyle: {borderColor: 'black', borderWidth: 1},
-//   });
-// };
+const hidePopupSafely = (): void => {
+  Popup.hide();
+  setTimeout(() => {
+    console.log('Popup closed safely');
+  }, 100); // Give RN time to remove overlay
+};
 
 const confirmModal = ({
   clickOnConfirm,
@@ -105,12 +57,14 @@ const confirmModal = ({
     textBody,
     buttonText,
     confirmText: 'Cancel',
-    callback: async () => {
-      await clickOnConfirm(); // Wait for the confirmation action to complete
-      Popup.hide(); // Close the popup afterwards
+    callback: () => {
+      hidePopupSafely(); // hide + wait
+      setTimeout(() => {
+        clickOnConfirm();
+      }, 150); // slight delay for safety
     },
     cancelCallback: () => {
-      Popup.hide(); // Close the popup on cancel
+      hidePopupSafely();
     },
     buttonContentStyle: {
       flexDirection: 'row',
@@ -172,72 +126,6 @@ const plzWait = (): void => {
   });
 };
 
-// export const showSuccessToast = ({
-//   description = '',
-//   timing = 1500,
-//   position = 'top',
-//   backgroundColor = color.success,
-//   textColor = '#FFFFFF',
-// }: {
-//   description?: string;
-//   timing?: number;
-//   position?: 'bottom' | 'top';
-//   backgroundColor?: string;
-//   textColor?: string;
-//   height?: any;
-// }) => {
-//   Toast.show({
-//     text: description,
-//     timing,
-//     position,
-//     backgroundColor,
-//     // titleTextStyle: {
-//     //   color: textColor,
-//     //   fontSize: 16,
-//     //   fontWeight: 'bold',
-//     // },
-//     descTextStyle: {
-//       color: textColor,
-//       fontSize: 14,
-//     },
-//     statusBarType: 'dark-content',
-//   });
-// };
-
-// export const showErrorToast = ({
-//   title = 'Error',
-//   description = '',
-//   timing = 1500,
-//   position = 'top', // 'top' or 'bottom'
-//   backgroundColor = color.danger,
-//   textColor = '#FFFFFF',
-// }: {
-//   title?: string;
-//   description?: string;
-//   timing?: number;
-//   position?: 'bottom' | 'top';
-//   backgroundColor?: string;
-//   textColor?: string;
-// }) => {
-//   Toast.show({
-//     title,
-//     text: description,
-//     timing,
-//     position,
-//     backgroundColor,
-//     titleTextStyle: {
-//       color: textColor,
-//       fontSize: 16,
-//       fontWeight: 'bold',
-//     },
-//     descTextStyle: {
-//       color: textColor,
-//       fontSize: 14,
-//     },
-//     statusBarType: 'dark-content',
-//   });
-// };
-
 export const showSuccessToast = ({
   description = '',
   timing = 1500,
@@ -258,11 +146,6 @@ export const showSuccessToast = ({
     timing,
     position,
     backgroundColor,
-    // titleTextStyle: {
-    //   color: 'red',
-    //   fontSize: 32,
-    //   fontWeight: 'bold',
-    // },
     statusBarHidden: true,
     descTextStyle: {
       color: textColor,
@@ -276,7 +159,7 @@ export const showErrorToast = ({
   title = '',
   description = '',
   timing = 1500,
-  position = 'top', // 'top' or 'bottom'
+  position = 'top',
   backgroundColor = color.danger,
   textColor = '#FFFFFF',
 }: {
@@ -306,34 +189,32 @@ export const showErrorToast = ({
   });
 };
 
-export const confModal = ({
-  clickOnConfirm,
-  title = 'Confirm!',
-  textBody = 'Do you want to delete users?',
-  buttonText = 'Delete',
-  confirmText = 'Cancel',
+export const showWarningToast = ({
+  description = '',
+  timing = 1500,
+  position = 'top',
+  backgroundColor = '#FFD700', // Bright yellow
+  textColor = '#000000', // Black text for contrast
+  height = 60,
+}: {
+  description?: string;
+  timing?: number;
+  position?: 'bottom' | 'top';
+  backgroundColor?: string;
+  textColor?: string;
+  height?: any;
 }) => {
-  Popup.show({
-    type: 'confirm',
-    title: title, // Dynamic title
-    textBody: textBody, // Dynamic textBody
-    buttonText: buttonText, // Dynamic button text
-    confirmText: confirmText, // Dynamic confirm text
-    callback: () => {
-      clickOnConfirm();
+  Toast.show({
+    text: description,
+    timing,
+    position,
+    backgroundColor,
+    statusBarHidden: true,
+    descTextStyle: {
+      color: textColor,
+      fontSize: 14,
     },
-    cancelCallback: () => {
-      Popup.hide();
-    },
-    buttonContentStyle: {
-      flexDirection: 'row',
-      gap: 20,
-    },
-    iconHeaderStyle: {
-      marginBottom: -10,
-    },
-    okButtonStyle: {backgroundColor: '#DC7331'},
-    confirmButtonStyle: {borderColor: 'black', borderWidth: 1},
+    statusBarType: 'dark-content',
   });
 };
 
@@ -378,7 +259,6 @@ export const popUpConfToast = {
   popUpClose,
   confFormValidation,
   subTypeValidation,
-  confModal,
   wantDelete,
 };
 

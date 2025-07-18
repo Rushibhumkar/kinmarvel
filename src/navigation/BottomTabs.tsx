@@ -30,7 +30,8 @@ const BottomTabs = () => {
         },
         tabBarActiveTintColor: color.mainColor,
         tabBarInactiveTintColor: '#A0A0A0',
-      })}>
+      })}
+      initialRouteName="HomeStack">
       <Tab.Screen
         name="PostStack"
         component={PostStack}
@@ -49,6 +50,14 @@ const BottomTabs = () => {
               />
             ),
         }}
+        listeners={({navigation}) => ({
+          tabPress: e => {
+            e.preventDefault();
+            navigation.navigate(postRoute.PostStack, {
+              screen: postRoute.AddPostMedia,
+            });
+          },
+        })}
       />
       <Tab.Screen
         name="HomeStack"
