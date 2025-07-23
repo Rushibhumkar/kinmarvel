@@ -14,6 +14,7 @@ import CustomText from '../../../components/CustomText';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import {runOnJS} from 'react-native-reanimated';
 import FullStoryModal from '../../../components/Modals/FullStoryModal';
+import CommentsModal from '../../../components/Modals/CommentsModal';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -22,6 +23,9 @@ const PostCard = ({post}: any) => {
   const [showOptions, setShowOptions] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [viewFullStory, setViewFullStory] = useState<boolean>(false);
+  const [commentModal, setCommentModal] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.likeCount || 0);
 
   return (
     <View style={styles.container}>
@@ -57,10 +61,17 @@ const PostCard = ({post}: any) => {
         pagingEnabled
         onSnapToItem={index => setActiveIndex(index)}
         renderItem={({item}) => {
+          const handleDoubleTapLike = () => {
+            if (!liked) {
+              setLiked(true);
+              setLikeCount(prev => prev + 1);
+            }
+          };
+
           const doubleTap = Gesture.Tap()
             .numberOfTaps(2)
             .onStart(() => {
-              console.log('💖 Liked Post');
+              runOnJS(handleDoubleTapLike)();
             });
 
           const singleTap = Gesture.Tap()
@@ -110,13 +121,23 @@ const PostCard = ({post}: any) => {
 
       {/* FOOTER */}
       <View style={styles.footer}>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            setLiked(prev => !prev);
+            setLikeCount(prev => (liked ? prev - 1 : prev + 1));
+          }}>
           <Image
-            source={require('../../../assets/icons/heartOutline.png')}
+            source={
+              liked
+                ? require('../../../assets/icons/heartFilled.png')
+                : require('../../../assets/icons/heartOutline.png')
+            }
             style={styles.icon}
           />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <CustomText style={{alignSelf: 'center'}}>{likeCount}</CustomText>
+
+        <TouchableOpacity onPress={() => setCommentModal(true)}>
           <Image
             source={require('../../../assets/icons/message.png')}
             style={styles.icon}
@@ -158,6 +179,10 @@ const PostCard = ({post}: any) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+      <CommentsModal
+        visible={commentModal}
+        onClose={() => setCommentModal(false)}
+      />
     </View>
   );
 };

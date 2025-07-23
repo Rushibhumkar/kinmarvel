@@ -11,6 +11,7 @@ import {
 import Carousel from 'react-native-reanimated-carousel';
 import {myConsole} from '../../utils/myConsole';
 import ModalWrapper from './ModalWrapper';
+import CommentsModal from './CommentsModal';
 
 type Props = {
   visible: boolean;
@@ -24,7 +25,7 @@ const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 const FullStoryModal = ({visible, onClose, media, initialIndex}: Props) => {
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [showOptions, setShowOptions] = useState(false);
-  myConsole('mediasdf', media);
+  const [commentModal, setCommentModal] = useState<boolean>(false);
 
   return (
     <ModalWrapper
@@ -73,7 +74,7 @@ const FullStoryModal = ({visible, onClose, media, initialIndex}: Props) => {
               style={styles.icon}
             />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setCommentModal(true)}>
             <Image
               source={require('../../assets/icons/message.png')}
               style={styles.icon}
@@ -117,6 +118,10 @@ const FullStoryModal = ({visible, onClose, media, initialIndex}: Props) => {
           </TouchableWithoutFeedback>
         </Modal>
       </View>
+      <CommentsModal
+        visible={commentModal}
+        onClose={() => setCommentModal(false)}
+      />
     </ModalWrapper>
   );
 };

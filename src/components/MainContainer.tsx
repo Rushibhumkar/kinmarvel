@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import React, {useRef, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {myConsole} from '../utils/myConsole';
 import CustomText from './CustomText';
 import {color} from '../const/color';
 import CustomAvatar from './CustomAvatar';
@@ -168,7 +167,7 @@ const MainContainer: React.FC<HeaderObjType> = ({
               }}
               style={styles.profileIcon}>
               <Image
-                source={require('../assets/icons/search.png')} // 🔥 Your search icon
+                source={require('../assets/icons/search.png')}
                 style={{width: 24, height: 24, resizeMode: 'contain'}}
               />
             </TouchableOpacity>
