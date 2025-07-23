@@ -293,6 +293,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingVertical: 8,
+    color: '#000',
   },
 
   clearIcon: {

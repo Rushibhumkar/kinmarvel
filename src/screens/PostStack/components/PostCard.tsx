@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import {
   View,
-  Text,
   Image,
   TouchableOpacity,
   StyleSheet,
@@ -12,6 +11,9 @@ import {
 import Carousel from 'react-native-reanimated-carousel';
 import CustomAvatar from '../../../components/CustomAvatar';
 import CustomText from '../../../components/CustomText';
+import {Gesture, GestureDetector} from 'react-native-gesture-handler';
+import {runOnJS} from 'react-native-reanimated';
+import FullStoryModal from '../../../components/Modals/FullStoryModal';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -19,6 +21,7 @@ const PostCard = ({post}: any) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showOptions, setShowOptions] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [viewFullStory, setViewFullStory] = useState<boolean>(false);
 
   return (
     <View style={styles.container}>
@@ -53,13 +56,34 @@ const PostCard = ({post}: any) => {
         height={360}
         pagingEnabled
         onSnapToItem={index => setActiveIndex(index)}
-        renderItem={({item}) => (
-          <Image
-            source={{uri: item.uri}}
-            style={styles.media}
-            resizeMode="cover"
-          />
-        )}
+        renderItem={({item}) => {
+          const doubleTap = Gesture.Tap()
+            .numberOfTaps(2)
+            .onStart(() => {
+              console.log('💖 Liked Post');
+            });
+
+          const singleTap = Gesture.Tap()
+            .numberOfTaps(1)
+            .maxDelay(250) // Wait to see if a second tap comes
+            .onStart(() => {
+              runOnJS(setViewFullStory)(true);
+            });
+
+          const composed = Gesture.Exclusive(doubleTap, singleTap);
+
+          return (
+            <GestureDetector gesture={composed}>
+              <View>
+                <Image
+                  source={{uri: item.uri}}
+                  style={styles.media}
+                  resizeMode="cover"
+                />
+              </View>
+            </GestureDetector>
+          );
+        }}
       />
 
       {/* PAGINATION & SPEAKER */}
@@ -111,6 +135,12 @@ const PostCard = ({post}: any) => {
           />
         </TouchableOpacity>
       </View>
+      <FullStoryModal
+        visible={viewFullStory}
+        onClose={() => setViewFullStory(false)}
+        media={post.media}
+        initialIndex={activeIndex}
+      />
 
       <Modal visible={showOptions} transparent animationType="slide">
         <TouchableWithoutFeedback onPress={() => setShowOptions(false)}>
@@ -189,8 +219,9 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     padding: 10,
-    gap: 16,
+    gap: 24,
     marginTop: 12,
+    marginLeft: 8,
   },
   icon: {
     width: 24,

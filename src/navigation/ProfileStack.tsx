@@ -12,6 +12,7 @@ import FollowersFollowing from '../screens/ProfileScreens/FollowersFollowing';
 import RateUs from '../screens/ProfileScreens/RateUs';
 import Hierarchy from '../screens/CommonScreens/Hierarchy';
 import AddMember from '../screens/CommonScreens/AddMember';
+import ProfPostsDetails from '../screens/ProfileScreens/ProfPostsDetails';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,10 @@ const ProfileStack = () => {
         statusBarBackgroundColor: '#fff',
       }}>
       <Stack.Screen name={profileRoute.ProfileMain} component={ProfileMain} />
+      <Stack.Screen
+        name={profileRoute.ProfPostsDetails}
+        component={ProfPostsDetails}
+      />
       <Stack.Screen name={profileRoute.Blocked} component={Blocked} />
       <Stack.Screen name={profileRoute.ProfileSetup} component={ProfileSetup} />
       <Stack.Screen name={profileRoute.Hierarchy} component={Hierarchy} />

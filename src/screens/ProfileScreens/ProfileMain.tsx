@@ -18,9 +18,11 @@ import {sizes} from '../../const';
 import DeviceInfo from 'react-native-device-info';
 import {myConsole} from '../../utils/myConsole';
 import {showConfirmAlert} from '../../utils/alertHelper';
+import CustomModal from '../../components/CustomModal';
 
 const ProfileMain: React.FC = ({navigation}: any) => {
   const queryClient = useQueryClient();
+  const [postNextScrModal, setPostNextScrModal] = useState<boolean>(false);
   const isNewUpdate = false;
   const handleLogout = async () => {
     showConfirmAlert({
@@ -83,6 +85,11 @@ const ProfileMain: React.FC = ({navigation}: any) => {
           }
         /> */}
         <CustomListing
+          icon={require('../../assets/icons/post.png')}
+          title="Posts"
+          onPress={() => setPostNextScrModal(true)}
+        />
+        <CustomListing
           icon={require('../../assets/animatedIcons/hierarchy-structure.png')}
           title="Family hierarchy"
           onPress={() =>
@@ -91,15 +98,6 @@ const ProfileMain: React.FC = ({navigation}: any) => {
             })
           }
         />
-        {/* <CustomListing
-          icon={require('../../assets/icons/bell.png')}
-          title="Notifications"
-          onPress={() =>
-            navigation.navigate(commonRoute.CommonStack, {
-              screen: commonRoute.AllNotifications,
-            })
-          }
-        /> */}
         <CustomListing
           icon={require('../../assets/animatedIcons/like.png')}
           title="Rate us"
@@ -121,6 +119,42 @@ const ProfileMain: React.FC = ({navigation}: any) => {
           onPress={() => null}
         /> */}
       </ScrollView>
+      <CustomModal
+        visible={postNextScrModal}
+        onClose={() => setPostNextScrModal(false)}>
+        <View>
+          {['Posts', 'Saved', 'Collaborations'].map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginVertical: 10,
+              }}
+              onPress={() => {
+                navigation.navigate(profileRoute.ProfPostsDetails, {item});
+                setPostNextScrModal(false);
+              }}>
+              <Image
+                source={
+                  item === 'Collaborations'
+                    ? require('../../assets/animatedIcons/handshake.png')
+                    : item === 'Posts'
+                    ? require('../../assets/icons/post.png')
+                    : // : item === 'Mentions'
+                      // ? require('../../assets/icons/atsign.png')
+                      require('../../assets/icons/save.png')
+                }
+                style={{width: 20, height: 20, marginRight: 10}}
+              />
+              <CustomText style={{fontSize: 16, color: '#000'}}>
+                {item}
+              </CustomText>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </CustomModal>
+
       <View style={styles.bottomView}>
         <TouchableOpacity activeOpacity={0.6}>
           {isNewUpdate ? (

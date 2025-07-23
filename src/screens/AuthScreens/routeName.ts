@@ -33,6 +33,7 @@ export const chatRoute = {
 export const profileRoute = {
   ProfileStack: 'ProfileStack',
   ProfileMain: 'ProfileMain',
+  ProfPostsDetails: 'ProfPostsDetails',
   TermsAndCond: 'TermsAndCond',
   PrivacyPolicy: 'PrivacyPolicy',
   AccountDetails: 'AccountDetails',

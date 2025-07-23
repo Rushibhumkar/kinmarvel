@@ -88,7 +88,7 @@ const ChatsList = ({navigation}: any) => {
   return (
     <MainContainer
       title="Chats"
-      removeFlexProp={true}
+      // removeFlexProp={true}
       bgColor={'#fff'}
       showRightIcon={[
         ...(recentChats?.data?.chats?.length > 0

@@ -1,8 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
-  View,
-  TextInput,
   ActivityIndicator,
   FlatList,
   TouchableOpacity,
@@ -14,7 +12,6 @@ import {homeRoute} from '../AuthScreens/routeName';
 import {useNavigation} from '@react-navigation/native';
 import {color} from '../../const/color';
 import {useGetAllUsers} from '../../api/user/userFunc';
-import {myConsole} from '../../utils/myConsole';
 
 type UserType = {
   _id: string;
