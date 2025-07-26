@@ -107,7 +107,12 @@ const PostCard = ({post}: any) => {
             />
           ))}
         </View>
-        <TouchableOpacity onPress={() => setSoundOn(!soundOn)}>
+        <TouchableOpacity
+          style={{
+            paddingLeft: 8,
+            paddingVertical: 4,
+          }}
+          onPress={() => setSoundOn(!soundOn)}>
           <Image
             source={
               soundOn
@@ -121,28 +126,32 @@ const PostCard = ({post}: any) => {
 
       {/* FOOTER */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          onPress={() => {
-            setLiked(prev => !prev);
-            setLikeCount(prev => (liked ? prev - 1 : prev + 1));
-          }}>
-          <Image
-            source={
-              liked
-                ? require('../../../assets/icons/heartFilled.png')
-                : require('../../../assets/icons/heartOutline.png')
-            }
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-        <CustomText style={{alignSelf: 'center'}}>{likeCount}</CustomText>
-
-        <TouchableOpacity onPress={() => setCommentModal(true)}>
-          <Image
-            source={require('../../../assets/icons/message.png')}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+          <TouchableOpacity
+            onPress={() => {
+              setLiked(prev => !prev);
+              setLikeCount(prev => (liked ? prev - 1 : prev + 1));
+            }}>
+            <Image
+              source={
+                liked
+                  ? require('../../../assets/icons/heartFilled.png')
+                  : require('../../../assets/icons/heartOutline.png')
+              }
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+          <CustomText style={{alignSelf: 'center'}}>{likeCount}</CustomText>
+        </View>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+          <TouchableOpacity onPress={() => setCommentModal(true)}>
+            <Image
+              source={require('../../../assets/icons/message.png')}
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+          <CustomText style={{alignSelf: 'center'}}>{0}</CustomText>
+        </View>
         <TouchableOpacity>
           <Image
             source={require('../../../assets/icons/share.png')}
