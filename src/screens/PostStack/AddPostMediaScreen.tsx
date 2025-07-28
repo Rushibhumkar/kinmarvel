@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
-import {TouchableOpacity, View, StyleSheet} from 'react-native';
+import {TouchableOpacity, View, StyleSheet, StatusBar} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {SafeAreaView} from 'react-native-safe-area-context';
+
 import HeaderBar from './components/HeaderBar';
 import MediaPicker from './components/MediaPicker';
 import {myConsole} from '../../utils/myConsole';
@@ -26,63 +28,71 @@ const AddPostMediaScreen: React.FC = () => {
   >('portrait');
 
   return (
-    <View style={styles.screen}>
-      <HeaderBar
-        title="New post"
-        leftIcon={require('../../assets/icons/close.png')}
-        leftIconColor="#000"
-        onLeftPress={() => {
-          if (selectedMedia.length > 0) {
-            showConfirmAlert({
-              message:
-                'Are you sure you want to discard selected media and go back?',
-              onConfirm: () => {
-                setSelectedMedia([]);
-                navigation.navigate(homeRoute.HomeStack);
-              },
-            });
-          } else {
-            navigation.navigate(homeRoute.HomeStack);
-          }
-        }}
-        rightText="Next"
-        onRightPress={() => {
-          selectedMedia.length > 0
-            ? navigation.navigate('ComposePost', {media: selectedMedia})
-            : showWarningToast({description: 'Please select the media'});
-        }}
-      />
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-      <MediaPicker
-        media={selectedMedia}
-        onMediaSelected={setSelectedMedia}
-        sizeMode={mediaSizeMode}
-      />
+      <View style={styles.screen}>
+        <HeaderBar
+          title="New post"
+          leftIcon={require('../../assets/icons/close.png')}
+          leftIconColor="#000"
+          onLeftPress={() => {
+            if (selectedMedia.length > 0) {
+              showConfirmAlert({
+                message:
+                  'Are you sure you want to discard selected media and go back?',
+                onConfirm: () => {
+                  setSelectedMedia([]);
+                  navigation.navigate(homeRoute.HomeStack);
+                },
+              });
+            } else {
+              navigation.navigate(homeRoute.HomeStack);
+            }
+          }}
+          rightText="Next"
+          onRightPress={() => {
+            selectedMedia.length > 0
+              ? navigation.navigate('ComposePost', {media: selectedMedia})
+              : showWarningToast({description: 'Please select the media'});
+          }}
+        />
 
-      {selectedMedia.length > 0 && (
-        <TouchableOpacity
-          style={styles.portraitBtn}
-          onPress={() => {
-            const nextMode =
-              mediaSizeMode === 'portrait'
-                ? 'square'
-                : mediaSizeMode === 'square'
-                ? 'mixed'
-                : 'portrait';
-            setMediaSizeMode(nextMode);
-          }}>
-          <CustomText style={{color: '#000'}}>
-            {mediaSizeMode.charAt(0).toUpperCase() + mediaSizeMode.slice(1)}
-          </CustomText>
-        </TouchableOpacity>
-      )}
-    </View>
+        <MediaPicker
+          media={selectedMedia}
+          onMediaSelected={setSelectedMedia}
+          sizeMode={mediaSizeMode}
+        />
+
+        {selectedMedia.length > 0 && (
+          <TouchableOpacity
+            style={styles.portraitBtn}
+            onPress={() => {
+              const nextMode =
+                mediaSizeMode === 'portrait'
+                  ? 'square'
+                  : mediaSizeMode === 'square'
+                  ? 'mixed'
+                  : 'portrait';
+              setMediaSizeMode(nextMode);
+            }}>
+            <CustomText style={{color: '#000'}}>
+              {mediaSizeMode.charAt(0).toUpperCase() + mediaSizeMode.slice(1)}
+            </CustomText>
+          </TouchableOpacity>
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
 export default AddPostMediaScreen;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   screen: {
     flex: 1,
     position: 'relative',
@@ -98,13 +108,5 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     zIndex: 10,
     ...shadow,
-  },
-  modeBtnWrapper: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    flexDirection: 'row',
-    gap: 10,
-    zIndex: 10,
   },
 });

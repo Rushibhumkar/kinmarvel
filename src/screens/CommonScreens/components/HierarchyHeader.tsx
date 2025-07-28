@@ -3,34 +3,38 @@ import React from 'react';
 import CustomText from '../../../components/CustomText';
 import {color} from '../../../const/color';
 import {useNavigation} from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const HierarchyHeader = () => {
   const navigation = useNavigation();
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: 52,
-        backgroundColor: '#fff',
-        paddingHorizontal: 12,
-      }}>
-      <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
-        <TouchableOpacity
-          style={{borderRadius: '50%', padding: 8}}
-          onPress={() => navigation.goBack()}>
-          <Image
-            source={require('../../../assets/icons/back.png')}
-            style={{height: 24, width: 24}}
-          />
-        </TouchableOpacity>
-        <CustomText style={{fontSize: 16, fontWeight: '600'}}>
-          Family Hierarchy
-        </CustomText>
-      </View>
-      <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
-        {/* <TouchableOpacity
+    <SafeAreaView
+      edges={['top', 'left', 'right']}
+      style={{backgroundColor: '#fff'}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: 52,
+          backgroundColor: '#fff',
+          paddingHorizontal: 12,
+        }}>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
+          <TouchableOpacity
+            style={{borderRadius: '50%', padding: 8}}
+            onPress={() => navigation.goBack()}>
+            <Image
+              source={require('../../../assets/icons/back.png')}
+              style={{height: 24, width: 24}}
+            />
+          </TouchableOpacity>
+          <CustomText style={{fontSize: 16, fontWeight: '600'}}>
+            Family Hierarchy
+          </CustomText>
+        </View>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
+          {/* <TouchableOpacity
           style={{borderRadius: '50%', padding: 8}}
           onPress={() => null}>
           <Image
@@ -38,7 +42,7 @@ const HierarchyHeader = () => {
             style={{height: 24, width: 24}}
           />
         </TouchableOpacity> */}
-        {/* <TouchableOpacity
+          {/* <TouchableOpacity
           style={{
             borderRadius: 8,
             paddingHorizontal: 12,
@@ -50,8 +54,9 @@ const HierarchyHeader = () => {
             Accept
           </CustomText>
         </TouchableOpacity> */}
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -17,7 +17,7 @@ type HeaderBarProps = {
   title: string;
   onLeftPress?: () => void;
   onRightPress?: () => void;
-  leftIcon?: ImageSourcePropType; // allows both require('./image.png') and uri
+  leftIcon?: ImageSourcePropType;
   rightText?: string;
   containerStyle?: ViewStyle;
   titleStyle?: TextStyle;
