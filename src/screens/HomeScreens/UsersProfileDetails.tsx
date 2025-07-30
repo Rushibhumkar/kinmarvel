@@ -132,7 +132,6 @@ const UsersProfileDetails = ({navigation, route}: any) => {
     {label: 'Instagram', value: 'https://rushibhumkar.com'},
     {label: 'Facebook', value: 'https://rushibhukar.com'},
   ];
-
   return (
     <View style={styles.container}>
       <TouchableOpacity

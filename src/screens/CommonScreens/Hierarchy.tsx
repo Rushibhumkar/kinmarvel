@@ -186,8 +186,8 @@ const Hierarchy = ({navigation}: any) => {
       Alert.alert('Error', errorMessage);
     }
   };
-  myConsole('myData?.data?._id', myData?.data?._id);
-  myConsole('selectedPerson._id', selectedPerson);
+  // myConsole('myData?.data?._id', myData?.data?._id);
+  // myConsole('selectedPerson._id', selectedPerson);
   return (
     <SafeAreaView style={styles.main}>
       <HierarchyHeader />

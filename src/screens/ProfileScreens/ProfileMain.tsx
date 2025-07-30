@@ -100,8 +100,8 @@ const ProfileMain: React.FC = ({navigation}: any) => {
         />
         <CustomListing
           icon={require('../../assets/animatedIcons/like.png')}
-          title="Rate us"
-          onPress={() => navigation.navigate(profileRoute.RateUs)}
+          title="Calling"
+          onPress={() => navigation.navigate('CallingMain')}
         />
         <CustomListing
           icon={require('../../assets/animatedIcons/share.png')}

@@ -37,7 +37,6 @@ const {width, height} = Dimensions.get('window');
 
 const ViewStory = ({route, navigation}: any) => {
   const {data, user} = route.params;
-  myConsole('lkjslkdfsdf', data);
   const {data: myData} = useGetMyData();
   const {
     data: userData,
