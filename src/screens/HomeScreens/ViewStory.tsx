@@ -10,6 +10,7 @@ import {
   PanResponder,
   BackHandler,
   Animated,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useRef, useState, useCallback} from 'react';
 import MainContainer from '../../components/MainContainer';
@@ -313,12 +314,28 @@ const ViewStory = ({route, navigation}: any) => {
     }
   };
 
-  const handleDeleteStoryPress = () => {
-    popUpConfToast.confirmModal({
-      clickOnConfirm: handleDeleteStory,
-      textBody: 'Are you sure you want to delete this story?',
-      buttonText: 'Delete',
+  const confirm = (title: string, message: string) =>
+    new Promise<boolean>(resolve => {
+      Alert.alert(
+        title,
+        message,
+        [
+          {text: 'Cancel', style: 'cancel', onPress: () => resolve(false)},
+          {text: 'Delete', style: 'destructive', onPress: () => resolve(true)},
+        ],
+        {cancelable: true},
+      );
     });
+
+  const handleDeleteStoryPress = async () => {
+    if (
+      await confirm(
+        'Delete story',
+        'Are you sure you want to delete this story?',
+      )
+    ) {
+      handleDeleteStory();
+    }
   };
 
   const renderStoryContent = ({item, index}: any) => {
