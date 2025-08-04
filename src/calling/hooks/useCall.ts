@@ -63,7 +63,11 @@ export const useCall = (userId: string) => {
       console.log('[socket] Error:', err); // Update from "undefined" to actual error
       endCall();
     });
-
+    socket.on('call-rejected', ({from, reason}) => {
+      console.log('[DEBUG] call-rejected received:', from, reason);
+      setIncomingCall(null);
+      endCall();
+    });
     return () => {
       console.log('[useCall] Cleaning up socket listeners');
       socket.off('call-made');
@@ -71,6 +75,7 @@ export const useCall = (userId: string) => {
       socket.off('ice-candidate');
       socket.off('call-ended');
       socket.off('error');
+      socket.off('call-rejected');
     };
   }, []);
 
@@ -221,5 +226,6 @@ export const useCall = (userId: string) => {
     startCall,
     answerCall,
     endCall,
+    setIncomingCall,
   };
 };

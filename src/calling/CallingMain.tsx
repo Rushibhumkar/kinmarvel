@@ -43,6 +43,7 @@ const CallingMain = () => {
     startCall,
     answerCall,
     endCall,
+    setIncomingCall,
   } = useCall(userId);
 
   const handleStartCall = async (
@@ -70,8 +71,13 @@ const CallingMain = () => {
     endCall();
     setInCall(false);
   };
-
   const handleReject = () => {
+    console.log('Reject button clicked'); // <--- add this
+    socket.emit('reject-call', {
+      to: incomingCall?.from,
+      reason: 'User declined the call',
+    });
+    setIncomingCall(null);
     endCall();
     setInCall(false);
   };
@@ -97,8 +103,12 @@ const CallingMain = () => {
     };
 
     registerSocket();
+    socket.on('call-rejected', () => {
+      setInCall(false);
+    });
 
     return () => {
+      socket.off('call-rejected');
       socket.disconnect();
     };
   }, []);
