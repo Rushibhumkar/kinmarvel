@@ -3,7 +3,6 @@ import {TouchableOpacity, View, StyleSheet, StatusBar} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {SafeAreaView} from 'react-native-safe-area-context';
-
 import HeaderBar from './components/HeaderBar';
 import MediaPicker from './components/MediaPicker';
 import {myConsole} from '../../utils/myConsole';
@@ -26,7 +25,7 @@ const AddPostMediaScreen: React.FC = () => {
   const [mediaSizeMode, setMediaSizeMode] = useState<
     'portrait' | 'square' | 'mixed'
   >('portrait');
-
+  myConsole('sldkjflkdsf', selectedMedia);
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />

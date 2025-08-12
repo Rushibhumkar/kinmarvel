@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     width: 300,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#eee',
+    // backgroundColor: '#eee',
     marginRight: 12,
   },
   portraitFrame: {
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     height: 500,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#eee',
+    // backgroundColor: '#eee',
     marginRight: 12,
   },
   portraitImage: {

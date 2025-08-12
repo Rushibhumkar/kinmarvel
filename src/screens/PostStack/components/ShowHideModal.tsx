@@ -11,14 +11,19 @@ import {
 import CustomText from '../../../components/CustomText';
 import {color} from '../../../const/color';
 
-const options = ['Everyone', 'My Contacts', 'Mentions Only', 'Selected Users'];
+const options = ['Self', 'Public', 'Followers'];
 
 type ShowHideModalProps = {
   visible: boolean;
   onClose: () => void;
+  onSelect: (option: string) => void;
 };
 
-const ShowHideModal: React.FC<ShowHideModalProps> = ({visible, onClose}) => {
+const ShowHideModal: React.FC<ShowHideModalProps> = ({
+  visible,
+  onClose,
+  onSelect,
+}) => {
   return (
     <Modal visible={visible} transparent animationType="slide">
       <TouchableWithoutFeedback onPress={onClose}>
@@ -33,8 +38,7 @@ const ShowHideModal: React.FC<ShowHideModalProps> = ({visible, onClose}) => {
                   <TouchableOpacity
                     style={styles.option}
                     onPress={() => {
-                      console.log('Selected:', item);
-                      onClose();
+                      onSelect(item);
                     }}>
                     <CustomText style={{color: color.titleColor}}>
                       {item}

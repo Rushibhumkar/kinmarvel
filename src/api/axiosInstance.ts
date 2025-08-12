@@ -9,9 +9,9 @@ export const fileViewURL =
   'https://fameely-backend.onrender.com/api/file/fetch/';
 
 let isLive = false;
-// let testUrl =`https://fameely-api.deliciousdabbas.com/api`;
+let testUrl = `https://fameely-api.deliciousdabbas.com/api`;
 // let testUrl =`https://fameely-backend-973m.onrender.com/api`
-let testUrl = `https://fameely-backend.onrender.com/api`;
+// let testUrl = `https://fameely-backend.onrender.com/api`;
 export const baseUrl: string = isLive ? '' : testUrl;
 
 // Standard Axios Instance
