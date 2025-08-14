@@ -20,6 +20,7 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 // import messaging from '@react-native-firebase/messaging';
 import {registerDevice} from './src/api/notification/notificationFunc';
 import {myConsole} from './src/utils/myConsole';
+import { ToastProvider } from 'react-native-toast-notifications'
 // import notifee from '@notifee/react-native';
 import {sizes} from './src/const';
 
@@ -163,6 +164,7 @@ const App = () => {
   LogBox.ignoreAllLogs(true);
 
   return (
+    <ToastProvider>
     <GestureHandlerRootView style={{flex: 1, backgroundColor: '#fff'}}>
       <QueryClientProvider client={queryClient}>
         <NavigationContainer>
@@ -172,6 +174,7 @@ const App = () => {
         </NavigationContainer>
       </QueryClientProvider>
     </GestureHandlerRootView>
+    </ToastProvider>
   );
 };
 
