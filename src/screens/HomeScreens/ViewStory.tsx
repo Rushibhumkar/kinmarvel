@@ -413,20 +413,6 @@ const ViewStory = ({route, navigation}: any) => {
                 playWhenInactive={false}
               />
               <View style={styles.speakerPPBtns}>
-                {/* <TouchableOpacity
-                  onPress={() => {
-                    setIsPaused(prev => !prev); // Toggle pause state
-                  }}
-                  style={styles.speakerOnOffBtn}>
-                  <Image
-                    source={
-                      true
-                        ? require('../../assets/icons/speakerOn.png')
-                        : require('../../assets/icons/speakerOff.png')
-                    }
-                    style={styles.speakerIcons}
-                  />
-                </TouchableOpacity> */}
                 <TouchableOpacity
                   onPress={() => {
                     setIsPaused(prev => !prev); // Toggle pause state

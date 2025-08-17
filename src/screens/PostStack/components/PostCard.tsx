@@ -1,197 +1,161 @@
 import React, {useState} from 'react';
 import {
-  View,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
   Dimensions,
-  TouchableWithoutFeedback,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import Video from 'react-native-video';
 import Carousel from 'react-native-reanimated-carousel';
-import CustomAvatar from '../../../components/CustomAvatar';
-import CustomText from '../../../components/CustomText';
-import {Gesture, GestureDetector} from 'react-native-gesture-handler';
-import {runOnJS} from 'react-native-reanimated';
-import FullStoryModal from '../../../components/Modals/FullStoryModal';
-import CommentsModal from '../../../components/Modals/CommentsModal';
 
-const {width: screenWidth} = Dimensions.get('window');
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
+const H_MARGIN = 12; // card marginHorizontal
+const CARD_PADDING = 12; // card padding left/right
+const ITEM_WIDTH = SCREEN_WIDTH - H_MARGIN * 2 - CARD_PADDING * 2;
 
-const PostCard = ({post}: any) => {
+const AVATAR_FALLBACK =
+  'https://ui-avatars.com/api/?background=EEE&color=111&name=';
+
+const formatWhen = iso => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = Date.now();
+  const diff = Math.max(0, now - d.getTime());
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d`;
+  return d.toDateString().slice(4);
+};
+
+const MediaCarousel = ({items}) => {
+  if (!items || items.length === 0) return null;
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showOptions, setShowOptions] = useState(false);
-  const [soundOn, setSoundOn] = useState(true);
-  const [viewFullStory, setViewFullStory] = useState<boolean>(false);
-  const [commentModal, setCommentModal] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likeCount || 0);
 
   return (
-    <View style={styles.container}>
-      {/* HEADER */}
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: '#fff',
-            borderTopWidth: 0.8,
-            borderColor: '#ddd',
-          },
-        ]}>
-        <CustomAvatar name={'lksjd'} />
-        <CustomText style={styles.username}>{post.user.name}</CustomText>
-        <CustomText style={styles.mention}> @{post.mention}</CustomText>
-        <TouchableOpacity
-          style={styles.dots}
-          onPress={() => setShowOptions(true)}>
-          <Image
-            source={require('../../../assets/icons/verThreeDots.png')}
-            style={{height: 20, width: 20}}
-            tintColor={'grey'}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* MEDIA CAROUSEL */}
+    <View style={styles.mediaWrap}>
       <Carousel
-        data={post.media}
-        width={screenWidth}
-        height={360}
-        pagingEnabled
-        onSnapToItem={index => setActiveIndex(index)}
-        renderItem={({item}) => {
-          const handleDoubleTapLike = () => {
-            if (!liked) {
-              setLiked(true);
-              setLikeCount(prev => prev + 1);
-            }
-          };
-
-          const doubleTap = Gesture.Tap()
-            .numberOfTaps(2)
-            .onStart(() => {
-              runOnJS(handleDoubleTapLike)();
-            });
-
-          const singleTap = Gesture.Tap()
-            .numberOfTaps(1)
-            .maxDelay(250) // Wait to see if a second tap comes
-            .onStart(() => {
-              runOnJS(setViewFullStory)(true);
-            });
-
-          const composed = Gesture.Exclusive(doubleTap, singleTap);
-
-          return (
-            <GestureDetector gesture={composed}>
-              <View>
-                <Image
-                  source={{uri: item.uri}}
-                  style={styles.media}
-                  resizeMode="cover"
-                />
-              </View>
-            </GestureDetector>
-          );
+        width={ITEM_WIDTH}
+        height={280}
+        data={items}
+        panGestureHandlerProps={{activeOffsetX: [-10, 10]}}
+        onProgressChange={(_, absProgress) => {
+          const idx = Math.round(absProgress);
+          if (idx !== activeIndex) setActiveIndex(idx);
+        }}
+        renderItem={({item, index}) => {
+          if (item?.type === 'video') {
+            return (
+              <Video
+                source={{uri: item.url}}
+                style={styles.media}
+                resizeMode="cover"
+                repeat
+                muted={false}
+                controls
+                paused={activeIndex !== index}
+              />
+            );
+          }
+          return <Image source={{uri: item?.url}} style={styles.media} />;
         }}
       />
+      <View style={styles.carouselDotsRow}>
+        {items.map((_, i) => (
+          <View
+            key={`dot-${i}`}
+            style={[
+              styles.carouselDot,
+              i === activeIndex && styles.carouselDotActive,
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
 
-      {/* PAGINATION & SPEAKER */}
-      <View style={styles.bottomOverlay}>
-        <View style={styles.dotsRow}>
-          {post.media.map((_: any, i: number) => (
-            <View
-              key={i}
-              style={[styles.dot, {opacity: i === activeIndex ? 1 : 0.3}]}
-            />
+const PostCard = ({post}) => {
+  const author = post?.createdBy || {};
+  const name =
+    author?.fullName ||
+    `${author?.firstName || ''} ${author?.lastName || ''}`.trim() ||
+    'User';
+  const avatarSrc =
+    author?.profileImageUrl || `${AVATAR_FALLBACK}${encodeURIComponent(name)}`;
+
+  const media = Array.isArray(post?.media) ? post.media : [];
+  const loc = post?.location;
+  const hasLocation = !!(loc?.name || loc?.address);
+  const tags = Array.isArray(post?.hashTags) ? post.hashTags : [];
+
+  return (
+    <View style={styles.card}>
+      {/* Header */}
+      <View style={styles.headerRow}>
+        <Image source={{uri: avatarSrc}} style={styles.avatar} />
+        <View style={{flex: 1}}>
+          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.when}>{formatWhen(post?.createdAt)}</Text>
+        </View>
+        <Text style={styles.visibility}>
+          {post?.visible_to === 'self'
+            ? '🔒'
+            : post?.visible_to === 'followers'
+            ? '👥'
+            : '🌐'}
+        </Text>
+      </View>
+
+      {/* Caption */}
+      {post?.desc ? <Text style={styles.caption}>{post.desc}</Text> : null}
+
+      {/* Location */}
+      {hasLocation ? (
+        <View style={styles.locationRow}>
+          <Text style={styles.locationPin}>📍</Text>
+          <Text style={styles.locationText}>
+            {loc?.name ? `${loc.name}` : ''}
+            {loc?.name && loc?.address ? ' · ' : ''}
+            {loc?.address ? `${loc.address}` : ''}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Media (carousel with images/videos) */}
+      <MediaCarousel items={media} />
+
+      {/* Hashtags */}
+      {tags.length ? (
+        <View style={styles.tagsRow}>
+          {tags.map((t, i) => (
+            <Text key={`${t}-${i}`} style={styles.tagText}>
+              #{t}
+            </Text>
           ))}
         </View>
+      ) : null}
+
+      {/* Footer actions */}
+      <View style={styles.footerRow}>
         <TouchableOpacity
-          style={{
-            paddingLeft: 8,
-            paddingVertical: 4,
-          }}
-          onPress={() => setSoundOn(!soundOn)}>
-          <Image
-            source={
-              soundOn
-                ? require('../../../assets/icons/speakerOn.png')
-                : require('../../../assets/icons/speakerOff.png')
-            }
-            style={styles.speakerIcon}
-          />
+          style={styles.footerBtn}
+          activeOpacity={0.7}
+          onPress={() => console.log('like pressed', post?._id)}>
+          <Text style={styles.footerBtnText}>❤ {post?.likeCount ?? 0}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.footerBtn}
+          activeOpacity={0.7}
+          onPress={() => console.log('comment pressed', post?._id)}>
+          <Text style={styles.footerBtnText}>💬 {post?.commentCount ?? 0}</Text>
         </TouchableOpacity>
       </View>
-
-      {/* FOOTER */}
-      <View style={styles.footer}>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-          <TouchableOpacity
-            onPress={() => {
-              setLiked(prev => !prev);
-              setLikeCount(prev => (liked ? prev - 1 : prev + 1));
-            }}>
-            <Image
-              source={
-                liked
-                  ? require('../../../assets/icons/heartFilled.png')
-                  : require('../../../assets/icons/heartOutline.png')
-              }
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-          <CustomText style={{alignSelf: 'center'}}>{likeCount}</CustomText>
-        </View>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-          <TouchableOpacity onPress={() => setCommentModal(true)}>
-            <Image
-              source={require('../../../assets/icons/message.png')}
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-          <CustomText style={{alignSelf: 'center'}}>{0}</CustomText>
-        </View>
-        <TouchableOpacity>
-          <Image
-            source={require('../../../assets/icons/share.png')}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={{marginLeft: 'auto'}}>
-          <Image
-            source={require('../../../assets/icons/save.png')}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-      </View>
-      <FullStoryModal
-        visible={viewFullStory}
-        onClose={() => setViewFullStory(false)}
-        media={post.media}
-        initialIndex={activeIndex}
-      />
-
-      <Modal visible={showOptions} transparent animationType="slide">
-        <TouchableWithoutFeedback onPress={() => setShowOptions(false)}>
-          <View style={styles.modal}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalBox}>
-                <TouchableOpacity style={{padding: 12}}>
-                  <CustomText>About this account</CustomText>
-                </TouchableOpacity>
-                <TouchableOpacity style={{padding: 12}}>
-                  <CustomText>Report</CustomText>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-      <CommentsModal
-        visible={commentModal}
-        onClose={() => setCommentModal(false)}
-      />
     </View>
   );
 };
@@ -199,77 +163,87 @@ const PostCard = ({post}: any) => {
 export default PostCard;
 
 const styles = StyleSheet.create({
-  container: {
-    marginVertical: 10,
+  card: {
     backgroundColor: '#fff',
+    marginHorizontal: H_MARGIN,
+    marginBottom: 12,
+    borderRadius: 14,
+    padding: CARD_PADDING,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: {width: 0, height: 3},
+    elevation: 2,
   },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    marginBottom: 8,
   },
-  username: {
-    fontWeight: '600',
-    marginLeft: 10,
-    fontSize: 14,
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginRight: 10,
+    backgroundColor: '#eee',
   },
-  mention: {
-    marginLeft: 4,
-    color: 'gray',
-    fontSize: 13,
+  name: {fontSize: 15.5, fontWeight: '600', color: '#111'},
+  when: {fontSize: 12, color: '#888'},
+  visibility: {fontSize: 16, color: '#666', marginLeft: 8},
+  caption: {fontSize: 15, color: '#222', lineHeight: 21, marginBottom: 8},
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  dots: {
-    marginLeft: 'auto',
-    padding: 5,
+  locationPin: {fontSize: 14, marginRight: 4},
+  locationText: {fontSize: 13.5, color: '#444', flexShrink: 1},
+
+  mediaWrap: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#f5f5f5',
+    marginBottom: 8,
+    alignSelf: 'center',
   },
   media: {
-    width: screenWidth,
-    height: 360,
+    width: ITEM_WIDTH,
+    height: 280,
+    backgroundColor: '#000',
   },
-  bottomOverlay: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: -30,
-    paddingHorizontal: 20,
-  },
-  dotsRow: {
+  carouselDotsRow: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
-  dot: {
+  carouselDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+    marginHorizontal: 4,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  carouselDotActive: {
     backgroundColor: '#fff',
   },
-  speakerIcon: {
-    width: 22,
-    height: 22,
-    tintColor: '#fff',
-  },
-  footer: {
+
+  tagsRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2},
+  tagText: {color: '#3b82f6', marginRight: 8, fontSize: 13},
+
+  footerRow: {
     flexDirection: 'row',
-    padding: 10,
-    gap: 24,
-    marginTop: 12,
-    marginLeft: 8,
+    paddingTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#eee',
+    justifyContent: 'space-between',
   },
-  icon: {
-    width: 24,
-    height: 24,
+  footerBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 6,
   },
-  modal: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: '#00000070',
-  },
-  modalBox: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-  },
+  footerBtnText: {fontSize: 14.5, color: '#111'},
 });

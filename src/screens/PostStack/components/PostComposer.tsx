@@ -17,6 +17,7 @@ const PostComposer = ({
   caption,
   setCaption,
   visibility,
+  selectedLocation,
 }: any) => {
   return (
     <View style={styles.container}>
@@ -42,6 +43,11 @@ const PostComposer = ({
         />
         <CustomText style={styles.linkText}>Add Location</CustomText>
       </TouchableOpacity>
+      {selectedLocation?.address ? (
+        <CustomText style={styles.locationText} onPress={onLocationPress}>
+          {selectedLocation.address}
+        </CustomText>
+      ) : null}
       <TouchableOpacity style={styles.linkRow} onPress={onShowHidePress}>
         <Image
           source={require('../../../assets/icons/users.png')}
@@ -88,4 +94,10 @@ const styles = StyleSheet.create({
   },
   linkText: {fontSize: 16},
   showHideBtn: {marginTop: 20},
+  locationText: {
+    marginTop: -10,
+    marginLeft: 30,
+    color: '#555',
+    fontSize: 14,
+  },
 });

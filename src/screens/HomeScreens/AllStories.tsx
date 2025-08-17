@@ -24,6 +24,7 @@ import SwitchName from '../../components/LoadingCompo/SwitchName';
 import {myConsole} from '../../utils/myConsole';
 import {dummyPosts} from '../../const/data';
 import PostCard from '../PostStack/components/PostCard';
+import PostsFeed from '../../components/PostsFeed';
 
 const AllStories = ({navigation}: any) => {
   const {
@@ -100,7 +101,6 @@ const AllStories = ({navigation}: any) => {
       {allStoriesErr && (
         <CustomErrorMessage message="Something went wrong" onRetry={refetch} />
       )}
-      {/* <SwitchName /> */}
       {(myData || allStories?.data?.length > 0) && (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -174,7 +174,9 @@ const AllStories = ({navigation}: any) => {
                         }>
                         <Image
                           source={{
-                            uri: `${fileViewURL}${storyGroup.stories[0].mediaKey}`,
+                            uri:
+                              `${fileViewURL}${storyGroup.stories[0].mediaKey}` ||
+                              ``,
                           }}
                           style={{height: 60, width: 60, borderRadius: 30}}
                           blurRadius={2}
@@ -190,51 +192,9 @@ const AllStories = ({navigation}: any) => {
                 })}
             </ScrollView>
           </View>
-
-          {/* Other Stories */}
-          {/* {allStories?.data?.length > 0 &&
-            filteredStories.map((storyGroup: any) => {
-              const user = storyGroup.user;
-              return (
-                <View key={user._id} style={styles.statusItem}>
-                  <TouchableOpacity
-                    style={styles.storySelectBtn}
-                    onPress={() =>
-                      navigation.navigate(homeRoute.ViewStory, {
-                        data: storyGroup.stories,
-                        user: allStories?.data[0]?.user,
-                      })
-                    }>
-                    <Image
-                      source={{
-                        uri: `${fileViewURL}${storyGroup.stories[0].mediaKey}`,
-                      }}
-                      style={{height: 60, width: 60, borderRadius: 30}}
-                      blurRadius={2}
-                    />
-                  </TouchableOpacity>
-                  <CustomText style={styles.statusText}>
-                    {user.firstName.length > 12
-                      ? `${user.firstName.slice(0, 12)}...`
-                      : user.firstName}
-                  </CustomText>
-                </View>
-              );
-            })} */}
-
           <View style={{marginTop: 10}}>
-            {dummyPosts.map((item, index) => (
-              <PostCard key={index} post={item} />
-            ))}
+            <PostsFeed />
           </View>
-          {/* {allStories?.data?.length === 0 && (
-        <View style={styles.noStoriesView}>
-          <CustomText style={{fontSize: 32}}>🙄</CustomText>
-          <CustomText style={styles.noDataText}>
-            No stories available
-          </CustomText>
-        </View>
-      )} */}
         </ScrollView>
       )}
     </MainContainer>

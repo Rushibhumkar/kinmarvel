@@ -24,11 +24,11 @@
 			"com.tldraw.shape.note": 9,
 			"com.tldraw.shape.line": 5,
 			"com.tldraw.shape.frame": 1,
-			"com.tldraw.shape.arrow": 6,
+			"com.tldraw.shape.arrow": 7,
 			"com.tldraw.shape.highlight": 1,
 			"com.tldraw.shape.embed": 4,
 			"com.tldraw.shape.image": 5,
-			"com.tldraw.shape.video": 3,
+			"com.tldraw.shape.video": 4,
 			"com.tldraw.binding.arrow": 1
 		}
 	},
@@ -36,26 +36,26 @@
 		{
 			"id": "pointer:pointer",
 			"typeName": "pointer",
-			"x": 6711.965431520087,
-			"y": 2357.5771992659065,
-			"lastActivityTimestamp": 1749558574149,
+			"x": -252.9899429916013,
+			"y": -391.87671515315924,
+			"lastActivityTimestamp": 1755454531093,
 			"meta": {}
 		},
 		{
-			"x": 4957.365298414318,
-			"y": 1272.3372432643118,
-			"z": 0.0743582436372405,
+			"x": 2976.8184049586553,
+			"y": 1089.244946369428,
+			"z": 0.20328048539265808,
 			"meta": {},
 			"id": "camera:page:page",
 			"typeName": "camera"
 		},
 		{
-			"editingShapeId": "shape:Bnm_YXfrUpodWh97Rmsvn",
+			"editingShapeId": null,
 			"croppingShapeId": null,
 			"selectedShapeIds": [
-				"shape:Bnm_YXfrUpodWh97Rmsvn"
+				"shape:hswRr5bLxkyMeVbSFy_Px"
 			],
-			"hoveredShapeId": "shape:Bnm_YXfrUpodWh97Rmsvn",
+			"hoveredShapeId": "shape:hswRr5bLxkyMeVbSFy_Px",
 			"erasingShapeIds": [],
 			"hintingShapeIds": [],
 			"focusedGroupId": null,
@@ -3952,8 +3952,8 @@
 			"screenBounds": {
 				"x": 0,
 				"y": 0,
-				"w": 1249,
-				"h": 976
+				"w": 1348,
+				"h": 981
 			},
 			"insets": [
 				false,
@@ -8211,6 +8211,305 @@
 			},
 			"parentId": "page:page",
 			"index": "a536X",
+			"typeName": "shape"
+		},
+		{
+			"x": -463.397572053703,
+			"y": -399.55412713891405,
+			"rotation": 0,
+			"isLocked": false,
+			"opacity": 1,
+			"meta": {},
+			"id": "shape:hswRr5bLxkyMeVbSFy_Px",
+			"type": "text",
+			"props": {
+				"color": "black",
+				"size": "m",
+				"w": 989.3979938215934,
+				"font": "draw",
+				"textAlign": "start",
+				"autoSize": false,
+				"scale": 1,
+				"richText": {
+					"type": "doc",
+					"content": [
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// import {StyleSheet, Text, View} from 'react-native';"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// import React from 'react';"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// import MainContainer from '../../components/MainContainer';"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// import {myStyle} from '../../sharedStyles';"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// import NoDataFound from '../../components/NoDataFound';"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "hardBreak"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// const Blocked = () => {"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//   return ("
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//     <MainContainer title=\"Blocked\" isBack>"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//       <View style={[myStyle.flexCenter, {backgroundColor: '#fff'}]}>"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//         <NoDataFound"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//           style={{backgroundColor: '#fff', height: 100}}"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//           message={'No blocked users found'}"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//         />"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//       </View>"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//     </MainContainer>"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "//   );"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// };"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "hardBreak"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// export default Blocked;"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "hardBreak"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "// const styles = StyleSheet.create({});"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "hardBreak"
+								}
+							]
+						}
+					]
+				}
+			},
+			"parentId": "page:page",
+			"index": "a6h90",
 			"typeName": "shape"
 		}
 	]
