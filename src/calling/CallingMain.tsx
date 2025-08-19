@@ -1,22 +1,19 @@
-import React, {useEffect, useState, useRef} from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  Alert,
-  TouchableOpacity,
-  Image,
-  Vibration,
-} from 'react-native';
+// src/calling/CallingMain.tsx
+import React, {useEffect, useState} from 'react';
+import {View, StyleSheet, Text, TouchableOpacity, Image} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+
 import CallScreen from './components/CallScreen';
 import IncomingCallModal from './components/IncomingCallModal';
-import {useGetMyData} from '../api/profile/profileFunc';
-import {getData} from '../hooks/useAsyncStorage';
-import socket from './services/socket';
-import {useNavigation} from '@react-navigation/native';
-import Sound from 'react-native-sound';
-import {useCall} from './hooks/useCall';
 import CallingUsersList from './components/CallingUsersList';
+
+import {useGetMyData} from '../api/profile/profileFunc';
+import {useCall} from './hooks/useCall';
+
+// extracted hooks
+import useCallAudio from './hooks/useCallAudio';
+import useSignalingWire from './hooks/useSignalingWire';
+import useCallControls from './hooks/useCallControls';
 
 const CallingMain = () => {
   const navigation = useNavigation();
@@ -26,100 +23,6 @@ const CallingMain = () => {
   const [inCall, setInCall] = useState(false);
   const [peerId, setPeerId] = useState<string | null>(null);
   const [isDialing, setIsDialing] = useState(false);
-
-  // ringtone / ringback refs
-  const incomingToneRef = useRef<Sound | null>(null);
-  const outgoingToneRef = useRef<Sound | null>(null);
-
-  // preload sounds once
-  useEffect(() => {
-    Sound.setCategory('Playback', true);
-
-    const incAsset = Image.resolveAssetSource(
-      require('../assets/audio/ringtone.mp3'),
-    );
-    const outAsset = Image.resolveAssetSource(
-      require('../assets/audio/outgoing.mp3'),
-    );
-
-    const incPath = incAsset?.uri;
-    const outPath = outAsset?.uri;
-
-    incomingToneRef.current = new Sound(
-      incPath || 'ringtone.mp3',
-      incPath ? undefined : Sound.MAIN_BUNDLE,
-      err => {
-        if (err) {
-          console.log('[Sound] incoming load error:', err);
-          return;
-        }
-        incomingToneRef.current?.setNumberOfLoops(-1);
-        incomingToneRef.current?.setVolume(1);
-      },
-    );
-
-    outgoingToneRef.current = new Sound(
-      outPath || 'outgoing.mp3',
-      outPath ? undefined : Sound.MAIN_BUNDLE,
-      err => {
-        if (err) {
-          console.log('[Sound] outgoing load error:', err);
-          return;
-        }
-        outgoingToneRef.current?.setNumberOfLoops(-1);
-        outgoingToneRef.current?.setVolume(1);
-      },
-    );
-
-    return () => {
-      try {
-        incomingToneRef.current?.release();
-      } catch {}
-      try {
-        outgoingToneRef.current?.release();
-      } catch {}
-    };
-  }, []);
-
-  const playIncomingTone = () => {
-    const s = incomingToneRef.current;
-    if (!s) return;
-    try {
-      s.setCurrentTime?.(0);
-      s.play(success => {
-        if (!success) console.log('[Sound] incoming play failed');
-      });
-    } catch {}
-    Vibration.vibrate(1000, true);
-  };
-
-  const stopIncomingTone = () => {
-    const s = incomingToneRef.current;
-    Vibration.cancel();
-    if (!s) return;
-    try {
-      s.stop(() => s.setCurrentTime?.(0));
-    } catch {}
-  };
-
-  const playOutgoingTone = () => {
-    const s = outgoingToneRef.current;
-    if (!s) return;
-    try {
-      s.setCurrentTime?.(0);
-      s.play(success => {
-        if (!success) console.log('[Sound] outgoing play failed');
-      });
-    } catch {}
-  };
-
-  const stopOutgoingTone = () => {
-    const s = outgoingToneRef.current;
-    if (!s) return;
-    try {
-      s.stop(() => s.setCurrentTime?.(0));
-    } catch {}
-  };
 
   const {
     localStream,
@@ -131,64 +34,44 @@ const CallingMain = () => {
     setIncomingCall,
   } = useCall(userId);
 
-  const handleStartCall = async (
-    toUserId: string,
-    mediaType: 'audio' | 'video',
-  ) => {
-    try {
-      await startCall(toUserId, mediaType);
-      setPeerId(toUserId);
-      setIsDialing(true);
-      playOutgoingTone();
-    } catch (err) {
-      Alert.alert('Call Error', `Could not start ${mediaType} call`);
-      stopOutgoingTone();
-    }
-  };
+  // audio (ringtone / ringback + category switching)
+  const {
+    playIncomingTone,
+    stopIncomingTone,
+    playOutgoingTone,
+    stopOutgoingTone,
+  } = useCallAudio({inCall});
 
-  const handleAnswer = async () => {
-    try {
-      await answerCall();
-      stopIncomingTone();
-      setIncomingCall(null);
-      setInCall(true);
-    } catch (err) {
-      Alert.alert('Answer Error', 'Could not answer call');
-    }
-  };
+  // socket signaling wiring
+  useSignalingWire({
+    userId,
+    peerId,
+    setPeerId,
+    setInCall,
+    setIsDialing,
+    setIncomingCall,
+    stopOutgoingTone,
+    stopIncomingTone,
+  });
 
-  const handleEnd = () => {
-    if (peerId) {
-      socket.emit('end-call', {to: peerId});
-    }
-    stopOutgoingTone();
-    stopIncomingTone();
-    endCall();
-    setIncomingCall(null);
-    setIsDialing(false);
-    setInCall(false);
-  };
-
-  const handleReject = () => {
-    stopIncomingTone();
-    socket.emit('reject-call', {
-      to: incomingCall?.from,
-      reason: 'User declined the call',
+  // high-level call controls
+  const {handleStartCall, handleAnswer, handleEnd, handleReject} =
+    useCallControls({
+      peerId,
+      setPeerId,
+      setIsDialing,
+      setInCall,
+      setIncomingCall,
+      startCall,
+      answerCall,
+      endCall,
+      playOutgoingTone,
+      stopOutgoingTone,
+      stopIncomingTone,
+      incomingCall,
     });
-    setIncomingCall(null);
-    endCall();
-    setIsDialing(false);
-    setInCall(false);
-  };
 
-  // adjust category while in active call
-  useEffect(() => {
-    try {
-      Sound.setCategory(inCall ? 'PlayAndRecord' : 'Playback', true);
-    } catch {}
-  }, [inCall]);
-
-  // play ring when incoming
+  // play ring when an incoming call arrives
   useEffect(() => {
     if (incomingCall?.from) {
       setPeerId(incomingCall.from);
@@ -196,55 +79,8 @@ const CallingMain = () => {
     } else {
       stopIncomingTone();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingCall]);
-
-  // socket wiring for call state
-  useEffect(() => {
-    const registerSocket = async () => {
-      const token = await getData('authToken');
-      if (token && userId) {
-        socket.auth = {token};
-        socket.connect();
-        socket.emit('register', userId, token);
-      } else {
-        console.warn('[Socket] Missing token or userId');
-      }
-    };
-
-    registerSocket();
-
-    socket.on('call-rejected', () => {
-      stopOutgoingTone();
-      stopIncomingTone();
-      setIncomingCall(null);
-      setIsDialing(false);
-      setInCall(false);
-    });
-
-    socket.on('call-answered', ({from}) => {
-      stopOutgoingTone();
-      setPeerId(from ?? peerId);
-      setIsDialing(false);
-      setInCall(true);
-    });
-
-    socket.on('call-ended', () => {
-      stopOutgoingTone();
-      stopIncomingTone();
-      setIncomingCall(null);
-      setInCall(false);
-      setIsDialing(false);
-    });
-
-    return () => {
-      socket.off('call-rejected');
-      socket.off('call-answered');
-      socket.off('call-ended');
-      socket.disconnect();
-      stopOutgoingTone();
-      stopIncomingTone();
-    };
-  }, [peerId, userId]);
 
   return (
     <View style={styles.container}>
