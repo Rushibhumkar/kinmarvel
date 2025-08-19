@@ -1,5 +1,15 @@
+// src/calling/components/IncomingCallModal.tsx
+
 import React from 'react';
-import {Modal, View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  Platform,
+} from 'react-native';
 
 type Props = {
   visible: boolean;
@@ -17,20 +27,58 @@ const IncomingCallModal: React.FC<Props> = ({
   onReject,
 }) => {
   return (
-    <Modal animationType="slide" transparent={true} visible={visible}>
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+    <Modal
+      animationType="slide"
+      transparent={false}
+      visible={visible}
+      presentationStyle="fullScreen"
+      statusBarTranslucent
+      onRequestClose={onReject}>
+      <View style={styles.container}>
+        <StatusBar
+          translucent
+          backgroundColor="rgba(0,0,0,0.2)"
+          barStyle="light-content"
+        />
+
+        {/* Top bar */}
+        <View style={styles.topBar}>
           <Text style={styles.title}>Incoming {mediaType} call</Text>
-          <Text style={styles.subtext}>From: {callerId}</Text>
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={onReject}
+            hitSlop={{top: 10, left: 10, right: 10, bottom: 10}}>
+            <Text style={styles.closeText}>✕</Text>
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.acceptButton} onPress={onAccept}>
-              <Text style={styles.buttonText}>Accept</Text>
-            </TouchableOpacity>
+        {/* Center content */}
+        <View style={styles.center}>
+          <Text style={styles.subtext}>From</Text>
+          <Text style={styles.caller}>{callerId}</Text>
+          <Text style={styles.ringing}>Ringing…</Text>
+        </View>
 
-            <TouchableOpacity style={styles.rejectButton} onPress={onReject}>
-              <Text style={styles.buttonText}>Reject</Text>
+        {/* Bottom controls */}
+        <View style={styles.bottomRow}>
+          <View style={styles.action}>
+            <TouchableOpacity
+              style={[styles.circleBtn, styles.rejectBg]}
+              onPress={onReject}
+              activeOpacity={0.8}>
+              <Text style={styles.btnIcon}>📵</Text>
             </TouchableOpacity>
+            <Text style={styles.actionLabel}>Reject</Text>
+          </View>
+
+          <View style={styles.action}>
+            <TouchableOpacity
+              style={[styles.circleBtn, styles.acceptBg]}
+              onPress={onAccept}
+              activeOpacity={0.8}>
+              <Text style={styles.btnIcon}>📞</Text>
+            </TouchableOpacity>
+            <Text style={styles.actionLabel}>Accept</Text>
           </View>
         </View>
       </View>
@@ -40,49 +88,64 @@ const IncomingCallModal: React.FC<Props> = ({
 
 export default IncomingCallModal;
 
+const EDGE = Platform.select({ios: 24, android: 16}) as number;
+
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: '#0b0b0b',
+    paddingTop: EDGE + 24,
+    paddingHorizontal: 20,
+    paddingBottom: EDGE,
+  },
+
+  // Top
+  topBar: {
+    height: 48,
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  title: {color: '#fff', fontSize: 18, fontWeight: '700'},
+  closeBtn: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  modalContainer: {
-    width: 300,
-    padding: 25,
-    backgroundColor: '#fff',
-    borderRadius: 10,
+  closeText: {fontSize: 18, color: '#fff', fontWeight: '700'},
+
+  // Center
+  center: {
+    flex: 1,
     alignItems: 'center',
-    elevation: 5,
+    justifyContent: 'center',
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  subtext: {
-    fontSize: 16,
-    marginBottom: 20,
-    color: '#444',
-  },
-  buttonContainer: {
+  subtext: {color: '#aaa', fontSize: 14, marginBottom: 6},
+  caller: {color: '#fff', fontSize: 22, fontWeight: '700', marginBottom: 8},
+  ringing: {color: '#7dd3fc', fontSize: 15},
+
+  // Bottom
+  bottomRow: {
     flexDirection: 'row',
-    gap: 10,
+    justifyContent: 'space-evenly',
+    alignItems: 'flex-end',
+    marginBottom: 8,
   },
-  acceptButton: {
-    backgroundColor: 'green',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
+  action: {alignItems: 'center', gap: 8},
+  circleBtn: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  rejectButton: {
-    backgroundColor: 'red',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
+  acceptBg: {backgroundColor: '#22c55e'},
+  rejectBg: {backgroundColor: '#ef4444'},
+  btnIcon: {fontSize: 28, color: '#fff'},
+  actionLabel: {color: '#e5e7eb', fontSize: 13},
 });
