@@ -3,14 +3,22 @@ import React, {memo, useCallback} from 'react';
 import {
   ActivityIndicator,
   FlatList,
+<<<<<<< HEAD
   Image,
   RefreshControl,
+=======
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+<<<<<<< HEAD
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+=======
+  RefreshControl,
+} from 'react-native';
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
 
 const UsersList = ({
   users = [],
@@ -23,10 +31,14 @@ const UsersList = ({
   isFetchingNextPage,
   onRefresh,
   refreshing,
+<<<<<<< HEAD
   title = 'Available Users',
   onBack, // optional override
 }: any) => {
   const navigation = useNavigation();
+=======
+}: any) => {
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
   const data = Array.isArray(users)
     ? users.filter(u => u?._id !== currentUserId)
     : [];
@@ -36,6 +48,7 @@ const UsersList = ({
   const renderItem = useCallback(
     ({item}: any) => (
       <View style={styles.userRow}>
+<<<<<<< HEAD
         <Text style={styles.userText} numberOfLines={1}>
           {(item?.firstName || 'User') +
             (item?.lastName ? ` ${item.lastName}` : '')}
@@ -53,6 +66,24 @@ const UsersList = ({
             onPress={() => onStartCall?.(item._id, 'audio')}
             activeOpacity={0.8}>
             <Text style={styles.circleEmoji}>📞</Text>
+=======
+        <Text style={styles.userText}>
+          {item?.firstName || 'User'} {item?.lastName || ''}{' '}
+          {item?.phone ? `(${item.phone})` : ''}
+        </Text>
+        <View style={styles.callButtons}>
+          <TouchableOpacity
+            style={styles.callButton}
+            onPress={() => onStartCall?.(item._id, 'video')}
+            activeOpacity={0.7}>
+            <Text style={styles.callText}>📹</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.callButton}
+            onPress={() => onStartCall?.(item._id, 'audio')}
+            activeOpacity={0.7}>
+            <Text style={styles.callText}>📞</Text>
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
           </TouchableOpacity>
         </View>
       </View>
@@ -66,6 +97,7 @@ const UsersList = ({
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+<<<<<<< HEAD
   const Header = (
     <View style={styles.header}>
       <TouchableOpacity
@@ -95,14 +127,25 @@ const UsersList = ({
           style={{marginTop: 16}}
         />
         <Text style={styles.loading}>Loading users…</Text>
+=======
+  if (isLoading) {
+    return (
+      <View style={styles.centerWrap}>
+        <ActivityIndicator size="small" color="#0f0" />
+        <Text style={styles.loading}> Loading users…</Text>
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
       </View>
     );
   }
 
   if (isError) {
     return (
+<<<<<<< HEAD
       <View style={[styles.container, styles.centerWrap]}>
         {Header}
+=======
+      <View style={styles.centerWrap}>
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
         <Text style={styles.error}>Error loading users</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={() => onRefresh?.()}>
           <Text style={styles.retryText}>Retry</Text>
@@ -112,6 +155,7 @@ const UsersList = ({
   }
 
   return (
+<<<<<<< HEAD
     <View style={styles.container}>
       <FlatList
         data={data}
@@ -143,12 +187,41 @@ const UsersList = ({
         showsVerticalScrollIndicator={false}
       />
     </View>
+=======
+    <FlatList
+      data={data}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
+      contentContainerStyle={styles.listContainer}
+      onEndReachedThreshold={0.3}
+      onEndReached={handleLoadMore}
+      ListEmptyComponent={
+        <View style={styles.centerWrap}>
+          <Text style={styles.empty}>No users found</Text>
+        </View>
+      }
+      ListFooterComponent={
+        hasNextPage && isFetchingNextPage ? (
+          <View style={styles.footerLoading}>
+            <ActivityIndicator size="small" color="#0f0" />
+          </View>
+        ) : null
+      }
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} />
+        ) : undefined
+      }
+      showsVerticalScrollIndicator={false}
+    />
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
   );
 };
 
 export default memo(UsersList);
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -217,10 +290,48 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
 
+=======
+  listContainer: {
+    paddingBottom: 30,
+    paddingHorizontal: 0,
+  },
+  centerWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+  },
+  loading: {color: '#888', marginTop: 8},
+  error: {color: 'red', fontSize: 15, marginBottom: 8},
+  empty: {color: '#aaa', fontSize: 15},
+  retryBtn: {
+    marginTop: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 6,
+  },
+  retryText: {color: '#fff'},
+  userRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    padding: 12,
+    marginVertical: 6,
+    borderRadius: 10,
+  },
+  userText: {
+    color: '#fff',
+    fontSize: 16,
+    flexShrink: 1,
+    paddingRight: 10,
+  },
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
   callButtons: {
     flexDirection: 'row',
     gap: 8,
   },
+<<<<<<< HEAD
   circleBtn: {
     width: 40,
     height: 40,
@@ -261,6 +372,15 @@ const styles = StyleSheet.create({
   retryText: {color: '#fff', fontWeight: '600'},
   empty: {color: '#777', fontSize: 15},
 
+=======
+  callButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 6,
+  },
+  callText: {color: '#0f0', fontSize: 16},
+>>>>>>> 3d5f4b16b11e494635cbf9e943760cbe3fa01d35
   footerLoading: {
     paddingVertical: 12,
     alignItems: 'center',
