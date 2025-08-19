@@ -1,3 +1,4 @@
+// src/calling/CallingMain.tsx
 import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
@@ -8,18 +9,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Vibration,
 } from 'react-native';
-import {useCall} from './hooks/useCall';
 import CallScreen from './components/CallScreen';
 import IncomingCallModal from './components/IncomingCallModal';
 import {useGetMyData} from '../api/profile/profileFunc';
-import {myConsole} from '../utils/myConsole';
 import {useGetAllUsers} from '../api/user/userFunc';
 import {getData} from '../hooks/useAsyncStorage';
 import socket from './services/socket';
 import {useNavigation} from '@react-navigation/native';
-import {Vibration} from 'react-native';
 import Sound from 'react-native-sound';
+import {useCall} from './hooks/useCall';
 
 const CallingMain = () => {
   const navigation = useNavigation();
@@ -39,17 +39,16 @@ const CallingMain = () => {
 
   const [inCall, setInCall] = useState(false);
   const [peerId, setPeerId] = useState<string | null>(null);
+  const [isDialing, setIsDialing] = useState(false);
 
   // ringtone / ringback refs
   const incomingToneRef = useRef<Sound | null>(null);
   const outgoingToneRef = useRef<Sound | null>(null);
-  // with other useState hooks
-  const [isDialing, setIsDialing] = useState(false);
 
+  // preload sounds once
   useEffect(() => {
     Sound.setCategory('Playback', true);
 
-    // Resolve Metro asset to a string URI (avoids passing a numeric require id)
     const incAsset = Image.resolveAssetSource(
       require('../assets/audio/ringtone.mp3'),
     );
@@ -57,12 +56,12 @@ const CallingMain = () => {
       require('../assets/audio/outgoing.mp3'),
     );
 
-    const incPath = incAsset?.uri; // e.g. "asset:/ringtone.mp3" or "file://..."
+    const incPath = incAsset?.uri;
     const outPath = outAsset?.uri;
 
     incomingToneRef.current = new Sound(
       incPath || 'ringtone.mp3',
-      incPath ? undefined : Sound.MAIN_BUNDLE, // fallback to MAIN_BUNDLE if you later move it to /res/raw
+      incPath ? undefined : Sound.MAIN_BUNDLE,
       err => {
         if (err) {
           console.log('[Sound] incoming load error:', err);
@@ -70,7 +69,6 @@ const CallingMain = () => {
         }
         incomingToneRef.current?.setNumberOfLoops(-1);
         incomingToneRef.current?.setVolume(1);
-        console.log('[Sound] incoming loaded');
       },
     );
 
@@ -84,7 +82,6 @@ const CallingMain = () => {
         }
         outgoingToneRef.current?.setNumberOfLoops(-1);
         outgoingToneRef.current?.setVolume(1);
-        console.log('[Sound] outgoing loaded');
       },
     );
 
@@ -100,18 +97,13 @@ const CallingMain = () => {
 
   const playIncomingTone = () => {
     const s = incomingToneRef.current;
-    if (!s) {
-      console.log('[Sound] incoming not ready');
-      return;
-    }
+    if (!s) return;
     try {
       s.setCurrentTime?.(0);
       s.play(success => {
         if (!success) console.log('[Sound] incoming play failed');
       });
-    } catch (e) {
-      console.log('[Sound] incoming play error:', e);
-    }
+    } catch {}
     Vibration.vibrate(1000, true);
   };
 
@@ -126,18 +118,13 @@ const CallingMain = () => {
 
   const playOutgoingTone = () => {
     const s = outgoingToneRef.current;
-    if (!s) {
-      console.log('[Sound] outgoing not ready');
-      return;
-    }
+    if (!s) return;
     try {
       s.setCurrentTime?.(0);
       s.play(success => {
         if (!success) console.log('[Sound] outgoing play failed');
       });
-    } catch (e) {
-      console.log('[Sound] outgoing play error:', e);
-    }
+    } catch {}
   };
 
   const stopOutgoingTone = () => {
@@ -166,7 +153,6 @@ const CallingMain = () => {
       await startCall(toUserId, mediaType);
       setPeerId(toUserId);
       setIsDialing(true);
-      console.log('[Call] dialing → play outgoing tone');
       playOutgoingTone();
     } catch (err) {
       Alert.alert('Call Error', `Could not start ${mediaType} call`);
@@ -178,7 +164,7 @@ const CallingMain = () => {
     try {
       await answerCall();
       stopIncomingTone();
-      setIncomingCall(null); // hide the incoming modal after accept
+      setIncomingCall(null);
       setInCall(true);
     } catch (err) {
       Alert.alert('Answer Error', 'Could not answer call');
@@ -198,7 +184,6 @@ const CallingMain = () => {
   };
 
   const handleReject = () => {
-    console.log('Reject button clicked');
     stopIncomingTone();
     socket.emit('reject-call', {
       to: incomingCall?.from,
@@ -209,18 +194,15 @@ const CallingMain = () => {
     setIsDialing(false);
     setInCall(false);
   };
+
+  // adjust category while in active call
   useEffect(() => {
-    if (inCall) {
-      try {
-        Sound.setCategory('PlayAndRecord', true);
-      } catch {}
-    } else {
-      try {
-        Sound.setCategory('Playback', true);
-      } catch {}
-    }
+    try {
+      Sound.setCategory(inCall ? 'PlayAndRecord' : 'Playback', true);
+    } catch {}
   }, [inCall]);
 
+  // play ring when incoming
   useEffect(() => {
     if (incomingCall?.from) {
       setPeerId(incomingCall.from);
@@ -230,6 +212,7 @@ const CallingMain = () => {
     }
   }, [incomingCall]);
 
+  // socket wiring for call state
   useEffect(() => {
     const registerSocket = async () => {
       const token = await getData('authToken');
@@ -237,9 +220,6 @@ const CallingMain = () => {
         socket.auth = {token};
         socket.connect();
         socket.emit('register', userId, token);
-        socket.once('register', () => {
-          console.log('[Socket] Registered successfully. Ready for calls.');
-        });
       } else {
         console.warn('[Socket] Missing token or userId');
       }
@@ -255,7 +235,6 @@ const CallingMain = () => {
       setInCall(false);
     });
 
-    // NEW: callee accepted
     socket.on('call-answered', ({from}) => {
       stopOutgoingTone();
       setPeerId(from ?? peerId);
@@ -263,7 +242,6 @@ const CallingMain = () => {
       setInCall(true);
     });
 
-    // NEW: remote ended
     socket.on('call-ended', () => {
       stopOutgoingTone();
       stopIncomingTone();
@@ -280,25 +258,36 @@ const CallingMain = () => {
       stopOutgoingTone();
       stopIncomingTone();
     };
-  }, []);
+  }, [peerId, userId]);
 
   const renderUser = ({item}: any) => {
     if (item._id === userId) return null;
+    const fullName = [item.firstName, item.lastName].filter(Boolean).join(' ');
     return (
-      <View style={styles.userRow}>
-        <Text style={styles.userText}>
-          {item.firstName} ({item.phone})
-        </Text>
-        <View style={styles.callButtons}>
+      <View style={styles.card}>
+        <View style={{flex: 1}}>
+          <Text style={styles.name} numberOfLines={1}>
+            {fullName || 'User'}
+          </Text>
+          {!!item.phone && (
+            <Text style={styles.phone} numberOfLines={1}>
+              {item.phone}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.callButton}
-            onPress={() => handleStartCall(item._id, 'video')}>
-            <Text style={styles.callText}>📹</Text>
+            style={[styles.circleBtn, styles.videoBtn]}
+            onPress={() => handleStartCall(item._id, 'video')}
+            activeOpacity={0.85}>
+            <Text style={styles.circleEmoji}>📹</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.callButton}
-            onPress={() => handleStartCall(item._id, 'audio')}>
-            <Text style={styles.callText}>📞</Text>
+            style={[styles.circleBtn, styles.audioBtn]}
+            onPress={() => handleStartCall(item._id, 'audio')}
+            activeOpacity={0.85}>
+            <Text style={styles.circleEmoji}>📞</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -315,35 +304,55 @@ const CallingMain = () => {
     <View style={styles.container}>
       {!inCall && (
         <>
-          <Text
-            style={{
-              position: 'absolute',
-              left: 8,
-              padding: 12,
-              backgroundColor: '#fff',
-              borderRadius: 8,
-            }}
-            onPress={() => navigation.goBack()}>
-            Back
-          </Text>
-          <Text style={styles.heading}>Available Users</Text>
+          {/* Top Bar */}
+          <View style={styles.topBar}>
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => navigation.goBack()}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              activeOpacity={0.7}>
+              <Image
+                source={require('../assets/icons/back.png')}
+                style={styles.backIcon}
+              />
+            </TouchableOpacity>
+            <Text style={styles.topTitle}>Available Users</Text>
+            <View style={{width: 40}} />
+          </View>
+
+          {/* List / States */}
           {isLoading ? (
-            <Text style={styles.loading}>Loading users...</Text>
+            <View style={styles.centerWrap}>
+              <ActivityIndicator size="small" color="#007AFF" />
+              <Text style={styles.loadingTxt}>Loading users…</Text>
+            </View>
           ) : isError ? (
-            <Text style={styles.error}>Error loading users</Text>
+            <View style={styles.centerWrap}>
+              <Text style={styles.errorTxt}>Error loading users</Text>
+            </View>
           ) : (
             <FlatList
               data={users}
               keyExtractor={item => item._id}
               renderItem={renderUser}
-              contentContainerStyle={styles.listContainer}
+              contentContainerStyle={styles.listContent}
               onEndReached={handleLoadMore}
               onEndReachedThreshold={0.3}
+              ListEmptyComponent={
+                <View style={styles.centerWrap}>
+                  <Text style={styles.emptyTxt}>No users found</Text>
+                </View>
+              }
               ListFooterComponent={
                 hasNextPage && isFetchingNextPage ? (
-                  <ActivityIndicator size="small" color="#0f0" />
-                ) : null
+                  <View style={styles.footerLoading}>
+                    <ActivityIndicator size="small" color="#007AFF" />
+                  </View>
+                ) : (
+                  <View style={{height: 12}} />
+                )
               }
+              showsVerticalScrollIndicator={false}
             />
           )}
         </>
@@ -373,50 +382,90 @@ export default CallingMain;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#101010',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
   },
-  heading: {
-    color: '#fff',
-    fontSize: 22,
-    marginBottom: 10,
-    alignSelf: 'center',
-  },
-  loading: {
-    color: '#888',
-    textAlign: 'center',
-  },
-  error: {
-    color: 'red',
-    textAlign: 'center',
-  },
-  listContainer: {
-    paddingBottom: 30,
-  },
-  userRow: {
+
+  // Top bar
+  topBar: {
+    height: 56,
+    paddingHorizontal: 12,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    padding: 12,
-    marginVertical: 6,
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E9E9E9',
   },
-  userText: {
-    color: '#fff',
-    fontSize: 16,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  callButtons: {
+  backIcon: {
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
+    tintColor: '#111',
+  },
+  topTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#111',
+    fontSize: 17,
+    fontWeight: '600',
+    marginRight: 40, // balance the back button space
+  },
+
+  // List
+  listContent: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 24,
+  },
+  card: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EDEDED',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: {width: 0, height: 3},
+    elevation: 2,
   },
-  callButton: {
-    padding: 8,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 6,
+  name: {color: '#111', fontSize: 15.5, fontWeight: '600'},
+  phone: {color: '#777', fontSize: 13, marginTop: 2},
+
+  actions: {flexDirection: 'row', gap: 10, marginLeft: 10},
+  circleBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
-  callText: {
-    color: '#0f0',
-    fontSize: 16,
+  videoBtn: {backgroundColor: '#E8F1FF', borderColor: '#D6E7FF'},
+  audioBtn: {backgroundColor: '#E9F9EE', borderColor: '#D9F2E2'},
+  circleEmoji: {fontSize: 18},
+
+  // States
+  centerWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+  },
+  loadingTxt: {color: '#666', marginTop: 8},
+  errorTxt: {color: '#E03A3A', fontSize: 15, marginTop: 12},
+  emptyTxt: {color: '#777', fontSize: 15},
+  footerLoading: {
+    paddingVertical: 12,
+    alignItems: 'center',
   },
 });

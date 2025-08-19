@@ -1,6 +1,5 @@
 // src/calling/components/IncomingCallModal.tsx
-
-import React from 'react';
+import React, {useMemo} from 'react';
 import {
   Modal,
   View,
@@ -10,6 +9,8 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
+import {useGetUserById} from '../../api/user/userFunc';
+import {myConsole} from '../../utils/myConsole';
 
 type Props = {
   visible: boolean;
@@ -26,6 +27,40 @@ const IncomingCallModal: React.FC<Props> = ({
   onAccept,
   onReject,
 }) => {
+  // Only fetch when we know who is calling and the modal is visible
+  const {
+    data: userData,
+    isLoading,
+    isError,
+  } = useGetUserById(visible && callerId ? callerId : ('' as any));
+
+  // myConsole('userData', userData);
+  console.log('renderingaaa');
+  const displayName = useMemo(() => {
+    const u = userData?.data || {};
+    // Prefer explicit fullName if API provides it
+    const full =
+      (typeof u.fullName === 'string' && u.fullName.trim()) ||
+      [u.firstName, u.middleName, u.lastName]
+        .filter((v: any) => typeof v === 'string' && v.trim().length > 0)
+        .join(' ')
+        .trim();
+
+    // Fallbacks: phone -> mobile -> callerId
+    return (
+      full ||
+      (typeof u.phone === 'string' && u.phone) ||
+      (typeof u.mobile === 'string' && u.mobile) ||
+      callerId
+    );
+  }, [userData, callerId]);
+
+  const subtitle = isLoading
+    ? 'Fetching caller…'
+    : isError
+    ? 'Unknown caller'
+    : 'From';
+
   return (
     <Modal
       animationType="slide"
@@ -54,8 +89,10 @@ const IncomingCallModal: React.FC<Props> = ({
 
         {/* Center content */}
         <View style={styles.center}>
-          <Text style={styles.subtext}>From</Text>
-          <Text style={styles.caller}>{callerId}</Text>
+          <Text style={styles.subtext}>{subtitle}</Text>
+          <Text style={styles.caller} numberOfLines={1}>
+            {displayName}
+          </Text>
           <Text style={styles.ringing}>Ringing…</Text>
         </View>
 
@@ -124,9 +161,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   subtext: {color: '#aaa', fontSize: 14, marginBottom: 6},
-  caller: {color: '#fff', fontSize: 22, fontWeight: '700', marginBottom: 8},
+  caller: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 8,
+    maxWidth: '90%',
+  },
   ringing: {color: '#7dd3fc', fontSize: 15},
 
   // Bottom
