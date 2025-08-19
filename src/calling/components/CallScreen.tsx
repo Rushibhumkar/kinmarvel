@@ -34,10 +34,8 @@ const CallScreen = ({localStream, remoteStream, onEndCall}: any) => {
   };
 
   const flipCamera = () => {
-    // react-native-webrtc exposes _switchCamera on the video track
-    // guard so it won't crash if not present (e.g., audio-only call)
     try {
-      // @ts-ignore private API on native track
+      // @ts-ignore native track helper (RN WebRTC)
       localVideoTrack?._switchCamera?.();
     } catch {}
   };
@@ -52,51 +50,61 @@ const CallScreen = ({localStream, remoteStream, onEndCall}: any) => {
         />
       ) : (
         <View style={styles.remoteVideoPlaceholder}>
-          <Text style={styles.text}>Connecting…</Text>
+          <Text style={styles.placeholderTitle}>Connecting…</Text>
+          <Text style={styles.placeholderSub}>Waiting for the other user</Text>
         </View>
       )}
 
       {hasLocal && (
-        <RTCView
-          streamURL={localStream.toURL()}
-          style={styles.localVideo}
-          objectFit="cover"
-          zOrder={1}
-        />
+        <View style={styles.localPreviewWrap}>
+          <RTCView
+            streamURL={localStream.toURL()}
+            style={styles.localVideo}
+            objectFit="cover"
+            zOrder={1}
+          />
+          {videoOff && (
+            <View style={styles.localOverlay}>
+              <Text style={styles.localOverlayText}>Video Off</Text>
+            </View>
+          )}
+        </View>
       )}
 
-      <View style={styles.controlsRow}>
-        <TouchableOpacity
-          style={[styles.ctrlBtn, isMuted && styles.ctrlBtnActive]}
-          onPress={toggleMute}
-          activeOpacity={0.7}>
-          <Text style={styles.ctrlText}>{isMuted ? '🔇' : '🎤'}</Text>
-        </TouchableOpacity>
+      <View style={styles.bottomBar}>
+        <View style={styles.controlsRow}>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, isMuted && styles.ctrlBtnActive]}
+            onPress={toggleMute}
+            activeOpacity={0.7}>
+            <Text style={styles.ctrlText}>{isMuted ? '🔇' : '🎤'}</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.ctrlBtn, videoOff && styles.ctrlBtnActive]}
-          onPress={toggleVideo}
-          activeOpacity={0.7}>
-          <Text style={styles.ctrlText}>{videoOff ? '📵' : '🎥'}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, videoOff && styles.ctrlBtnActive]}
+            onPress={toggleVideo}
+            activeOpacity={0.7}>
+            <Text style={styles.ctrlText}>{videoOff ? '📵' : '🎥'}</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.ctrlBtn}
-          onPress={flipCamera}
-          disabled={!localVideoTrack}
-          activeOpacity={0.7}>
-          <Text
-            style={[styles.ctrlText, !localVideoTrack && styles.ctrlTextDim]}>
-            🔄
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, !localVideoTrack && styles.ctrlBtnDisabled]}
+            onPress={flipCamera}
+            disabled={!localVideoTrack}
+            activeOpacity={0.7}>
+            <Text
+              style={[styles.ctrlText, !localVideoTrack && styles.ctrlTextDim]}>
+              🔄
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.endCallButton}
-          onPress={onEndCall}
-          activeOpacity={0.8}>
-          <Text style={styles.endCallText}>End</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.endCallButton}
+            onPress={onEndCall}
+            activeOpacity={0.85}>
+            <Text style={styles.endCallText}>End</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -104,71 +112,128 @@ const CallScreen = ({localStream, remoteStream, onEndCall}: any) => {
 
 export default CallScreen;
 
+const BAR_BG = '#0B0B0B';
+const BTN_BG = '#1F1F1F';
+const BTN_BG_ACTIVE = '#343434';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
-  },
-  remoteVideo: {
-    flex: 1,
-    width: '100%',
-  },
-  remoteVideoPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#222',
-  },
-  localVideo: {
-    position: 'absolute',
-    width: 120,
-    height: 180,
-    top: 20,
-    right: 20,
-    borderRadius: 8,
-    zIndex: 2,
+    backgroundColor: '#000', // full opaque
   },
 
-  controlsRow: {
+  // Remote video fills the screen
+  remoteVideo: {
     position: 'absolute',
-    bottom: 34,
+    top: 0,
+    right: 0,
+    left: 0,
+    bottom: 0,
+  },
+
+  remoteVideoPlaceholder: {
+    flex: 1,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  placeholderSub: {
+    color: '#B5B5B5',
+    fontSize: 13,
+  },
+
+  // Local preview framed (no transparency)
+  localPreviewWrap: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 130,
+    height: 184,
+    backgroundColor: '#000', // opaque behind local video
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    shadowOffset: {width: 0, height: 6},
+  },
+  localVideo: {
+    width: '100%',
+    height: '100%',
+  },
+  localOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  localOverlayText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+
+  // Bottom bar with solid background
+  bottomBar: {
+    position: 'absolute',
     left: 0,
     right: 0,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    bottom: 22,
+    paddingHorizontal: 16,
   },
+  controlsRow: {
+    backgroundColor: BAR_BG, // opaque bar
+    borderRadius: 32,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    shadowOffset: {width: 0, height: 8},
+  },
+
   ctrlBtn: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: BTN_BG, // solid, not translucent
     justifyContent: 'center',
     alignItems: 'center',
   },
   ctrlBtnActive: {
-    backgroundColor: 'rgba(255,255,255,0.28)',
+    backgroundColor: BTN_BG_ACTIVE,
+  },
+  ctrlBtnDisabled: {
+    backgroundColor: '#2A2A2A',
   },
   ctrlText: {fontSize: 22, color: '#fff'},
-  ctrlTextDim: {opacity: 0.4},
+  ctrlTextDim: {opacity: 0.45},
 
   endCallButton: {
     height: 56,
     paddingHorizontal: 22,
     borderRadius: 28,
-    backgroundColor: '#E53935',
+    backgroundColor: '#E53935', // solid red
     justifyContent: 'center',
     alignItems: 'center',
   },
   endCallText: {
-    color: 'white',
-    fontWeight: '700',
+    color: '#fff',
+    fontWeight: '800',
     fontSize: 16,
     letterSpacing: 0.3,
-  },
-  text: {
-    color: '#aaa',
-    fontSize: 16,
   },
 });
