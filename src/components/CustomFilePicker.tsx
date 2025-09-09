@@ -11,12 +11,12 @@ import {
 import {launchImageLibrary} from 'react-native-image-picker';
 import {API_AXIOS} from '../api/axiosInstance';
 import {myConsole} from '../utils/myConsole';
-import {showErrorToast} from '../utils/toastModalFunction';
+import {useAppToast} from './toast/AppToast';
 
 const CustomFilePicker = ({onClose}: any) => {
   const [file, setFile] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
-
+  const toast = useAppToast();
   const pickFile = async () => {
     try {
       const result = await launchImageLibrary({
@@ -32,13 +32,13 @@ const CustomFilePicker = ({onClose}: any) => {
       }
     } catch (error) {
       console.error('Error picking file:', error);
-      showErrorToast({description: 'Failed to pick a file.'});
+      toast.error('Failed to pick a file.');
     }
   };
 
   const uploadFile = async () => {
     if (!file) {
-      showErrorToast({description: 'Please select a file first.'});
+      toast.error('Please select a file first.');
       return;
     }
 
@@ -58,11 +58,11 @@ const CustomFilePicker = ({onClose}: any) => {
         },
       });
 
-      showErrorToast({description: 'File uploaded successfully!'});
+      toast.error('File uploaded successfully!');
       console.log('Upload response:', data);
     } catch (error: any) {
       console.error('Error uploading file:', error.response || error);
-      showErrorToast({description: 'Something went wrong while uploading.'});
+      toast.error('Something went wrong while uploading.');
     } finally {
       setUploading(false);
     }

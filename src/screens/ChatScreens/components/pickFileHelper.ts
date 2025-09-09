@@ -1,6 +1,6 @@
 import {launchImageLibrary} from 'react-native-image-picker';
 import {API_AXIOS} from '../../../api/axiosInstance';
-import {showErrorToast} from '../../../utils/toastModalFunction';
+import {useAppToast} from '../../../components/toast/AppToast';
 
 export const pickFileHelper = async ({
   onSuccess,
@@ -22,6 +22,7 @@ export const pickFileHelper = async ({
   onStartUpload?: () => void;
   onFinishUpload?: () => void;
 }) => {
+  const toast = useAppToast();
   try {
     const result = await launchImageLibrary({
       mediaType: 'mixed',
@@ -70,7 +71,7 @@ export const pickFileHelper = async ({
     }
   } catch (error) {
     console.error('Error picking or uploading file:', error);
-    showErrorToast({description: 'Failed to pick or upload the file.'});
+    toast.error('Failed to pick or upload the file.');
   } finally {
     onFinishUpload?.();
   }

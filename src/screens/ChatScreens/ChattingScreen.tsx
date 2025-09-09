@@ -23,7 +23,6 @@ import CustomModal from '../../components/CustomModal';
 import CustomText from '../../components/CustomText';
 import {MsgDataType} from '../../utils/typescriptInterfaces';
 import {useFocusEffect} from '@react-navigation/native';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
 import MessageComponent from './components/MessageComponent';
 import {CameraType} from 'react-native-camera-kit';
 import RNFS from 'react-native-fs';
@@ -41,9 +40,20 @@ import {getTextWithLength} from '../../utils/commonFunction';
 import {deleteMessagesByIds} from '../../api/chats/chatFunc';
 import CustomForwardModal from './components/CustomForwardModal';
 import Clipboard from '@react-native-clipboard/clipboard';
+import {useAppToast} from '../../components/toast/AppToast';
+import {
+  fetchMessagesHelper,
+  handleDeleteMessagesHelper,
+  useKeyboardHeight,
+  useMarkSeenOnFocus,
+} from './hooks/chatHelpers';
 
 const ChattingScreen = ({navigation, route}: any) => {
-  const {data} = route.params;
+  const toast = useAppToast();
+  const {data, media, isComeFromAnotherScreen = false} = route.params;
+  const inputAutoFocus = isComeFromAnotherScreen;
+  myConsole('sdlfkjldsf', media);
+  myConsole('isComeFromAnotherScreennnn', isComeFromAnotherScreen);
   const {forwardedMessages, forwardedToUserId} = route.params || {};
   const {data: myData} = useGetMyData();
   const [message, setMessage] = useState('');
@@ -66,9 +76,7 @@ const ChattingScreen = ({navigation, route}: any) => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [callingModal, setCallingModal] = useState<boolean>(false);
   const [videoCallModal, setVideoCallModal] = useState<boolean>(false);
-  const [selectedMessages, setSelectedMessages] = useState<Array<MsgDataType>>(
-    [],
-  );
+  const [selectedMessages, setSelectedMessages] = useState<Array<any>>([]);
 
   const [forwardModal, setForwardModal] = useState<boolean>(false);
   const cameraRef = useRef(null);
@@ -84,41 +92,8 @@ const ChattingScreen = ({navigation, route}: any) => {
       };
       socket.emit('sendMessage', forwardMsg);
     });
-    showSuccessToast({description: 'Message forwarded successfully!'});
+    toast.success('Message forwarded successfully!');
   }
-
-  useFocusEffect(
-    useCallback(() => {
-      if (messages.length > 0) {
-        const lastReceivedMessage = messages.find(
-          msg => msg.sender !== senderId,
-        );
-        // myConsole('lastReceivedMessage', lastReceivedMessage);
-        if (lastReceivedMessage && socket) {
-          socket.emit('markSeenMessage', lastReceivedMessage._id);
-        }
-      }
-    }, [messages, socket]),
-  );
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      event => {
-        setKeyboardHeight(event.endCoordinates.height);
-        // console.log('Keyboard Height:', event.endCoordinates.height);
-      },
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setKeyboardHeight(0);
-      },
-    );
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, []);
 
   const senderId = myData?.data?._id;
   const receiverId = data?._id;
@@ -131,12 +106,14 @@ const ChattingScreen = ({navigation, route}: any) => {
     // };
   }, []);
 
+  useMarkSeenOnFocus(messages, senderId, socket);
+  useKeyboardHeight(setKeyboardHeight);
   const flatListRef = useRef(null);
 
   const socketSetup = async () => {
     const newSocket = io(SOCKET_SERVER_URL, {
       transports: ['websocket'],
-      query: {userId: senderId}, // Send userId when connecting
+      query: {userId: senderId},
     });
 
     setSocket(newSocket);
@@ -165,36 +142,21 @@ const ChattingScreen = ({navigation, route}: any) => {
   const [page, setPage] = useState(1);
   const [isFetching, setIsFetching] = useState(false);
 
-  const fetchMessages = async (nextPage = 1) => {
-    if (isFetching) return;
-    setIsFetching(true);
-
-    try {
-      const response = await API_AXIOS.get(
-        `${SOCKET_SERVER_URL}/api/chat/${receiverId}?limit=20&page=${nextPage}`,
-      );
-      const newMessages = response.data.data.messages ?? [];
-      if (nextPage === 1) {
-        setMessages(newMessages);
-        setFetchError(null);
-      } else {
-        setMessages(prevMessages => [...prevMessages, ...newMessages]);
-      }
-      setPage(nextPage);
-    } catch (error: any) {
-      if (error?.response?.status === 429) {
-        console.error('Rate limit exceeded:', error);
-        setFetchError(
-          'You are sending too many requests. Please wait a moment and try again.',
-        );
-      } else {
-        console.error('Failed to fetch messages:', error);
-        setFetchError('Failed to load messages. Please try again.');
-      }
-    } finally {
-      setIsFetching(false);
-    }
-  };
+  const fetchMessages = useCallback(
+    (nextPage: number = 1) =>
+      fetchMessagesHelper({
+        API_AXIOS,
+        SOCKET_SERVER_URL,
+        receiverId,
+        nextPage,
+        isFetching,
+        setIsFetching,
+        setMessages,
+        setFetchError,
+        setPage,
+      }),
+    [API_AXIOS, SOCKET_SERVER_URL, receiverId, isFetching],
+  );
 
   const sendMessage = (): void => {
     if (!message.trim() && !file && !location && !contact) return;
@@ -324,44 +286,21 @@ const ChattingScreen = ({navigation, route}: any) => {
       },
     });
   };
-  const handleDeleteMessages = () => {
-    Alert.alert(
-      'Confirm Delete',
-      'Do you want to delete selected messages?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          onPress: async () => {
-            try {
-              await deleteMessagesByIds(selectedMessages.map(msg => msg._id));
-
-              setSelectedMessages([]);
-              fetchMessages(1);
-              showSuccessToast({
-                description: 'Message(s) are deleted successfully!',
-              });
-            } catch (err) {
-              showErrorToast({
-                description: 'Failed to delete messages',
-              });
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      {cancelable: true},
-    );
-  };
+  const handleDeleteMessages = () =>
+    handleDeleteMessagesHelper({
+      Alert,
+      toast,
+      selectedMessages,
+      deleteMessagesByIds,
+      fetchMessages,
+      setSelectedMessages,
+    });
 
   const copyMessageToClipboard = () => {
     console.log('skdfld');
     if (selectedMessages.length === 1) {
       Clipboard.setString(selectedMessages[0]?.text || '');
-      showSuccessToast({description: 'Copied to clipboard!'});
+      toast.success('Copied to clipboard!');
     }
   };
 
@@ -467,7 +406,7 @@ const ChattingScreen = ({navigation, route}: any) => {
             ref={flatListRef}
             data={messages}
             inverted
-            keyExtractor={item => item?._id ?? 'defaultKey'} // Use a default key if item or item._id is null/undefined
+            keyExtractor={item => item?._id ?? 'defaultKey'}
             contentContainerStyle={[
               chatScreenStyles.chatArea,
               {paddingBottom: keyboardHeight || 20},
@@ -508,6 +447,7 @@ const ChattingScreen = ({navigation, route}: any) => {
             onChangeMessage={setMessage}
             onSendMessage={sendMessage}
             onAttachmentPress={() => setAttachmentsPopup(!attachmentsPopup)}
+            autoFocus={inputAutoFocus}
           />
         )}
 

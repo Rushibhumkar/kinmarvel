@@ -22,15 +22,16 @@ import {color} from '../../const/color';
 import CustomButton from '../../components/Buttons/CustomButton';
 import CustomAvatar from '../../components/CustomAvatar';
 import {useQueryClient} from '@tanstack/react-query';
-import {showSuccessToast} from '../../utils/toastModalFunction';
 import {useIsFocused} from '@react-navigation/native';
 import {useGetAllUsers} from '../../api/user/userFunc';
 import {commonRoute, homeRoute, profileRoute} from '../AuthScreens/routeName';
 import CustomErrorMessage from '../../components/CustomErrorMessage';
 import {sizes} from '../../const';
 import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const AllNotifications = ({navigation}: any) => {
+  const toast = useAppToast();
   const {
     data: pendingReqData,
     isLoading: pendingReqLoading,
@@ -66,7 +67,7 @@ const AllNotifications = ({navigation}: any) => {
       // await followDataRefetch();
       queryClient.invalidateQueries({queryKey: ['pendingFollowRequests']});
       queryClient.invalidateQueries({queryKey: ['isFollowerIsFollowing']});
-      showSuccessToast({description: `The request is ${status}`});
+      toast.success(`The request is ${status}`);
     } catch (error) {
       console.error(`Error updating follow request for ${userId}:`, error);
     } finally {
@@ -80,7 +81,7 @@ const AllNotifications = ({navigation}: any) => {
   //     await sendFollowRequest('67bad2233dc936e19caf2cb6');
   //     // queryClient.invalidateQueries({queryKey:['followData']});
   //     queryClient.invalidateQueries({queryKey: ['pendingFollowRequests']});
-  //     showSuccessToast({description: 'Follow request sent successfully'});
+  //     toast.success('Follow request sent successfully');
   //   } catch (error) {
   //     console.error('Error sending follow request:', error);
   //   } finally {

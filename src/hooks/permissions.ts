@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {myConsole} from '../utils/myConsole';
 import {PermissionsAndroid, Platform} from 'react-native';
-import {showErrorToast} from '../utils/toastModalFunction';
+import {useAppToast} from '../components/toast/AppToast';
 
 export const modifyPermissions = (permissions: Array<any>) => {
   const rolePermissions =
@@ -52,6 +52,7 @@ export const hasResourcePermission = async (
 };
 
 export const requestPermissions = async () => {
+  const toast = useAppToast();
   if (Platform.OS === 'android') {
     const apiLevel = Platform.Version;
     console.log(`Android API level: ${apiLevel}`);
@@ -81,9 +82,7 @@ export const requestPermissions = async () => {
           return true;
         } else {
           console.log('Managed storage permission denied.');
-          showErrorToast({
-            description: 'App requires storage permissions to save files.',
-          });
+          toast.error('App requires storage permissions to save files.');
           return false;
         }
       } else {

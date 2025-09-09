@@ -19,7 +19,7 @@ type ApiResponse = {
   };
 };
 
-const PostsFeed: React.FC = () => {
+const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
   const [posts, setPosts] = useState<ApiPost[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -71,8 +71,11 @@ const PostsFeed: React.FC = () => {
   }, [loadPage]);
 
   const onRefresh = useCallback(() => {
+    try {
+      onExternalRefresh?.();
+    } catch {}
     loadPage(1, {refresh: true});
-  }, [loadPage]);
+  }, [loadPage, onExternalRefresh]);
 
   const onEndReached = useCallback(() => {
     if (loadingMore || initialLoading || refreshing) return;
@@ -110,6 +113,7 @@ const PostsFeed: React.FC = () => {
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
+      ListHeaderComponent={headerComponent || null}
       onEndReachedThreshold={0.4}
       onEndReached={onEndReached}
       ListFooterComponent={ListFooter}

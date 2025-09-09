@@ -9,12 +9,13 @@ import {myConsole} from '../../utils/myConsole';
 import CustomAvatar from '../../components/CustomAvatar';
 import {color} from '../../const/color';
 import CustomButton from '../../components/Buttons/CustomButton';
-import {showSuccessToast} from '../../utils/toastModalFunction';
 import {useQueryClient} from '@tanstack/react-query';
 import CustomErrorMessage from '../../components/CustomErrorMessage';
 import FullHeightLoader from '../../components/LoadingCompo/FullHeightLoader';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const PendingRequests = () => {
+  const toast = useAppToast();
   const {
     data: pendingReqData,
     isLoading,
@@ -34,7 +35,7 @@ const PendingRequests = () => {
     setLoadingStates(prev => ({...prev, [userId]: true}));
     try {
       await updateFollowRequest(userId, status);
-      showSuccessToast({description: `The request is ${status}`});
+      toast.success(`The request is ${status}`);
       queryClient.invalidateQueries({queryKey: ['pendingFollowRequests']});
       queryClient.invalidateQueries({queryKey: ['isFollowerIsFollowing']});
     } catch (error) {

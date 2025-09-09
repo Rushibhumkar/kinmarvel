@@ -4,6 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  RefreshControl,
 } from 'react-native';
 import React, {useState} from 'react';
 import MainContainer from '../../components/MainContainer';
@@ -19,12 +20,10 @@ import CustomErrorMessage from '../../components/CustomErrorMessage';
 import {sizes} from '../../const';
 import {useNotifications} from '../../api/notification/notificationFunc';
 import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
-import {RefreshControl} from 'react-native';
-import SwitchName from '../../components/LoadingCompo/SwitchName';
-import {myConsole} from '../../utils/myConsole';
-import {dummyPosts} from '../../const/data';
-import PostCard from '../PostStack/components/PostCard';
 import PostsFeed from '../../components/PostsFeed';
+import {useFocusEffect} from '@react-navigation/native';
+import {getData} from '../../hooks/useAsyncStorage';
+import socket from '../../calling/services/socket';
 
 const AllStories = ({navigation}: any) => {
   const {
@@ -61,8 +60,38 @@ const AllStories = ({navigation}: any) => {
     }
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      let mounted = true;
+
+      (async () => {
+        const token = await getData('authToken');
+        const uid = myData?.data?._id;
+        if (!mounted || !token || !uid) return;
+
+        try {
+          if (!socket.connected) {
+            socket.auth = {token};
+            socket.connect();
+            socket.once('connect', () => {
+              console.log('\x1b[32m✅ [Socket] Connected (Home)\x1b[0m');
+            });
+          } else {
+            console.log('\x1b[32m✅ [Socket] Already connected (Home)\x1b[0m');
+          }
+          socket.emit('register', uid, token);
+        } catch {}
+      })();
+
+      // don't disconnect on blur — we handle app close below
+      return () => {
+        mounted = false;
+      };
+    }, [myData?.data?._id]),
+  );
+
   const filteredStories = allStories?.data?.filter(
-    storyGroup => storyGroup.user._id !== senderId,
+    (storyGroup: any) => storyGroup.user._id !== senderId,
   );
 
   return (

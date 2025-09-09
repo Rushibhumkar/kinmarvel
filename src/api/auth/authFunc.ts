@@ -1,9 +1,3 @@
-import {myConsole} from '../../utils/myConsole';
-import {
-  popUpConfToast,
-  showErrorToast,
-  showSuccessToast,
-} from '../../utils/toastModalFunction';
 import {API_AXIOS} from '../axiosInstance';
 
 export const authSignup = async (values: any) => {
@@ -11,10 +5,8 @@ export const authSignup = async (values: any) => {
     const {data} = await API_AXIOS.post('/auth/signup', values);
     return data;
   } catch (error: any) {
-    showSuccessToast({
-      description: error?.response?.data?.message || 'Error ',
-    });
-    throw error;
+    const message = error?.response?.data?.message || 'Signup failed';
+    throw new Error(message);
   }
 };
 

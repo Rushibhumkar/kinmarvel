@@ -4,6 +4,7 @@ import {chatScreenStyles} from '../../../sharedStyles';
 
 interface MessageInputBarProps {
   message: string;
+  autoFocus: boolean;
   onChangeMessage: (text: string) => void;
   onSendMessage: () => void;
   onAttachmentPress: () => void;
@@ -11,6 +12,7 @@ interface MessageInputBarProps {
 
 const MessageInputBar: React.FC<MessageInputBarProps> = ({
   message,
+  autoFocus,
   onChangeMessage,
   onSendMessage,
   onAttachmentPress,
@@ -24,6 +26,7 @@ const MessageInputBar: React.FC<MessageInputBarProps> = ({
           placeholderTextColor="#999"
           value={message}
           onChangeText={onChangeMessage}
+          autoFocus={autoFocus}
         />
 
         <TouchableOpacity onPress={onAttachmentPress}>

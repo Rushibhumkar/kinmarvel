@@ -7,12 +7,12 @@ import ShowHideModal from './components/ShowHideModal';
 import CustomText from '../../components/CustomText';
 import {color} from '../../const/color';
 import {homeRoute} from '../AuthScreens/routeName';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
 import {createPost} from '../../api/posts/postFunc';
 import mime from 'mime';
 import {myConsole} from '../../utils/myConsole';
 import useLocationPermission from '../../hooks/useLocationPermission';
 import LocationPickerBottomSheet from '../../components/LocationPickerBottomSheet';
+import {useAppToast} from '../../components/toast/AppToast';
 
 type SelectedLocation = {
   address: string;
@@ -22,6 +22,7 @@ type SelectedLocation = {
 } | null;
 
 const ComposePostScreen = () => {
+  const toast = useAppToast();
   const navigation = useNavigation();
   const route = useRoute();
   const {media: routeMedia = [] as any[]} = (route.params as any) || {};
@@ -80,12 +81,12 @@ const ComposePostScreen = () => {
       const response = await createPost(postData);
       myConsole('Create post API response:', JSON.stringify(response, null, 2));
 
-      showSuccessToast({description: 'Post added successfully'});
+      toast.success('Post added successfully');
       // @ts-ignore
       navigation.navigate('HomeStack', {screen: homeRoute.AllStories});
     } catch (err) {
       console.error(err);
-      showErrorToast({description: 'Failed to create post'});
+      toast.error('Failed to create post');
     } finally {
       setLoading(false);
     }

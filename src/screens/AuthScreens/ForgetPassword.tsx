@@ -7,10 +7,10 @@ import * as Yup from 'yup';
 import {authRoute} from './routeName';
 import CustomTextInput from '../../components/TextInput/CustomTextInput';
 import {authForgotPassword} from '../../api/auth/authFunc';
-import {myConsole} from '../../utils/myConsole';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const ForgotPassword = ({navigation}: any) => {
+  const toast = useAppToast();
   const [loading, setLoading] = useState(false);
   const formik = useFormik({
     initialValues: {
@@ -23,19 +23,13 @@ const ForgotPassword = ({navigation}: any) => {
       setLoading(true);
       try {
         const res = await authForgotPassword(values);
-        showSuccessToast({
-          description: res?.message || 'OTP sent successfully',
-        });
+        toast.success(res?.message || 'OTP sent successfully');
         navigation.navigate(authRoute.VerificationCode, {
           response: res,
           type: 'forgotPassword',
         });
       } catch (error: any) {
-        showErrorToast({
-          description:
-            error?.response?.data?.message ||
-            'Something went wrong. Please try again.',
-        });
+        toast.error('Something went wrong. Please try again.');
       } finally {
         setLoading(false);
       }

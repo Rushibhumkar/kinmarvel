@@ -9,14 +9,11 @@ import {
   authVerifyForgotPassOtp,
 } from '../../api/auth/authFunc';
 import {storeData} from '../../hooks/useAsyncStorage';
-import {
-  popUpConfToast,
-  showErrorToast,
-  showSuccessToast,
-} from '../../utils/toastModalFunction';
 import {authRoute} from './routeName';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const VerificationCode = ({navigation, route}: any) => {
+  const toast = useAppToast();
   const [otp, setOtp] = useState(new Array(6).fill(''));
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -35,7 +32,7 @@ const VerificationCode = ({navigation, route}: any) => {
   const handleSubmit = async () => {
     const enteredOtp = otp.join('');
     if (enteredOtp.length < 6) {
-      showErrorToast({description: 'Please enter a 6-digit OTP'});
+      toast.error('Please enter a 6-digit OTP');
       return;
     }
     setLoading(true);
@@ -67,7 +64,7 @@ const VerificationCode = ({navigation, route}: any) => {
         await storeData('authToken', authToken);
         await storeData('refreshToken', refreshToken);
         // popUpConfToast.successMessage('OTP Verified Successfully');
-        showSuccessToast({description: 'OTP Verified Successfully'});
+        toast.success('OTP Verified Successfully');
         navigation.reset({
           index: 0,
           routes: [{name: 'Main'}],
@@ -77,7 +74,7 @@ const VerificationCode = ({navigation, route}: any) => {
       }
     } catch (error) {
       console.log('OTP Verification Error:ssss', error);
-      showErrorToast({description: 'Invalid OTP, please try again'});
+      toast.error('Invalid OTP, please try again');
     } finally {
       setLoading(false);
     }

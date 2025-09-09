@@ -17,17 +17,17 @@ import AuthHeaderComp from '../../components/Headers/AuthHeaderComp';
 import {color} from '../../const/color';
 import {authSignup} from '../../api/auth/authFunc';
 import {myConsole} from '../../utils/myConsole';
-import {showSuccessToast} from '../../utils/toastModalFunction';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const Signup = ({navigation}: any) => {
-  const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [loading, setLoading] = useState(false);
-
+  const toast = useAppToast();
   const formik = useFormik({
     initialValues: {
       firstName: '',
       middleName: '',
       lastName: '',
+      userName: '',
       // dob: '',
       gender: '',
       phone: '',
@@ -36,8 +36,9 @@ const Signup = ({navigation}: any) => {
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required('First name is required'),
-      middleName: Yup.string(),
+      middleName: Yup.string().required('Middle name is required'),
       lastName: Yup.string().required('Last name is required'),
+      userName: Yup.string().required('User name is required'),
       // dob: Yup.string().required('Date of birth is required'),
       gender: Yup.string().required('Gender is required'),
       phone: Yup.string()
@@ -53,12 +54,13 @@ const Signup = ({navigation}: any) => {
       try {
         const response = await authSignup(values);
         console.log('Signup successful:', response);
-        showSuccessToast({description: 'OTP sent to your phone number.'});
+        toast.success('OTP sent to your phone number.');
         navigation.navigate(authRoute.VerificationCode, {
           response: response,
           type: 'signup',
         });
-      } catch (error) {
+      } catch (error: any) {
+        toast.error(error?.message || 'Signup failed!');
         console.error('Signup failed:', error);
       } finally {
         setLoading(false);
@@ -67,7 +69,9 @@ const Signup = ({navigation}: any) => {
   });
   return (
     <View style={{flex: 1, backgroundColor: '#fff'}}>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{paddingBottom: 100}}>
         <AuthHeaderComp title="Signup" isBack />
         <CustomTextInput
           label="First Name"
@@ -85,6 +89,12 @@ const Signup = ({navigation}: any) => {
           label="Last Name"
           name="lastName"
           placeholder="Last Name"
+          formik={formik}
+        />
+        <CustomTextInput
+          label="User Name"
+          name="userName"
+          placeholder="User Name"
           formik={formik}
         />
         <DropdownRNE

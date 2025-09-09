@@ -21,22 +21,20 @@ import {myConsole} from '../../utils/myConsole';
 import {useGetMyData} from '../../api/profile/profileFunc';
 import {useGetUserById} from '../../api/user/userFunc';
 import {deleteStory, markStoryAsSeen} from '../../api/story/storyFunc';
-import CustomErrorMessage from '../../components/CustomErrorMessage';
 import Video from 'react-native-video';
 import CustomBottomModal from '../../components/CustomBottomModal';
 import {myStyle, row, shadow} from '../../sharedStyles';
 import CustomText from '../../components/CustomText';
-import {
-  popUpConfToast,
-  showErrorToast,
-  showSuccessToast,
-} from '../../utils/toastModalFunction';
 import {useQueryClient} from '@tanstack/react-query';
 import {sizes} from '../../const';
+import {useAppToast} from '../../components/toast/AppToast';
+import ChatStack from '../../navigation/ChatStack';
+import {chatRoute} from '../AuthScreens/routeName';
 
 const {width, height} = Dimensions.get('window');
 
 const ViewStory = ({route, navigation}: any) => {
+  const toast = useAppToast();
   const {data, user} = route.params;
   const {data: myData} = useGetMyData();
   const {
@@ -48,7 +46,7 @@ const ViewStory = ({route, navigation}: any) => {
   const queryClient = useQueryClient();
 
   const [showViewsModal, setShowViewsModal] = useState(false);
-  const [selectedStory, setSelectedStory] = useState(null);
+  const [selectedStory, setSelectedStory] = useState<any>(null);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -58,7 +56,7 @@ const ViewStory = ({route, navigation}: any) => {
   const [videoDuration, setVideoDuration] = useState(0);
 
   const flatListRef = useRef<FlatList>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<any | null>(null);
   const isMe = myData?.data?._id === data[0]?.user?._id;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const animatedSec = 10000; // 10 seconds for image stories
@@ -93,7 +91,6 @@ const ViewStory = ({route, navigation}: any) => {
 
     const currentStory = data[selectedStoryIndex];
     let duration = animatedSec;
-
     if (currentStory?.mediaType === 'video') {
       if (videoDuration === 0) {
         return;
@@ -304,13 +301,13 @@ const ViewStory = ({route, navigation}: any) => {
       if (selectedStory?._id) {
         await deleteStory(selectedStory._id);
         queryClient.invalidateQueries({queryKey: ['userStories']});
-        showSuccessToast({description: 'Story deleted successfully'});
+        toast.success('Story deleted successfully');
         setShowViewsModal(false);
         navigation.goBack();
       }
     } catch (err) {
       console.error('Failed to delete story:', err);
-      showErrorToast({description: 'Error deleting story'});
+      toast.error('Error deleting story');
     }
   };
 
@@ -461,8 +458,8 @@ const ViewStory = ({route, navigation}: any) => {
           onPress={() => handleOpenStory(index)}
           style={{
             borderRadius: 12,
-            width: width / 3 - 16,
-            height: width / 3 - 16,
+            width: width / 2 - 16,
+            height: width / 2 - 16,
           }}>
           {item.mediaType === 'video' ? (
             <View style={{position: 'relative'}}>
@@ -493,6 +490,38 @@ const ViewStory = ({route, navigation}: any) => {
             />
           )}
         </TouchableOpacity>
+        {!isMe && (
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 6,
+            }}
+            onPress={() =>
+              navigation.navigate(chatRoute.ChatStack, {
+                screen: chatRoute.ChatsList,
+                params: {
+                  data: {
+                    receiverId: userData?.data?._id,
+                    media: {
+                      mediaUrl: `${fileViewURL}${item.mediaKey}`,
+                      mediaType: item?.mediaType,
+                    },
+                  },
+                  isComeFromAnotherScreen: true,
+                },
+              })
+            }>
+            <Image
+              source={require('../../assets/icons/forward.png')}
+              style={{height: 22, width: 22, marginRight: 6}}
+              tintColor={color.mainColor}
+            />
+            <CustomText>Reply</CustomText>
+          </TouchableOpacity>
+        )}
+
         {isMe && (
           <View style={styles.DelEyeMainView}>
             <TouchableOpacity
@@ -516,8 +545,8 @@ const ViewStory = ({route, navigation}: any) => {
               <CustomText>{item.views?.length || 0}</CustomText>
               <Image
                 source={require('../../assets/icons/openEye.png')}
-                style={{height: 24, width: 24}}
-                tintColor={'grey'}
+                style={{height: 22, width: 22}}
+                tintColor={color.mainColor}
               />
             </TouchableOpacity>
           </View>
@@ -551,7 +580,7 @@ const ViewStory = ({route, navigation}: any) => {
         <FlatList
           key={'grid'}
           data={data}
-          numColumns={3}
+          numColumns={2}
           contentContainerStyle={styles.gridContainer}
           keyExtractor={item => item._id}
           renderItem={renderStoryListItem}
@@ -594,7 +623,7 @@ const ViewStory = ({route, navigation}: any) => {
           Viewers
         </CustomText>
         {selectedStory?.views?.length ? (
-          selectedStory.views.map(viewer => (
+          selectedStory.views.map((viewer: any) => (
             <View key={viewer._id} style={{marginBottom: 12}}>
               <CustomText>
                 {viewer.firstName} {viewer.middleName} {viewer.lastName}
@@ -627,8 +656,8 @@ const styles = StyleSheet.create({
     width: '100%', // Ensure it spans full width for animation
   },
   thumbnailItem: {
-    width: width / 3 - 16,
-    height: width / 3 - 16,
+    width: width / 2 - 16,
+    height: width / 2 - 16,
     margin: 4,
     borderRadius: 10,
     overflow: 'hidden',

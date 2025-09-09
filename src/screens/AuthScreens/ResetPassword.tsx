@@ -1,19 +1,17 @@
 import React, {useState} from 'react';
-import {View, StyleSheet, Alert} from 'react-native';
-import {svgIcons} from '../../assets/svg/svg';
+import {View, StyleSheet} from 'react-native';
 import {useFormik} from 'formik';
 import * as Yup from 'yup';
 import {authRoute} from './routeName';
 import CustomTextInput from '../../components/TextInput/CustomTextInput';
 import AuthHeaderComp from '../../components/Headers/AuthHeaderComp';
 import CustomButton from '../../components/Buttons/CustomButton';
-import {myConsole} from '../../utils/myConsole';
 import {authSetPassword} from '../../api/auth/authFunc';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const ResetPassword = ({navigation, route}: any) => {
   const {response} = route.params;
-
+  const toast = useAppToast();
   const [loading, setLoading] = useState(false);
 
   const formik = useFormik({
@@ -42,18 +40,14 @@ const ResetPassword = ({navigation, route}: any) => {
         );
 
         if (resetPasswordResponse?.success) {
-          showSuccessToast({description: 'Password reset successfully!'});
+          toast.success('Password reset successfully!');
           navigation.navigate(authRoute.Login);
         } else {
-          showErrorToast({
-            description: 'Failed to reset password. Please try again.',
-          });
+          toast.error('Failed to reset password. Please try again.');
         }
       } catch (error) {
         // myConsole('Error resetting password', error);
-        showErrorToast({
-          description: 'Error resetting password. Please try again.',
-        });
+        toast.error('Error resetting password. Please try again.');
       } finally {
         setSubmitting(false);
         setLoading(false);

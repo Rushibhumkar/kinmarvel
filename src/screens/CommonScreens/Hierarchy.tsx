@@ -28,8 +28,8 @@ import CustomModal from '../../components/CustomModal';
 import CustomText from '../../components/CustomText';
 import {homeRoute, profileRoute} from '../AuthScreens/routeName';
 import {useQueryClient} from '@tanstack/react-query';
-import {popUpConfToast, showSuccessToast} from '../../utils/toastModalFunction';
 import {useGetMyData} from '../../api/profile/profileFunc';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const RelativeItem = ({
   level,
@@ -74,7 +74,7 @@ const Hierarchy = ({navigation}: any) => {
 
   const {data: myData, isLoading: myDataLoad} = useGetMyData();
   const queryClient = useQueryClient();
-
+  const toast = useAppToast();
   const {
     data: myTreeData,
     isLoading: myTreeLoad,
@@ -176,9 +176,7 @@ const Hierarchy = ({navigation}: any) => {
       setPendingNewMember(null);
       navigation.goBack();
 
-      showSuccessToast({
-        description: 'Member Added Successfully !',
-      });
+      toast.success('Member Added Successfully !');
     } catch (err) {
       console.log('Failed to add member:', err);
       const errorMessage =

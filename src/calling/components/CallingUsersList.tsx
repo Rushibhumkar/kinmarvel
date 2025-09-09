@@ -1,11 +1,14 @@
-import React, {useMemo} from 'react';
+// src/calling/components/CallingUsersList.tsx
+import React, {useCallback, useMemo, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
   ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  TextInput,
+  Keyboard,
 } from 'react-native';
 import {useGetAllUsers} from '../../api/user/userFunc';
 
@@ -33,54 +36,107 @@ const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
     isFetchingNextPage,
   } = useGetAllUsers();
 
+  const [query, setQuery] = useState('');
+
+  // Flatten paginated users
   const users: User[] = useMemo(
-    () => data?.pages.flatMap((p: any) => p.data.users) ?? [],
+    () => data?.pages.flatMap((p: any) => p?.data?.users ?? []) ?? [],
     [data],
   );
 
-  const filteredUsers = useMemo(
-    () => users.filter(u => u._id !== currentUserId),
+  // Remove self
+  const withoutSelf = useMemo(
+    () => users.filter(u => u?._id !== currentUserId),
     [users, currentUserId],
   );
 
-  const renderUser = ({item}: {item: User}) => {
-    const fullName = [item.firstName, item.lastName].filter(Boolean).join(' ');
-    return (
-      <View style={styles.card}>
-        <View style={{flex: 1}}>
-          <Text style={styles.name} numberOfLines={1}>
-            {fullName || 'User'}
-          </Text>
-          {!!item.phone && (
-            <Text style={styles.phone} numberOfLines={1}>
-              {item.phone}
+  // Filter by search query (firstName, lastName, phone)
+  const q = query.trim().toLowerCase();
+  const filteredUsers = useMemo(() => {
+    if (!q) return withoutSelf;
+    return withoutSelf.filter(u => {
+      const fn = (u.firstName || '').toLowerCase();
+      const ln = (u.lastName || '').toLowerCase();
+      const ph = (u.phone || '').toLowerCase();
+      return fn.includes(q) || ln.includes(q) || ph.includes(q);
+    });
+  }, [withoutSelf, q]);
+
+  const keyExtractor = useCallback((item: User) => item._id, []);
+
+  const renderItem = useCallback(
+    ({item}: {item: User}) => {
+      const fullName = [item.firstName, item.lastName]
+        .filter(Boolean)
+        .join(' ');
+      return (
+        <View style={styles.card}>
+          <View style={{flex: 1}}>
+            <Text style={styles.name} numberOfLines={1}>
+              {fullName || 'User'}
             </Text>
-          )}
-        </View>
+            {!!item.phone && (
+              <Text style={styles.phone} numberOfLines={1}>
+                {item.phone}
+              </Text>
+            )}
+          </View>
 
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.circleBtn, styles.videoBtn]}
-            onPress={() => onStartCall(item._id, 'video')}
-            activeOpacity={0.85}>
-            <Text style={styles.circleEmoji}>📹</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.circleBtn, styles.audioBtn]}
-            onPress={() => onStartCall(item._id, 'audio')}
-            activeOpacity={0.85}>
-            <Text style={styles.circleEmoji}>📞</Text>
-          </TouchableOpacity>
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.circleBtn, styles.videoBtn]}
+              onPress={() => onStartCall(item._id, 'video')}
+              activeOpacity={0.85}>
+              <Text style={styles.circleEmoji}>📹</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.circleBtn, styles.audioBtn]}
+              onPress={() => onStartCall(item._id, 'audio')}
+              activeOpacity={0.85}>
+              <Text style={styles.circleEmoji}>📞</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    );
-  };
+      );
+    },
+    [onStartCall],
+  );
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
+    // Avoid paginating while searching (local filter only)
+    if (q) return;
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  };
+  }, [q, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const clearSearch = useCallback(() => setQuery(''), []);
+
+  const SearchHeader = (
+    <View style={styles.searchWrap}>
+      <View style={styles.searchField}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search by name or phone"
+          placeholderTextColor="#9AA0A6"
+          style={styles.searchInput}
+          returnKeyType="search"
+          onSubmitEditing={Keyboard.dismiss}
+          clearButtonMode="never"
+        />
+        {query.length > 0 && (
+          <TouchableOpacity
+            style={styles.clearBtn}
+            onPress={clearSearch}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Text style={styles.clearText}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
 
   if (isLoading) {
     return (
@@ -102,18 +158,22 @@ const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
   return (
     <FlatList
       data={filteredUsers}
-      keyExtractor={item => item._id}
-      renderItem={renderUser}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
       contentContainerStyle={styles.listContent}
+      ListHeaderComponent={SearchHeader}
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.3}
+      keyboardShouldPersistTaps="handled"
       ListEmptyComponent={
         <View style={styles.centerWrap}>
-          <Text style={styles.emptyTxt}>No users found</Text>
+          <Text style={styles.emptyTxt}>
+            {q ? 'No users match your search' : 'No users found'}
+          </Text>
         </View>
       }
       ListFooterComponent={
-        hasNextPage && isFetchingNextPage ? (
+        hasNextPage && isFetchingNextPage && !q ? (
           <View style={styles.footerLoading}>
             <ActivityIndicator size="small" color="#007AFF" />
           </View>
@@ -129,6 +189,41 @@ const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
 export default CallingUsersList;
 
 const styles = StyleSheet.create({
+  // Search
+  searchWrap: {
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    paddingTop: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  searchField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 10,
+    height: 44,
+  },
+  searchIcon: {fontSize: 16, color: '#6B7280', marginRight: 6},
+  searchInput: {
+    flex: 1,
+    color: '#111827',
+    paddingVertical: 0,
+    fontSize: 15,
+  },
+  clearBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E5E7EB',
+  },
+  clearText: {fontSize: 14, color: '#111827', fontWeight: '700'},
+
+  // List
   listContent: {
     paddingVertical: 12,
     paddingHorizontal: 12,
@@ -166,6 +261,7 @@ const styles = StyleSheet.create({
   audioBtn: {backgroundColor: '#E9F9EE', borderColor: '#D9F2E2'},
   circleEmoji: {fontSize: 18},
 
+  // States
   centerWrap: {
     alignItems: 'center',
     justifyContent: 'center',

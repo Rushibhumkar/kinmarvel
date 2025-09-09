@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -23,8 +23,9 @@ import {uesGetRecentChats} from '../../api/chats/chatFunc';
 import {sizes} from '../../const';
 import {getLastSeen} from '../../utils/commonFunction';
 import {myConsole} from '../../utils/myConsole';
+import {useFocusEffect} from '@react-navigation/native';
 
-const ChatsList = ({navigation}: any) => {
+const ChatsList = ({navigation, route}: any) => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const {data: myData} = useGetMyData();
@@ -63,14 +64,6 @@ const ChatsList = ({navigation}: any) => {
       console.log({event: 'register', message: res});
     });
   };
-
-  const {
-    data: combinedData,
-    isLoading,
-    isError,
-    refetch,
-  } = useGetCombinedFollowData(searchValue);
-
   const {
     data: recentChats,
     isLoading: recentChatsLoad,
@@ -80,10 +73,58 @@ const ChatsList = ({navigation}: any) => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    refetch();
     recentChatsRefetch();
     setTimeout(() => setRefreshing(false), 1000);
   };
+
+  const {data, isComeFromAnotherScreen = false} = route.params || {};
+
+  const hasNavigatedRef = useRef(false);
+  useFocusEffect(
+    React.useCallback(() => {
+      hasNavigatedRef.current = false;
+    }, []),
+  );
+
+  useEffect(() => {
+    const debug = {
+      isComeFromAnotherScreen,
+      recentChatsLoad: !!recentChatsLoad,
+      hasChats: !!recentChats?.data?.chats?.length,
+      receiverId: data?.receiverId,
+      hasNavigated: hasNavigatedRef.current,
+    };
+
+    myConsole('ChatsList:navigateDebug', debug);
+    const chats = recentChats?.data?.chats || [];
+    if (
+      debug.isComeFromAnotherScreen &&
+      !debug.recentChatsLoad &&
+      debug.hasChats &&
+      debug.receiverId &&
+      !debug.hasNavigated
+    ) {
+      const match = chats.find(
+        (c: any) => c?.receiver?._id === debug.receiverId,
+      );
+      myConsole('ChatsList:navigateMatchFound', !!match);
+      if (match && !hasNavigatedRef.current) {
+        hasNavigatedRef.current = true;
+        navigation.navigate(chatRoute.ChattingScreen, {
+          data: match,
+          ...(data?.media ? {media: data.media} : {}),
+          isComeFromAnotherScreen: true,
+        });
+      } else {
+        hasNavigatedRef.current = true;
+        navigation.navigate(chatRoute.ChattingScreen, {
+          data: {receiver: {_id: debug.receiverId}},
+          ...(data?.media ? {media: data.media} : {}),
+          isComeFromAnotherScreen: true,
+        });
+      }
+    }
+  }, [isComeFromAnotherScreen, recentChatsLoad, recentChats, data, navigation]);
 
   return (
     <MainContainer
@@ -102,10 +143,10 @@ const ChatsList = ({navigation}: any) => {
       ]}>
       {recentChatsLoad ? (
         <LoadingCompo minHeight={sizes.height / 1.1} />
-      ) : isError ? (
+      ) : recentChatsErr ? (
         <CustomErrorMessage
           message="Failed to fetch chats. Please try again."
-          onRetry={refetch}
+          onRetry={recentChatsRefetch}
         />
       ) : recentChats?.data?.chats?.length > 0 ? (
         <FlatList
@@ -126,7 +167,6 @@ const ChatsList = ({navigation}: any) => {
               onPress={() =>
                 navigation.navigate(chatRoute.ChattingScreen, {
                   data: item,
-                  dsss: socket,
                 })
               }>
               <CustomAvatar

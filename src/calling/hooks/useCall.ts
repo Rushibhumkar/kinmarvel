@@ -9,6 +9,7 @@ import {
 } from 'react-native-webrtc';
 import socket from '../services/socket';
 import ICE_SERVERS from '../utils/webrtcConfig';
+import {RTCSessionDescriptionInit} from 'react-native-webrtc/lib/typescript/RTCSessionDescription';
 
 export const useCall = (userId: string) => {
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -60,7 +61,7 @@ export const useCall = (userId: string) => {
     });
 
     socket.on('error', err => {
-      console.log('[socket] Error:', err); // Update from "undefined" to actual error
+      console.log('[socket] Error:', err);
       endCall();
     });
     socket.on('call-rejected', ({from, reason}) => {

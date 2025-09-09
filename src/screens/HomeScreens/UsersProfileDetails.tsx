@@ -13,12 +13,12 @@ import {
   sendFollowRequest,
   useIsFollowerIsFollowing,
 } from '../../api/follow/followFunc';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
 import {useQueryClient} from '@tanstack/react-query';
 import OnlyLoader from '../../components/LoadingCompo/OnlyLoader';
 import {myStyle} from '../../sharedStyles';
 import {useGetUserById} from '../../api/user/userFunc';
 import {getValue} from '../../utils/commonFunction';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const UsersProfileDetails = ({navigation, route}: any) => {
   const {
@@ -40,7 +40,7 @@ const UsersProfileDetails = ({navigation, route}: any) => {
   } = useIsFollowerIsFollowing(data?._id);
   const [followReqLoading, setFollowReqLoading] = useState(false);
   const [cancelReqLoad, setCancelReqLoad] = useState(false);
-
+  const toast = useAppToast();
   const {
     data: userData,
     isLoading: userDataLoad,
@@ -54,7 +54,7 @@ const UsersProfileDetails = ({navigation, route}: any) => {
   //     await sendFollowRequest(data?._id);
   //     // queryClient.invalidateQueries({queryKey:['followData']});
   //     queryClient.invalidateQueries({queryKey: ['pendingFollowRequests']});
-  //     showSuccessToast({description: 'Follow request sent successfully'});
+  //     toast.success('Follow request sent successfully');
   //   } catch (error) {
   //     console.error('Error sending follow request:', error);
   //   } finally {
@@ -66,22 +66,20 @@ const UsersProfileDetails = ({navigation, route}: any) => {
     setFollowReqLoading(true);
     try {
       if (isFollowerIsFollowingData?.data?.following?.status === 'accepted') {
-        showSuccessToast({description: 'You are following back'});
+        toast.success('You are following back');
       } else if (
         isFollowerIsFollowingData?.data?.following?.status === 'pending'
       ) {
-        showSuccessToast({description: 'Follow request sent'});
+        toast.success('Follow request sent');
       } else {
         await sendFollowRequest(data?._id);
         queryClient.invalidateQueries({queryKey: ['pendingFollowRequests']});
         queryClient.invalidateQueries({queryKey: ['isFollowerIsFollowing']});
-        showSuccessToast({description: 'Follow request sent successfully'});
+        toast.success('Follow request sent successfully');
       }
     } catch (error) {
       console.error('Error during follow action:', error);
-      showErrorToast({
-        description: 'An error occurred while sending the follow request.',
-      });
+      toast.error('An error occurred while sending the follow request.');
     } finally {
       setFollowReqLoading(false);
     }
@@ -92,10 +90,10 @@ const UsersProfileDetails = ({navigation, route}: any) => {
       await cancelFollowRequest(data?._id);
       queryClient.invalidateQueries({queryKey: ['isFollowerIsFollowing']});
       queryClient.invalidateQueries({queryKey: ['pendingFollowRequests']});
-      showSuccessToast({description: 'Follow request canceled successfully'});
+      toast.success('Follow request canceled successfully');
     } catch (error) {
       console.error('Error cancelling follow request:', error);
-      showErrorToast({description: 'Error cancelling follow request.'});
+      toast.error('Error cancelling follow request.');
     } finally {
       setCancelReqLoad(false);
     }

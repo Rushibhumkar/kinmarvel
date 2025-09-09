@@ -79,7 +79,6 @@ const CallingMain = () => {
     } else {
       stopIncomingTone();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingCall]);
 
   return (
@@ -102,7 +101,6 @@ const CallingMain = () => {
             <View style={{width: 40}} />
           </View>
 
-          {/* Users List */}
           <CallingUsersList
             currentUserId={userId ?? ''}
             onStartCall={handleStartCall}

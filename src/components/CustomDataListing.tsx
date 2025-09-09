@@ -9,9 +9,9 @@ import {
   ViewStyle,
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {showSuccessToast} from '../utils/toastModalFunction';
 import {customDataListingStyle} from '../sharedStyles';
 import {color} from '../const/color';
+import {useToast} from 'react-native-toast-notifications';
 
 interface CustomDataListingProps {
   data: any; // Replace "any" with a more specific type as needed
@@ -32,8 +32,13 @@ const CustomDataListing: React.FC<CustomDataListingProps> = ({
   mb = 0,
   customViewStyling,
 }) => {
+  const toast = useToast();
   const handleCopyToClipboard = (label: string, value: string) => {
-    showSuccessToast({description: `${label} URL successfully copied!`});
+    toast.show(`${label} copied to clipboard`, {
+      type: 'success',
+      placement: 'top',
+      duration: 1800,
+    });
     Clipboard.setString(value);
   };
 

@@ -21,6 +21,9 @@ import notifee from '@notifee/react-native';
 import {registerDevice} from './src/api/notification/notificationFunc';
 import {myConsole} from './src/utils/myConsole';
 import {sizes} from './src/const';
+import {AppState} from 'react-native';
+import socket from './src/calling/services/socket';
+import {ToastProvider} from 'react-native-toast-notifications';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator();
@@ -81,6 +84,17 @@ const App = () => {
       Alert.alert('Permission Denied');
     }
   };
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'inactive' || state === 'background') {
+        try {
+          socket.disconnect();
+        } catch {}
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   const getFCMToken = async () => {
     try {
@@ -188,9 +202,15 @@ const App = () => {
     <GestureHandlerRootView style={{flex: 1, backgroundColor: '#fff'}}>
       <QueryClientProvider client={queryClient}>
         <NavigationContainer>
-          <PopupRootProvider>
-            <AppStack userToken={userToken} />
-          </PopupRootProvider>
+          <ToastProvider
+            placement="top"
+            offset={16}
+            duration={2500}
+            swipeEnabled>
+            <PopupRootProvider>
+              <AppStack userToken={userToken} />
+            </PopupRootProvider>
+          </ToastProvider>
         </NavigationContainer>
       </QueryClientProvider>
     </GestureHandlerRootView>

@@ -10,7 +10,6 @@ import CustomText from '../../components/CustomText';
 import CustomListing from './components/CustomListing';
 import {color} from '../../const/color';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
 import {commonRoute, profileRoute} from '../AuthScreens/routeName';
 import {useQueryClient} from '@tanstack/react-query';
 import {myStyle} from '../../sharedStyles';
@@ -19,8 +18,10 @@ import DeviceInfo from 'react-native-device-info';
 import {myConsole} from '../../utils/myConsole';
 import {showConfirmAlert} from '../../utils/alertHelper';
 import CustomModal from '../../components/CustomModal';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const ProfileMain: React.FC = ({navigation}: any) => {
+  const toast = useAppToast();
   const queryClient = useQueryClient();
   const [postNextScrModal, setPostNextScrModal] = useState<boolean>(false);
   const isNewUpdate = false;
@@ -33,7 +34,7 @@ const ProfileMain: React.FC = ({navigation}: any) => {
       onConfirm: async () => {
         try {
           await AsyncStorage.clear();
-          showSuccessToast({description: 'Logged out successfully'});
+          toast.success('Logged out successfully');
 
           queryClient.invalidateQueries({queryKey: ['myData']});
           navigation.reset({
@@ -42,7 +43,7 @@ const ProfileMain: React.FC = ({navigation}: any) => {
           });
         } catch (error) {
           console.error('Error logging out:', error);
-          showErrorToast({description: 'Error logging out. Please try again.'});
+          toast.error('Error logging out. Please try again.');
         }
       },
     });

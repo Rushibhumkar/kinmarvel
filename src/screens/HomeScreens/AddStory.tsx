@@ -10,20 +10,18 @@ import {
 import React, {useEffect, useState} from 'react';
 import MainContainer from '../../components/MainContainer';
 import {launchImageLibrary} from 'react-native-image-picker';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
 import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
 import CustomModal from '../../components/CustomModal';
 import CustomText from '../../components/CustomText';
 import {sizes} from '../../const';
 import {color} from '../../const/color';
-import CustomButton from '../../components/Buttons/CustomButton';
 import {API_AXIOS} from '../../api/axiosInstance';
-import {myConsole} from '../../utils/myConsole';
-import {homeRoute} from '../AuthScreens/routeName';
 import {useQueryClient} from '@tanstack/react-query';
 import Video from 'react-native-video';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const AddStory = ({navigation}: any) => {
+  const toast = useAppToast();
   const [imageViewModalVisible, setImageViewModalVisible] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<any>(null);
@@ -95,13 +93,13 @@ const AddStory = ({navigation}: any) => {
       }
     } catch (error) {
       console.error('❌ Error picking or uploading file:', error);
-      showErrorToast({description: 'Failed to pick or upload the file.'});
+      toast.error('Failed to pick or upload the file.');
     }
   };
 
   const uploadStory = async () => {
     if (!file?.mediaKey) {
-      showErrorToast({description: 'Please select a file first'});
+      toast.error('Please select a file first');
       return;
     }
 
@@ -116,11 +114,11 @@ const AddStory = ({navigation}: any) => {
       setFile(null);
       setCaption('');
       setImageViewModalVisible(false);
-      showSuccessToast({description: 'Story uploaded successfully'});
+      toast.success('Story uploaded successfully');
       navigation.goBack();
     } catch (error) {
       console.error('Error uploading story:', error);
-      showErrorToast({description: 'Failed to upload story'});
+      toast.error('Failed to upload story');
     }
   };
 

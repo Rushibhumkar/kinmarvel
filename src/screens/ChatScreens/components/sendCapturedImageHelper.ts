@@ -1,6 +1,6 @@
 import RNFS from 'react-native-fs';
 import {API_AXIOS} from '../../../api/axiosInstance';
-import {showErrorToast} from '../../../utils/toastModalFunction';
+import {useAppToast} from '../../../components/toast/AppToast';
 
 export const sendCapturedImageHelper = async ({
   uri,
@@ -24,7 +24,7 @@ export const sendCapturedImageHelper = async ({
   const pathSegments = filePath.split('/');
   const fileName = pathSegments[pathSegments.length - 1];
   const destFilePath = `${RNFS.DownloadDirectoryPath}/${fileName}`;
-
+  const toast = useAppToast();
   try {
     await RNFS.moveFile(filePath, destFilePath);
     const updatedUri = `file://${destFilePath}`;
@@ -54,12 +54,12 @@ export const sendCapturedImageHelper = async ({
 
       onSuccess({attachments: [attachment]});
     } else {
-      showErrorToast({description: 'Failed to upload the image.'});
+      toast.error('Failed to upload the image.');
       onError?.();
     }
   } catch (error) {
     console.error('Error saving or uploading captured image:', error);
-    showErrorToast({description: 'Error while saving or uploading the image.'});
+    toast.error('Error while saving or uploading the image.');
     onError?.();
   }
 };

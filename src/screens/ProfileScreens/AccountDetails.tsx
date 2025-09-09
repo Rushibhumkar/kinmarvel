@@ -16,7 +16,6 @@ import CustomDataListing from '../../components/CustomDataListing';
 import {useGetMyData} from '../../api/profile/profileFunc';
 import {color} from '../../const/color';
 import {capitalizeFirstLetter} from '../../utils/commonFunction';
-import {showErrorToast} from '../../utils/toastModalFunction';
 import {API_AXIOS, fileViewURL} from '../../api/axiosInstance';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {myConsole} from '../../utils/myConsole';
@@ -24,8 +23,10 @@ import {useQueryClient} from '@tanstack/react-query';
 import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
 import {sizes} from '../../const';
 import CustomErrorMessage from '../../components/CustomErrorMessage';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const AccountDetails = ({navigation}: any) => {
+  const toast = useAppToast();
   const queryClient = useQueryClient();
   // const {
   //   data: myData,
@@ -116,7 +117,7 @@ const AccountDetails = ({navigation}: any) => {
       }
     } catch (error) {
       console.error('Error picking or uploading file:', error);
-      showErrorToast({description: 'Failed to pick or upload the file.'});
+      toast.error('Failed to pick or upload the file.');
     } finally {
       setFileUploadLoad(false);
     }

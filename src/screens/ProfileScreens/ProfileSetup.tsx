@@ -15,17 +15,16 @@ import {
   useGetMyData,
   useGetProfileDynamicSchema,
 } from '../../api/profile/profileFunc';
-import {myConsole} from '../../utils/myConsole';
 import CustomAvatar from '../../components/CustomAvatar';
 import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
 import CustomDatePicker from '../../components/CustomDatePicker';
 import CustomTextInput from '../../components/TextInput/CustomTextInput';
 import CustomButton from '../../components/Buttons/CustomButton';
 import {convertToLowerCase} from '../../utils/commonFunction';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
 import {useQueryClient} from '@tanstack/react-query';
 import {API_AXIOS, fileViewURL} from '../../api/axiosInstance';
 import {launchImageLibrary} from 'react-native-image-picker';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const ProfileSetup = ({navigation}: any) => {
   const {
@@ -53,7 +52,7 @@ const ProfileSetup = ({navigation}: any) => {
   const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(null);
   const [fileUploadLoad, setFileUploadLoad] = useState<boolean>(false);
   const fields = schema?.data || [];
-
+  const toast = useAppToast();
   const initialValues = useMemo(() => {
     return {
       ...fields.reduce((acc: any, field: any) => {
@@ -79,7 +78,7 @@ const ProfileSetup = ({navigation}: any) => {
       try {
         await updateUserData(myData?.data?._id, formattedValues);
         queryClient.invalidateQueries({queryKey: ['myData']});
-        showSuccessToast({description: 'Profile Updated Successfully'});
+        toast.success('Profile Updated Successfully');
         navigation.goBack();
       } catch (error) {
         console.error('Failed to update profile:', error);
@@ -141,9 +140,7 @@ const ProfileSetup = ({navigation}: any) => {
               profileImageUrl: `${fileViewURL}${uploadedFilePath}`,
             });
             queryClient.invalidateQueries({queryKey: ['myData']});
-            showSuccessToast({
-              description: 'Profile Photo Updated Successfully',
-            });
+            toast.error('Profile Photo Updated Successfully');
             navigation.goBack();
           } catch (error) {
             console.error('Failed to update profile photo:', error);
@@ -153,7 +150,7 @@ const ProfileSetup = ({navigation}: any) => {
       }
     } catch (error) {
       console.error('Error picking or uploading file:', error);
-      showErrorToast({description: 'Failed to pick or upload the file.'});
+      toast.error('Failed to pick or upload the file.');
     } finally {
       setFileUploadLoad(false);
     }
@@ -218,7 +215,6 @@ const ProfileSetup = ({navigation}: any) => {
   );
 };
 
-// ✅ ProfileField ensures consistent rendering and prevents Hook Order issues
 const ProfileField = React.memo(({field, formik, handleChange}: any) => {
   return (
     <View>

@@ -8,12 +8,11 @@ import * as Yup from 'yup';
 import AuthHeaderComp from '../../components/Headers/AuthHeaderComp';
 import {color} from '../../const/color';
 import {authLogin} from '../../api/auth/authFunc';
-import {myConsole} from '../../utils/myConsole';
-import {showErrorToast, showSuccessToast} from '../../utils/toastModalFunction';
+import {useAppToast} from '../../components/toast/AppToast';
 
 const Login = ({navigation, onLogin}: any) => {
   const [loading, setLoading] = useState(false);
-
+  const toast = useAppToast();
   const formik = useFormik({
     initialValues: {
       phoneOremail: '',
@@ -37,13 +36,10 @@ const Login = ({navigation, onLogin}: any) => {
               password: formik.values.password,
             },
           });
-          showSuccessToast({description: 'OTP sent to your phone number.'});
+          toast.success('OTP sent to your phone number.');
         }
       } catch (error: any) {
-        showErrorToast({
-          description:
-            error?.message || 'Invalid credentials, please try again.',
-        });
+        toast.error(error?.message || 'Invalid credentials, please try again.');
       } finally {
         setLoading(false);
       }

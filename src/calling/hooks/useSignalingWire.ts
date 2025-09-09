@@ -24,23 +24,6 @@ export default function useSignalingWire({
   stopIncomingTone,
 }: UseSignalingWireParams) {
   useEffect(() => {
-    const registerSocket = async () => {
-      try {
-        const token = await getData('authToken');
-        if (token && userId) {
-          socket.auth = {token};
-          socket.connect();
-          socket.emit('register', userId, token);
-        } else {
-          console.warn('[Socket] Missing token or userId');
-        }
-      } catch (e) {
-        console.warn('[Socket] Register error:', e);
-      }
-    };
-
-    registerSocket();
-
     const onRejected = () => {
       stopOutgoingTone();
       stopIncomingTone();
@@ -72,12 +55,9 @@ export default function useSignalingWire({
       socket.off('call-rejected', onRejected);
       socket.off('call-answered', onAnswered);
       socket.off('call-ended', onEnded);
-      try {
-        socket.disconnect();
-      } catch {}
+      // ⛔️ No connect/disconnect here anymore
       stopOutgoingTone();
       stopIncomingTone();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peerId, userId]);
+  }, [peerId]);
 }
