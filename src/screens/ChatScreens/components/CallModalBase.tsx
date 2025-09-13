@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Modal,
   View,
@@ -26,6 +26,7 @@ const CallModalBase: React.FC<CallModalBaseProps> = ({
 }) => {
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
+  const [closing, setClosing] = useState(false);
   const [speakerMode, setSpeakerMode] = useState<
     'speaker' | 'ear' | 'bluetooth'
   >('speaker');
@@ -47,12 +48,25 @@ const CallModalBase: React.FC<CallModalBaseProps> = ({
     }
   };
 
+  const closeNow = () => {
+    setClosing(true);
+    onClose();
+  };
+
+  // when parent actually hides it, reset local closing flag
+  useEffect(() => {
+    if (!visible) setClosing(false);
+  }, [visible]);
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal
+      visible={visible && !closing}
+      transparent
+      animationType="slide"
+      onRequestClose={closeNow}>
       <View style={styles.container}>
         {/* Top */}
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={onClose}>
+          <TouchableOpacity onPress={closeNow}>
             <Image
               source={require('../../../assets/icons/back.png')}
               style={styles.icon}
@@ -110,12 +124,12 @@ const CallModalBase: React.FC<CallModalBaseProps> = ({
           </TouchableOpacity>
 
           {/* End Call */}
-          <TouchableOpacity style={styles.endCallBtn} onPress={onClose}>
+          {/* <TouchableOpacity style={styles.endCallBtn} onPress={closeNow}>
             <Image
               source={require('../../../assets/icons/phoneDown.png')}
               style={[styles.controlIcon, {tintColor: '#fff'}]}
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </Modal>

@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import {fetchPosts} from '../api/posts/postFunc';
 import PostCard from '../screens/PostStack/components/PostCard';
+import {myConsole} from '../utils/myConsole';
+import CommentSheet from '../screens/PostStack/components/CommentSheet';
 
 type ApiPost = any; // your PostCard already expects `post` prop; keep flexible
 type ApiResponse = {
@@ -26,6 +28,25 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [activePost, setActivePost] = useState<any>(null);
+
+  const handleOpenComments = useCallback((post: ApiPost) => {
+    setActivePost(post);
+    myConsole('[PostsFeed] open comments for', {postId: post?._id});
+  }, []);
+
+  const handleCommentCountChange = useCallback(
+    (postId: string, delta: number) => {
+      setPosts(prev =>
+        prev.map(p =>
+          p._id === postId
+            ? {...p, commentCount: Math.max(0, (p.commentCount || 0) + delta)}
+            : p,
+        ),
+      );
+    },
+    [],
+  );
 
   const loadPage = useCallback(
     async (nextPage: number, opts?: {refresh?: boolean}) => {
@@ -103,22 +124,35 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
       </View>
     );
   }
-
   return (
-    <FlatList
-      data={posts}
-      keyExtractor={keyExtractor}
-      renderItem={({item}) => <PostCard post={item} />}
-      contentContainerStyle={styles.listContent}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      ListHeaderComponent={headerComponent || null}
-      onEndReachedThreshold={0.4}
-      onEndReached={onEndReached}
-      ListFooterComponent={ListFooter}
-      showsVerticalScrollIndicator={false}
-    />
+    <View style={{flex: 1}}>
+      <FlatList
+        data={posts}
+        keyExtractor={keyExtractor}
+        renderItem={({item}) => (
+          <PostCard
+            post={item}
+            onOpenComments={handleOpenComments}
+            onCommentCountChange={handleCommentCountChange}
+          />
+        )}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListHeaderComponent={headerComponent || null}
+        onEndReachedThreshold={0.4}
+        onEndReached={onEndReached}
+        ListFooterComponent={ListFooter}
+        showsVerticalScrollIndicator={false}
+      />
+      <CommentSheet
+        visible={!!activePost}
+        postId={activePost?._id}
+        onClose={() => setActivePost(null)}
+        onCommentCountChange={handleCommentCountChange}
+      />
+    </View>
   );
 };
 

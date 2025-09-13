@@ -1,4 +1,4 @@
-import {useCallback, useEffect} from 'react';
+import {useCallback, useEffect, useRef} from 'react';
 import {Keyboard} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 
@@ -9,11 +9,19 @@ export const useMarkSeenOnFocus = (
   senderId: string | undefined,
   socket?: {emit: (evt: string, payload: any) => void},
 ) => {
+  const lastEmittedIdRef = useRef<string | undefined>(undefined);
   useFocusEffect(
     useCallback(() => {
       if (!messages?.length || !senderId || !socket) return;
-      const lastReceivedMessage = messages.find(m => m?.sender !== senderId);
-      if (lastReceivedMessage?._id) {
+      const getId = (v: any) => (typeof v === 'string' ? v : v?._id);
+      const lastReceivedMessage = messages.find(
+        m => getId(m?.sender) && getId(m?.sender) !== senderId,
+      );
+      if (
+        lastReceivedMessage?._id &&
+        lastEmittedIdRef.current !== lastReceivedMessage._id
+      ) {
+        lastEmittedIdRef.current = lastReceivedMessage._id;
         socket.emit('markSeenMessage', lastReceivedMessage._id);
       }
     }, [messages, senderId, socket]),
@@ -65,11 +73,27 @@ export const fetchMessagesHelper = async ({
       `${SOCKET_SERVER_URL}/api/chat/${receiverId}?limit=20&page=${nextPage}`,
     );
     const newMessages = res?.data?.data?.messages ?? [];
+
+    // helper: stable sort (newest first) and de-dupe by _id
+    const normalize = (arr: any[]) =>
+      arr
+        .filter(Boolean)
+        .reduce((acc: any[], m: any) => {
+          if (!m?._id) return acc;
+          if (!acc.some(x => x._id === m._id)) acc.push(m);
+          return acc;
+        }, [])
+        .sort(
+          (a, b) =>
+            new Date(b?.createdAt ?? 0).getTime() -
+            new Date(a?.createdAt ?? 0).getTime(),
+        );
+
     if (nextPage === 1) {
-      setMessages(newMessages);
+      setMessages(() => normalize(newMessages));
       setFetchError(null);
     } else {
-      setMessages((prev: any[]) => [...prev, ...newMessages]);
+      setMessages((prev: any[]) => normalize([...prev, ...newMessages]));
     }
     setPage(nextPage);
   } catch (error: any) {

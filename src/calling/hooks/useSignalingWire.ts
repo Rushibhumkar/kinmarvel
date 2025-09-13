@@ -11,6 +11,7 @@ type UseSignalingWireParams = {
   setIncomingCall: (v: any) => void;
   stopOutgoingTone: () => void;
   stopIncomingTone: () => void;
+  endCall: () => void;
 };
 
 export default function useSignalingWire({
@@ -22,6 +23,7 @@ export default function useSignalingWire({
   setIncomingCall,
   stopOutgoingTone,
   stopIncomingTone,
+  endCall,
 }: UseSignalingWireParams) {
   useEffect(() => {
     const onRejected = () => {
@@ -30,6 +32,8 @@ export default function useSignalingWire({
       setIncomingCall(null);
       setIsDialing(false);
       setInCall(false);
+      setPeerId(null);
+      endCall();
     };
 
     const onAnswered = ({from}: {from?: string}) => {
@@ -37,14 +41,17 @@ export default function useSignalingWire({
       setPeerId(from ?? peerId);
       setIsDialing(false);
       setInCall(true);
+      setIncomingCall(null);
     };
 
     const onEnded = () => {
       stopOutgoingTone();
       stopIncomingTone();
+      endCall();
       setIncomingCall(null);
       setInCall(false);
       setIsDialing(false);
+      setPeerId(null);
     };
 
     socket.on('call-rejected', onRejected);
@@ -59,5 +66,14 @@ export default function useSignalingWire({
       stopOutgoingTone();
       stopIncomingTone();
     };
-  }, [peerId]);
+  }, [
+    peerId,
+    endCall,
+    setPeerId,
+    setIncomingCall,
+    setIsDialing,
+    setInCall,
+    stopOutgoingTone,
+    stopIncomingTone,
+  ]);
 }

@@ -13,8 +13,6 @@ import CustomText from '../../../components/CustomText';
 import {color} from '../../../const/color';
 import CustomAvatar from '../../../components/CustomAvatar';
 import MessageStatusTicks from './MessageStatusTicks';
-import {useNavigation} from '@react-navigation/native';
-import ImageViewer from 'react-native-image-zoom-viewer';
 import {fileViewURL} from '../../../api/axiosInstance';
 import Video from 'react-native-video';
 import {sizes} from '../../../const';
@@ -27,18 +25,18 @@ const MessageComponent = ({
 }: any) => {
   const [viewFullImg, setViewFullImg] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>('');
-  const [isPaused, setIsPaused] = useState(false); // To handle play/pause functionality
+  const [isPaused, setIsPaused] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
   const handleImageClick = (uri: string) => {
-    setSelectedImage(uri); // Set the selected image URI or video URI
-    setViewFullImg(true); // Show the full-screen image view
-    setIsPaused(false); // Ensure the video starts playing when full-screen is opened
+    setSelectedImage(uri);
+    setViewFullImg(true);
+    setIsPaused(false);
   };
 
-  const navigation = useNavigation();
-  const hasText = data.text && data.text.trim().length > 0;
-  const hasAttachments = data.attachments && data.attachments.length > 0;
+  const hasText = !!(data.text && String(data.text).trim().length > 0);
+  const hasAttachments =
+    Array.isArray(data.attachments) && data.attachments.length > 0;
   const hasContact =
     data.contact &&
     typeof data.contact === 'object' &&
@@ -50,159 +48,136 @@ const MessageComponent = ({
     data.location.latitude !== undefined &&
     data.location.longitude !== undefined;
 
-  const isSender = data.sender === senderId;
-
+  const isSender =
+    (typeof data?.sender === 'string' ? data.sender : data?.sender?._id) ===
+    senderId;
   const isSelected = selectedMessages?.some?.(m => m._id === data._id);
-
+  myConsole('dataaaa', data);
   return (
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={() => {
-        if (isSelected) {
-          onToggleSelect(data);
-          // unselect on single tap if already selected
-        }
+        if (isSelected) onToggleSelect(data);
       }}
-      onLongPress={() => onToggleSelect(data)} // toggle on long press
+      onLongPress={() => onToggleSelect(data)}
       style={[
-        data.sender === senderId && data.attachments?.length > 0
+        isSender && data.attachments?.length > 0
           ? styles.myMsgAttachment
-          : data.sender === senderId
+          : isSender
           ? styles.myMessageContainer
           : styles.otherMessageContainer,
         {
-          alignSelf: data.sender === senderId ? 'flex-end' : 'flex-start',
+          alignSelf: isSender ? 'flex-end' : 'flex-start',
           backgroundColor: isSelected
             ? '#B2DFDB'
-            : data.sender === senderId
+            : isSender
             ? color.mainColorFade
             : '#E0E0E0',
         },
       ]}
       key={data?._id}>
-      {/* If text exists, show text and timestamp in the same row */}
+      {/* Attachments */}
       {hasAttachments &&
-        data.attachments.map((attachment: any, index: number) => (
-          <View key={index} style={{position: 'relative', marginBottom: 6}}>
-            <TouchableOpacity
-              onPress={() => {
-                if (isSelected) {
-                  onToggleSelect(data);
-                } else {
-                  handleImageClick(`${fileViewURL}${attachment.path}`);
-                }
-              }}
-              onLongPress={() => onToggleSelect(data)}>
-              {attachment.mimeType.includes('video') ? (
-                <View style={{position: 'relative'}}>
-                  <Video
-                    source={{uri: `${fileViewURL}${attachment.path}`}}
+        data.attachments.map((attachment: any, index: number) => {
+          const isVideo = String(attachment.mimeType || '').includes('video');
+          const uri = `${fileViewURL}${attachment.path}`;
+
+          return (
+            <View
+              key={`${data?._id || 'att'}-${index}`}
+              style={{position: 'relative', marginBottom: 6}}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (isSelected) onToggleSelect(data);
+                  else handleImageClick(uri);
+                }}
+                onLongPress={() => onToggleSelect(data)}>
+                {isVideo ? (
+                  <View style={{position: 'relative'}}>
+                    <Video
+                      source={{uri}}
+                      style={{height: 220, width: 220}}
+                      resizeMode="cover"
+                      paused={true}
+                      poster={uri}
+                      onError={(error: any) =>
+                        myConsole('Error loading video:', error)
+                      }
+                    />
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: [{translateX: -20}, {translateY: -20}],
+                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                        padding: 10,
+                        borderRadius: 30,
+                      }}>
+                      <Image
+                        source={require('../../../assets/icons/play.png')}
+                        style={{width: 30, height: 30, tintColor: '#fff'}}
+                      />
+                    </View>
+                  </View>
+                ) : (
+                  <Image
+                    source={{uri}}
                     style={{height: 220, width: 220}}
                     resizeMode="cover"
-                    paused={true}
-                    poster={`${fileViewURL}${attachment.path}`}
-                    onError={(error: any) =>
-                      myConsole('Error loading video:', error)
-                    }
+                    onError={error => myConsole('Error loading image:', error)}
                   />
+                )}
+              </TouchableOpacity>
 
-                  {/* Centered Play Icon */}
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: [{translateX: -20}, {translateY: -20}],
-                      backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                      padding: 10,
-                      borderRadius: 30,
-                    }}>
-                    <Image
-                      source={require('../../../assets/icons/play.png')} // your downloaded PNG
-                      style={{width: 30, height: 30, tintColor: '#fff'}}
-                    />
-                  </View>
-                </View>
-              ) : (
-                <Image
-                  source={{uri: `${fileViewURL}${attachment.path}`}}
-                  style={{height: 220, width: 220}}
-                  resizeMode="cover"
-                  onError={error => myConsole('Error loading image:', error)}
+              {/* Time + ticks over media */}
+              <View style={styles.attachmentTickTime}>
+                <CustomText style={{color: '#fff', fontSize: 10}}>
+                  {formatTime24Hour(data.createdAt)}
+                </CustomText>
+                <MessageStatusTicks
+                  isSeen={data.isSeen}
+                  isDelivered={data.isDelivered}
+                  isSender={isSender}
                 />
-              )}
-            </TouchableOpacity>
-
-            {/* Time and Ticks on media */}
-            <View style={styles.attachmentTickTime}>
-              <CustomText style={{color: '#fff', fontSize: 10}}>
-                {formatTime24Hour(data.createdAt)}
-              </CustomText>
-              <MessageStatusTicks
-                isSeen={data.isSeen}
-                isDelivered={data.isDelivered}
-                isSender={data.sender === senderId}
-              />
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
 
+      {/* Full-screen viewer (image or video) */}
       {viewFullImg && (
-        <Modal
-          visible={viewFullImg}
-          transparent={true}
-          onRequestClose={() => setViewFullImg(false)}>
-          <View
-            style={{
-              flex: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            }}>
+        <Modal visible transparent onRequestClose={() => setViewFullImg(false)}>
+          <View style={styles.fullViewBackdrop}>
             {selectedImage.endsWith('.mp4') ? (
               <Video
-                source={{uri: selectedImage}} // Use the URI selected from the chat message
+                source={{uri: selectedImage}}
                 style={{width: sizes.width, height: sizes.height}}
                 resizeMode="contain"
-                paused={isPaused} // Play or pause based on the state
-                onError={() => setLoadError(true)} // Handle the error and set loadError state
-                onEnd={() => setViewFullImg(false)} // Close when video ends
+                paused={isPaused}
+                onError={() => setLoadError(true)}
+                onEnd={() => setViewFullImg(false)}
               />
             ) : (
               <Image
-                source={{uri: selectedImage}} // Use the selected image URI
+                source={{uri: selectedImage}}
                 style={{width: sizes.width, height: sizes.height}}
                 resizeMode="contain"
               />
             )}
+
             <TouchableOpacity
-              style={{
-                position: 'absolute',
-                top: 20,
-                left: 20,
-                backgroundColor: '#000',
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderRadius: 50,
-                padding: 12,
-              }}
+              style={styles.fullViewBackBtn}
               activeOpacity={0.6}
               onPress={() => setViewFullImg(false)}>
               <Image
                 source={require('../../../assets/icons/back.png')}
-                style={{height: 32, width: 32}}
-                tintColor={'#fff'}
+                style={{height: 32, width: 32, tintColor: '#fff'}}
               />
             </TouchableOpacity>
-            {/* Show error message if the video fails to load */}
+
             {loadError && (
-              <CustomText
-                style={{
-                  color: 'red',
-                  position: 'absolute',
-                  bottom: 20,
-                  zIndex: 20,
-                }}>
+              <CustomText style={styles.fullViewError}>
                 Failed to load video
               </CustomText>
             )}
@@ -210,14 +185,7 @@ const MessageComponent = ({
             {selectedImage.endsWith('.mp4') && (
               <TouchableOpacity
                 onPress={() => setIsPaused(!isPaused)}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  zIndex: 20,
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  padding: 10,
-                  borderRadius: 50,
-                }}>
+                style={styles.fullViewPlayPause}>
                 <Image
                   source={
                     isPaused
@@ -232,79 +200,55 @@ const MessageComponent = ({
         </Modal>
       )}
 
+      {/* Contact card */}
       {hasContact && (
         <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-            }}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
             <CustomAvatar
               imgUrl={data.contact.profilePicture}
-              name={data.contact.name}
+              name={String(data.contact.name ?? '')}
               imgStyle={{height: 32, width: 32}}
             />
             <CustomText
-              style={
-                data.sender === senderId
-                  ? styles.myMessageText
-                  : styles.otherMessageText
-              }>
+              style={isSender ? styles.myMessageText : styles.otherMessageText}>
               {data.contact.name}
             </CustomText>
           </View>
           <CustomText
-            style={
-              data.sender === senderId
-                ? styles.myMsgNumber
-                : styles.otherMsgNumber
-            }>
+            style={isSender ? styles.myMsgNumber : styles.otherMsgNumber}>
             {data.contact.phoneNumber}
           </CustomText>
           {data.contact.email && (
             <CustomText
-              style={
-                data.sender === senderId
-                  ? styles.myMsgNumber
-                  : styles.otherMsgNumber
-              }>
+              style={isSender ? styles.myMsgNumber : styles.otherMsgNumber}>
               {data.contact.email}
             </CustomText>
           )}
           <View style={styles.timeTickView}>
             <CustomText
-              style={styles.callBtn}
-              onPress={() => {
-                const phoneNumber = data.contact.phoneNumber;
-                Linking.openURL(`tel:${phoneNumber}`);
-              }}>
-              Call
-            </CustomText>
-            <CustomText
-              style={
-                data.sender === senderId
-                  ? styles.myMsgTime
-                  : styles.otherMsgTime
-              }>
+              style={isSender ? styles.myMsgTime : styles.otherMsgTime}>
               {formatTime24Hour(data.createdAt)}
             </CustomText>
             <MessageStatusTicks
               isSeen={data.isSeen}
               isDelivered={data.isDelivered}
-              isSender={data.sender === senderId}
+              isSender={isSender}
             />
           </View>
         </View>
       )}
 
+      {/* Location card */}
       {hasLocation && (
         <View>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
             <Image
               source={require('../../../assets/icons/location.png')}
-              style={{height: 20, width: 20}}
-              tintColor={isSender ? '#fff' : '#000'}
+              style={{
+                height: 20,
+                width: 20,
+                tintColor: isSender ? '#fff' : '#000',
+              }}
             />
             <CustomText
               style={isSender ? styles.myMessageText : styles.otherMessageText}>
@@ -334,67 +278,39 @@ const MessageComponent = ({
             </CustomText>
             <View style={styles.seeMapBelowViewStyle}>
               <CustomText
-                style={
-                  data.sender === senderId
-                    ? styles.myMsgTime
-                    : styles.otherMsgTime
-                }>
+                style={isSender ? styles.myMsgTime : styles.otherMsgTime}>
                 {formatTime24Hour(data.createdAt)}
               </CustomText>
               <MessageStatusTicks
                 isSeen={data.isSeen}
                 isDelivered={data.isDelivered}
-                isSender={data.sender === senderId}
+                isSender={isSender}
               />
             </View>
           </View>
         </View>
       )}
 
+      {/* Plain text */}
       {hasText && !hasAttachments && !hasContact && !hasLocation && (
         <View style={styles.textWithTimestamp}>
           <CustomText
-            style={
-              data.sender === senderId
-                ? styles.myMessageText
-                : styles.otherMessageText
-            }>
+            style={isSender ? styles.myMessageText : styles.otherMessageText}>
             {data.text}
           </CustomText>
           <View style={{flexDirection: 'row', alignItems: 'flex-end', gap: 4}}>
             <CustomText
-              style={
-                data.sender === senderId
-                  ? styles.myMsgTime
-                  : styles.otherMsgTime
-              }>
+              style={isSender ? styles.myMsgTime : styles.otherMsgTime}>
               {formatTime24Hour(data.createdAt)}
             </CustomText>
             <MessageStatusTicks
               isSeen={data.isSeen}
               isDelivered={data.isDelivered}
-              isSender={data.sender === senderId}
+              isSender={isSender}
             />
           </View>
         </View>
       )}
-
-      {/* Show timestamp below if attachments exist */}
-      {/* {hasAttachments && (
-        <View style={styles.ifAttachmentsMsgView}>
-          <CustomText
-            style={
-              data.sender === senderId ? styles.myMsgTime : styles.otherMsgTime
-            }>
-            {formatTime24Hour(data.createdAt)}
-          </CustomText>
-          <MessageStatusTicks
-            isSeen={data.isSeen}
-            isDelivered={data.isDelivered}
-            isSender={data.sender === senderId}
-          />
-        </View>
-      )} */}
     </TouchableOpacity>
   );
 };
@@ -433,28 +349,8 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
-  // ifAttachmentsMsgView: {
-  //   flexDirection: 'row',
-  //   alignItems: 'center',
-  //   gap: 4,
-  //   alignSelf: 'flex-end',
-  //   backgroundColor: 'red',
-  // },
-  ifAttachmentsMsgView: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-end',
-    backgroundColor: 'red',
-    borderBottomRightRadius: 8,
-    borderBottomLeftRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginTop: 2,
-  },
-
   otherMessageContainer: {
-    flexDirection: 'column', // Stack messages and attachments properly
+    flexDirection: 'column',
     alignItems: 'flex-start',
     alignSelf: 'flex-start',
     backgroundColor: '#E0E0E0',
@@ -474,61 +370,52 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   textWithTimestamp: {
-    flexDirection: 'row', // Align text and time in the same row
+    flexDirection: 'row',
     gap: 4,
     justifyContent: 'space-between',
   },
   myMessageText: {
     fontSize: 16,
-    color: '#fff', // White text for sender messages
-    flexShrink: 1, // Prevents overflow
+    color: '#fff',
+    flexShrink: 1,
   },
   otherMessageText: {
     fontSize: 16,
-    color: '#000', // Black text for receiver messages
-    flexShrink: 1, // Prevents overflow
+    color: '#000',
+    flexShrink: 1,
   },
   myLocTxt: {
     marginTop: 4,
     fontSize: 14,
-    color: '#ffffff80', // White text for sender messages
-    flexShrink: 1, // Prevents overflow
+    color: '#ffffffb3',
+    flexShrink: 1,
   },
   otherLocTxt: {
     fontSize: 14,
-    color: 'grey', // Black text for receiver messages
-    flexShrink: 1, // Prevents overflow
+    color: 'grey',
+    flexShrink: 1,
   },
   otherMsgTime: {
     fontSize: 12,
     color: 'grey',
-    marginLeft: 5, // Space between text and timestamp
+    marginLeft: 5,
     alignSelf: 'flex-end',
   },
   myMsgTime: {
     fontSize: 12,
     color: '#fff',
     alignSelf: 'flex-end',
-    marginLeft: 5, // Space between text and timestamp
+    marginLeft: 5,
   },
   otherMsgNumber: {
     fontSize: 14,
     color: 'grey',
     alignSelf: 'flex-end',
   },
-
   myMsgNumber: {
     fontSize: 14,
     color: '#fff',
     alignSelf: 'flex-end',
-  },
-  callBtn: {
-    textDecorationLine: 'underline',
-    color: color.bluTextColor,
-    fontWeight: '800',
-    position: 'relative',
-    left: -10,
-    paddingHorizontal: 8,
   },
   seeLocBtn: {
     textDecorationLine: 'underline',
@@ -552,5 +439,35 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 4,
     paddingVertical: 2,
+  },
+  fullViewBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  fullViewBackBtn: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 50,
+    padding: 12,
+  },
+  fullViewError: {
+    color: 'red',
+    position: 'absolute',
+    bottom: 20,
+    zIndex: 20,
+  },
+  fullViewPlayPause: {
+    position: 'absolute',
+    top: '50%',
+    zIndex: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 10,
+    borderRadius: 50,
   },
 });

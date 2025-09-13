@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, {useState, useEffect, useCallback, useRef, useMemo} from 'react';
 import {
   View,
   FlatList,
@@ -6,12 +6,10 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
-  Alert,
 } from 'react-native';
 import MainContainer from '../../components/MainContainer';
 import {useGetMyData} from '../../api/profile/profileFunc';
-import io, {Socket} from 'socket.io-client';
+import {io, Socket} from 'socket.io-client';
 import {API_AXIOS, SOCKET_SERVER_URL} from '../../api/axiosInstance';
 import {myConsole} from '../../utils/myConsole';
 import {chatScreenStyles, myStyle} from '../../sharedStyles';
@@ -22,7 +20,6 @@ import {color} from '../../const/color';
 import CustomModal from '../../components/CustomModal';
 import CustomText from '../../components/CustomText';
 import {MsgDataType} from '../../utils/typescriptInterfaces';
-import {useFocusEffect} from '@react-navigation/native';
 import MessageComponent from './components/MessageComponent';
 import {CameraType} from 'react-native-camera-kit';
 import RNFS from 'react-native-fs';
@@ -34,12 +31,8 @@ import CustomErrorMessage from '../../components/CustomErrorMessage';
 import {pickFileHelper} from './components/pickFileHelper';
 import CameraCaptureView from './components/CameraCaptureView';
 import {sendCapturedImageHelper} from './components/sendCapturedImageHelper';
-import CapturedImagePreviewModal from './components/CapturedImagePreviewModal';
-import CallModalBase from './components/CallModalBase';
 import {getTextWithLength} from '../../utils/commonFunction';
 import {deleteMessagesByIds} from '../../api/chats/chatFunc';
-import CustomForwardModal from './components/CustomForwardModal';
-import Clipboard from '@react-native-clipboard/clipboard';
 import {useAppToast} from '../../components/toast/AppToast';
 import {
   fetchMessagesHelper,
@@ -50,124 +43,211 @@ import {
 
 const ChattingScreen = ({navigation, route}: any) => {
   const toast = useAppToast();
-  const {data, media, isComeFromAnotherScreen = false} = route.params;
+  const {data, media, isComeFromAnotherScreen = false} = route.params || {};
   const inputAutoFocus = isComeFromAnotherScreen;
-  myConsole('sdlfkjldsf', media);
-  myConsole('isComeFromAnotherScreennnn', isComeFromAnotherScreen);
+  // Forwarding support
   const {forwardedMessages, forwardedToUserId} = route.params || {};
+
+  // Me
   const {data: myData} = useGetMyData();
+  const senderId: string | undefined = myData?.data?._id;
+
+  // helper to normalize user id whether it's a string or an object
+  const getId = (v: any): string | undefined =>
+    typeof v === 'string' ? v : v?._id;
+  // Figure out who the other person is (peer user object if available)
+  const peerUser = useMemo(() => {
+    const s = data?.sender;
+    const r = data?.receiver;
+    const sId = getId(s);
+    const rId = getId(r);
+    if (senderId && sId === senderId)
+      return typeof r === 'object' ? r : undefined;
+    if (senderId && rId === senderId)
+      return typeof s === 'object' ? s : undefined;
+    // fallback when coming from list where only receiver is sent
+    return (
+      (typeof r === 'object' && r) ||
+      (typeof data === 'object' ? data : undefined)
+    );
+  }, [data, senderId]);
+
+  // Resolve peer id (always the other person's _id)
+  const receiverId: string | undefined = useMemo(() => {
+    const sId = getId(data?.sender);
+    const rId = getId(data?.receiver);
+    if (senderId && sId === senderId) return rId;
+    if (senderId && rId === senderId) return sId;
+    return rId ?? getId(data) ?? getId(data?.user);
+  }, [data, senderId]);
+
+  // UI state
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<any>>([]);
   const [attachmentsPopup, setAttachmentsPopup] = useState(false);
-  const [socket, setSocket] = useState<Socket>();
-  const [messageLoad, setMessageLoad] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [imageViewModalVisible, setImageViewModalVisible] = useState(false);
   const [file, setFile] = useState<any>(null);
-  const [sendCapturedImgLoad, setSendCapturedImgLoad] = useState(false);
   const [contact, setContact] = useState<MsgDataType['contact'] | undefined>();
   const [location, setLocation] = useState<
     MsgDataType['location'] | undefined
   >();
-
   const [cameraVisible, setCameraVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [cameraType, setCameraType] = useState(CameraType.Back);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [callingModal, setCallingModal] = useState<boolean>(false);
-  const [videoCallModal, setVideoCallModal] = useState<boolean>(false);
   const [selectedMessages, setSelectedMessages] = useState<Array<any>>([]);
-
-  const [forwardModal, setForwardModal] = useState<boolean>(false);
-  const cameraRef = useRef(null);
-  if (forwardedMessages && forwardedToUserId && socket) {
-    forwardedMessages.forEach((msg: any) => {
-      const forwardMsg: MsgDataType = {
-        sender: senderId,
-        receiver: forwardedToUserId,
-        text: msg.text,
-        ...(msg.attachments?.length ? {attachments: msg.attachments} : {}),
-        ...(msg.contact ? {contact: msg.contact} : {}),
-        ...(msg.location ? {location: msg.location} : {}),
-      };
-      socket.emit('sendMessage', forwardMsg);
-    });
-    toast.success('Message forwarded successfully!');
-  }
-
-  const senderId = myData?.data?._id;
-  const receiverId = data?._id;
-  useEffect(() => {
-    fetchMessages();
-    socketSetup();
-    // return () => {
-    //   if (socket) socket.disconnect();
-    //   console.log('socket is disconnected');
-    // };
-  }, []);
-
-  useMarkSeenOnFocus(messages, senderId, socket);
-  useKeyboardHeight(setKeyboardHeight);
-  const flatListRef = useRef(null);
-
-  const socketSetup = async () => {
-    const newSocket = io(SOCKET_SERVER_URL, {
-      transports: ['websocket'],
-      query: {userId: senderId},
-    });
-
-    setSocket(newSocket);
-
-    newSocket.on('connect', () => {
-      console.log('Connected to socket server');
-    });
-
-    const token = await getData('authToken');
-    newSocket.emit('register', senderId, token);
-
-    newSocket.on('getMessage', (newMessage: any) => {
-      setMessages((prevMessages: any) => [newMessage, ...prevMessages]);
-    });
-
-    newSocket.emit('markSeenMessage', messages[0]?._id);
-
-    newSocket.on('error', (newMessage: any) => {
-      console.log({event: 'error', message: newMessage});
-    });
-    newSocket.on('register', (newMessage: any) => {
-      console.log({event: 'register', message: newMessage});
-    });
-  };
-
   const [page, setPage] = useState(1);
   const [isFetching, setIsFetching] = useState(false);
 
+  // Keyboard & list refs
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const flatListRef = useRef<FlatList<any> | null>(null);
+
+  // Socket ref (avoids stale closures)
+  const socketRef = useRef<Socket | null>(null);
+  const forwardedOnceRef = useRef(false);
+
+  /* ----------------------------- Hooks / Effects ---------------------------- */
+
+  // Mark messages seen when focused (you already wrote this hook)
+  useMarkSeenOnFocus(messages, senderId, socketRef.current);
+
+  // Track keyboard height (you already wrote this hook)
+  useKeyboardHeight(setKeyboardHeight);
+
+  const isFetchingRef = useRef(false);
+  useEffect(() => {
+    isFetchingRef.current = isFetching;
+  }, [isFetching]);
   const fetchMessages = useCallback(
-    (nextPage: number = 1) =>
-      fetchMessagesHelper({
+    (nextPage: number = 1) => {
+      if (!receiverId) return;
+      return fetchMessagesHelper({
         API_AXIOS,
         SOCKET_SERVER_URL,
         receiverId,
         nextPage,
-        isFetching,
-        setIsFetching,
+        isFetching: isFetchingRef.current,
+        setIsFetching: (v: boolean) => {
+          isFetchingRef.current = v;
+          setIsFetching(v);
+        },
         setMessages,
         setFetchError,
         setPage,
-      }),
-    [API_AXIOS, SOCKET_SERVER_URL, receiverId, isFetching],
+      });
+    },
+    [receiverId],
   );
 
+  // Initial load + whenever chat peer changes
+  useEffect(() => {
+    if (!senderId || !receiverId) return;
+    setMessages([]); // reset thread when switching peer
+    setPage(1);
+    fetchMessages(1);
+  }, [senderId, receiverId, fetchMessages]);
+
+  // Setup socket when I’m known
+  useEffect(() => {
+    let mounted = true;
+    const setup = async () => {
+      if (!senderId) return;
+
+      const token = await getData('authToken');
+
+      const s = io(SOCKET_SERVER_URL, {
+        transports: ['websocket'],
+        query: {userId: senderId},
+      });
+      if (!mounted) {
+        s.disconnect();
+        return;
+      }
+      socketRef.current = s;
+
+      s.on('connect', () => {
+        myConsole('socket', 'connected');
+        s.emit('register', senderId, token);
+      });
+
+      // New message arrived
+      s.on('getMessage', (newMessage: any) => {
+        // Only append if this message belongs to *this* 1:1
+        const msgSenderId = getId(newMessage?.sender);
+        const msgReceiverId = getId(newMessage?.receiver);
+
+        if (!senderId || !receiverId) return;
+
+        const sameDyad =
+          (msgSenderId === senderId && msgReceiverId === receiverId) ||
+          (msgSenderId === receiverId && msgReceiverId === senderId);
+
+        if (sameDyad) {
+          setMessages(prev => [newMessage, ...prev]);
+        }
+      });
+
+      s.on('error', (err: any) => myConsole('socket:error', err));
+      s.on('register', (res: any) => myConsole('socket:register', res));
+    };
+
+    setup();
+
+    return () => {
+      mounted = false;
+      if (socketRef.current) {
+        socketRef.current.removeAllListeners();
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [senderId]);
+
+  // Forward once if present
+  useEffect(() => {
+    const s = socketRef.current;
+    if (!s || !senderId) return;
+    if (forwardedOnceRef.current) return;
+
+    if (forwardedMessages && forwardedToUserId) {
+      forwardedMessages.forEach((msg: any) => {
+        const forwardMsg: MsgDataType = {
+          sender: senderId,
+          receiver: forwardedToUserId,
+          text: msg.text,
+          ...(msg.attachments?.length ? {attachments: msg.attachments} : {}),
+          ...(msg.contact ? {contact: msg.contact} : {}),
+          ...(msg.location ? {location: msg.location} : {}),
+        };
+        s.emit('sendMessage', forwardMsg);
+      });
+      forwardedOnceRef.current = true;
+      toast.success('Message forwarded successfully!');
+    }
+  }, [senderId, forwardedMessages, forwardedToUserId, toast]);
+
+  // Auto-send when user picked contact or location (your existing pattern)
+  useEffect(() => {
+    if (contact) sendMessage();
+  }, [contact]);
+
+  useEffect(() => {
+    if (location) sendMessage();
+  }, [location]);
+
+  /* -------------------------------- Handlers -------------------------------- */
+
   const sendMessage = (): void => {
+    const s = socketRef.current;
+    if (!s || !senderId || !receiverId) return;
     if (!message.trim() && !file && !location && !contact) return;
-    // myConsole('sldfjldksf', file);
+
     const newMessage: MsgDataType = {
       receiver: receiverId,
       text: message,
       sender: senderId,
-      ...(file?.attachments && file.attachments.length > 0
-        ? {attachments: file.attachments}
-        : {}),
+      ...(file?.attachments?.length ? {attachments: file.attachments} : {}),
       ...(location &&
       location.latitude !== undefined &&
       location.longitude !== undefined
@@ -180,7 +260,7 @@ const ChattingScreen = ({navigation, route}: any) => {
             },
           }
         : {}),
-      ...(contact && contact.name && contact.phoneNumber
+      ...(contact?.name && contact?.phoneNumber
         ? {
             contact: {
               name: contact.name,
@@ -194,9 +274,9 @@ const ChattingScreen = ({navigation, route}: any) => {
         : {}),
     };
 
-    if (socket) {
-      socket.emit('sendMessage', newMessage);
-    }
+    s.emit('sendMessage', newMessage);
+
+    // Reset composers
     setMessage('');
     setFile(null);
     setContact(undefined);
@@ -222,43 +302,53 @@ const ChattingScreen = ({navigation, route}: any) => {
       screen: commonRoute.SelectContacts,
       params: {
         onContactSelect: (selectedContact: MsgDataType['contact']) => {
-          // myConsole('Returned contact: ', selectedContact);
           setContact(selectedContact);
         },
       },
     });
   };
 
-  const pickCamera = () => {
+  const pickLocation = () => {
     setAttachmentsPopup(false);
-    setCameraVisible(true); // Open the camera when this option is selected
+    navigation.navigate(chatRoute.ChatStack, {
+      screen: chatRoute.MapScreen,
+      params: {
+        onLocationSelect: (selectedLocation: MsgDataType['location']) => {
+          setLocation(selectedLocation);
+        },
+      },
+    });
+  };
+
+  const setCamera = () => {
+    setAttachmentsPopup(false);
+    setCameraVisible(true);
   };
 
   const switchCamera = () => {
-    setCameraType(prevType =>
-      prevType === CameraType.Back ? CameraType.Front : CameraType.Back,
+    setCameraType(prev =>
+      prev === CameraType.Back ? CameraType.Front : CameraType.Back,
     );
   };
 
-  const handleCapturedImage = async (uri: any) => {
-    if (uri.startsWith('file://')) {
-      const filePath = uri.replace('file://', '');
-      const pathSegments = filePath.split('/');
-      const fileName = pathSegments[pathSegments.length - 1];
-
-      const destFilePath = `${RNFS.DownloadDirectoryPath}/${fileName}`;
-
-      try {
+  const handleCapturedImage = async (uri: string) => {
+    try {
+      if (uri.startsWith('file://')) {
+        const filePath = uri.replace('file://', '');
+        const fileName = filePath.split('/').pop() || `IMG_${Date.now()}.jpg`;
+        const destFilePath = `${RNFS.DownloadDirectoryPath}/${fileName}`;
         await RNFS.moveFile(filePath, destFilePath);
-        const updatedUri = `file://${destFilePath}`;
-        setCapturedImage(updatedUri); // Store the captured image URI
-      } catch (error) {
-        console.error('Error saving captured image:', error);
+        setCapturedImage(`file://${destFilePath}`);
+      } else {
+        setCapturedImage(uri);
       }
+    } catch (error) {
+      myConsole('saveCapturedImage:error', error);
     }
   };
 
-  const sendCapturedImage = async (uri: string) => {
+  const sendCapturedImage = async (uri: string | null) => {
+    if (!uri) return;
     sendCapturedImageHelper({
       uri,
       onSuccess: fileData => {
@@ -268,27 +358,14 @@ const ChattingScreen = ({navigation, route}: any) => {
         sendMessage();
       },
       onError: () => {
-        // optionally reset any states here
+        // optional: toast.error('Failed to process image');
       },
     });
   };
 
-  // myConsole('fielssss', file);
-  const pickLocation = () => {
-    setAttachmentsPopup(false);
-    navigation.navigate(chatRoute.ChatStack, {
-      screen: chatRoute.MapScreen,
-      params: {
-        onLocationSelect: (selectedLocation: MsgDataType['location']) => {
-          // myConsole('Returned location: ', selectedLocation);
-          setLocation(selectedLocation);
-        },
-      },
-    });
-  };
   const handleDeleteMessages = () =>
     handleDeleteMessagesHelper({
-      Alert,
+      Alert: require('react-native').Alert,
       toast,
       selectedMessages,
       deleteMessagesByIds,
@@ -297,42 +374,33 @@ const ChattingScreen = ({navigation, route}: any) => {
     });
 
   const copyMessageToClipboard = () => {
-    console.log('skdfld');
     if (selectedMessages.length === 1) {
+      // Lazy import to keep top imports tidy
+      const Clipboard = require('@react-native-clipboard/clipboard').default;
       Clipboard.setString(selectedMessages[0]?.text || '');
       toast.success('Copied to clipboard!');
     }
   };
 
-  useEffect(() => {
-    if (contact) {
-      sendMessage();
-    }
-  }, [contact]);
+  /* --------------------------------- Render --------------------------------- */
 
-  useEffect(() => {
-    if (location) {
-      sendMessage();
-    }
-  }, [location]);
-  const userFullName = `${data?.receiver?.firstName || data?.firstName || ''} ${
-    data?.receiver?.lastName || data?.lastName || ''
-  }`;
-  // myConsole('selectedMessages', selectedMessages);
-  // myConsole('messages', messages);
+  const userFullName = `${peerUser?.firstName || ''} ${
+    peerUser?.lastName || ''
+  }`.trim();
+
+  const endReachedTsRef = useRef(0);
+
   return (
     <MainContainer
       title={
         selectedMessages.length > 0
           ? ''
-          : getTextWithLength(userFullName.trim(), 14) || 'Chat'
+          : getTextWithLength(userFullName, 14) || 'Chat'
       }
-      showAvatar={
-        selectedMessages.length > 0
-          ? ''
-          : (data?.receiver?.firstName || data?.firstName) && userFullName
+      // showAvatar={selectedMessages.length > 0 ? '' : !!userFullName}
+      showRightTxt={
+        selectedMessages.length > 0 ? String(selectedMessages.length) : ''
       }
-      showRightTxt={selectedMessages.length > 0 ? selectedMessages.length : ''}
       showRightIcon={
         selectedMessages.length > 0
           ? [
@@ -352,23 +420,19 @@ const ChattingScreen = ({navigation, route}: any) => {
                 : []),
               {
                 imageSource: require('../../assets/animatedIcons/forwardAni.png'),
-                onPress: () => setForwardModal(true),
+                onPress: () => navigation.navigate(null, {selectedMessages}),
                 size: 22,
               },
             ]
           : [
               {
                 imageSource: require('../../assets/icons/video-call.png'),
-                onPress: () => {
-                  setVideoCallModal(true);
-                },
+                onPress: () => null,
                 size: 28,
               },
               {
                 imageSource: require('../../assets/icons/call.png'),
-                onPress: () => {
-                  setCallingModal(true);
-                },
+                onPress: () => null,
                 color: color.mainColor,
                 size: 20,
               },
@@ -383,7 +447,7 @@ const ChattingScreen = ({navigation, route}: any) => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={
-          Platform.OS === 'ios' ? 90 : keyboardHeight / 2 - 44
+          Platform.OS === 'ios' ? 90 : Math.max(0, keyboardHeight / 2 - 44)
         }
         style={chatScreenStyles.container}>
         {fetchError ? (
@@ -399,14 +463,14 @@ const ChattingScreen = ({navigation, route}: any) => {
               sendMessage();
             }}
           />
-        ) : messageLoad ? (
+        ) : isFetching && messages.length === 0 ? (
           <LoadingCompo />
         ) : (
           <FlatList
             ref={flatListRef}
             data={messages}
             inverted
-            keyExtractor={item => item?._id ?? 'defaultKey'}
+            keyExtractor={(item, index) => item?._id ?? `local-${index}`}
             contentContainerStyle={[
               chatScreenStyles.chatArea,
               {paddingBottom: keyboardHeight || 20},
@@ -437,10 +501,20 @@ const ChattingScreen = ({navigation, route}: any) => {
                 style={{height: keyboardHeight ? keyboardHeight + 20 : 20}}
               />
             }
-            onEndReached={() => fetchMessages(page + 1)}
+            onEndReached={() => {
+              const now = Date.now();
+              if (isFetchingRef.current || now - endReachedTsRef.current < 800)
+                return;
+              endReachedTsRef.current = now;
+              fetchMessages(page + 1);
+            }}
+            onMomentumScrollBegin={() => {
+              endReachedTsRef.current = 0;
+            }}
             onEndReachedThreshold={0.8}
           />
         )}
+
         {!fetchError && (
           <MessageInputBar
             message={message}
@@ -464,7 +538,7 @@ const ChattingScreen = ({navigation, route}: any) => {
 
         {cameraVisible && (
           <CameraCaptureView
-            cameraRef={cameraRef}
+            cameraRef={useRef(null)}
             cameraType={cameraType}
             switchCamera={switchCamera}
             onBack={() => setCameraVisible(false)}
@@ -472,50 +546,46 @@ const ChattingScreen = ({navigation, route}: any) => {
           />
         )}
 
-        <CapturedImagePreviewModal
+        {/* Captured image confirm/send */}
+        <CustomModal
           visible={!!capturedImage}
-          imageUri={capturedImage || ''}
-          onClose={() => setCapturedImage(null)}
-          onSend={() => sendCapturedImage(capturedImage)}
-          isSending={sendCapturedImgLoad}
-        />
-        <CallModalBase
-          visible={videoCallModal}
-          onClose={() => setVideoCallModal(false)}
-          userName={userFullName}
-          avatarUrl={data?.profilePicture}
-          showVideoToggle={true}
-        />
-
-        <CallModalBase
-          visible={callingModal}
-          onClose={() => setCallingModal(false)}
-          userName={userFullName}
-          avatarUrl={data?.profilePicture}
-          showVideoToggle={false}
-        />
-
-        <CustomForwardModal
-          visible={forwardModal}
-          onClose={() => setForwardModal(false)}
-          selectedMessages={selectedMessages}
-        />
+          onClose={() => setCapturedImage(null)}>
+          <View style={{alignItems: 'center'}}>
+            {capturedImage ? (
+              <Image
+                source={{uri: capturedImage}}
+                style={{width: 220, height: 220}}
+              />
+            ) : null}
+            <View style={[myStyle.rowAround, {marginTop: 12, width: '100%'}]}>
+              <TouchableOpacity onPress={() => setCapturedImage(null)}>
+                <CustomText style={{color: color.blockRed, fontWeight: '700'}}>
+                  Discard
+                </CustomText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => sendCapturedImage(capturedImage)}>
+                <CustomText
+                  style={{color: color.bluTextColor, fontWeight: '700'}}>
+                  Send
+                </CustomText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </CustomModal>
 
         <CustomModal
           visible={attachmentsPopup}
           onClose={() => setAttachmentsPopup(false)}
           containerStyle={chatScreenStyles.attachmentContStyle}
-          customBgStyle={{
-            justifyContent: 'flex-end',
-          }}>
+          customBgStyle={{justifyContent: 'flex-end'}}>
           <View style={myStyle.rowAround}>
             {attachmentList.map((item, index) => (
               <TouchableOpacity
                 key={index}
                 style={chatScreenStyles.attachmentItem}
                 onPress={() => {
-                  if (item.label === 'Camera')
-                    pickCamera(); // Open camera when clicked
+                  if (item.label === 'Camera') setCamera();
                   else if (item.label === 'Gallery') pickFile();
                   else if (item.label === 'Location') pickLocation();
                   else if (item.label === 'Contact') pickContact();

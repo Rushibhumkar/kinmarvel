@@ -141,6 +141,7 @@ const getRouteName = (route: any) => {
     routeName === homeRoute.AddUsers ||
     routeName === commonRoute.NotiDetails ||
     routeName === commonRoute.SelectContacts ||
+    routeName === chatRoute.ChatsSearchScreen ||
     routeName === chatRoute.ChattingScreen ||
     routeName === postRoute.AddPostMedia ||
     routeName === postRoute.ComposePost ||

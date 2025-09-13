@@ -10,18 +10,19 @@ import {
   Image,
   LogBox,
   PermissionsAndroid,
+  Platform,
   StatusBar,
   View,
+  AppState,
 } from 'react-native';
 import {getData} from './src/hooks/useAsyncStorage';
 import AuthStack from './src/navigation/AuthStack';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import messaging from '@react-native-firebase/messaging';
-import notifee from '@notifee/react-native';
+import notifee, {AndroidImportance, EventType} from '@notifee/react-native';
 import {registerDevice} from './src/api/notification/notificationFunc';
 import {myConsole} from './src/utils/myConsole';
 import {sizes} from './src/const';
-import {AppState} from 'react-native';
 import socket from './src/calling/services/socket';
 import {ToastProvider} from 'react-native-toast-notifications';
 
@@ -41,6 +42,7 @@ const App = () => {
   const [userToken, setUserToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ------- Auth & token boot -------
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -50,95 +52,111 @@ const App = () => {
           await getFCMToken();
         }
       } catch (error) {
-        console.log('Error checking login status:', error);
+        console.log('[AUTH] Error checking login status:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
     checkLoginStatus();
   }, []);
 
+  // ------- Device ID (optional debug) -------
   useEffect(() => {
     const fetchDeviceId = async () => {
       try {
         const uniqueId = await DeviceInfo.getUniqueId();
-        // console.log('🔥 Unique Device ID:', uniqueId);
+        console.log('[DEVICE] Unique ID:', uniqueId);
       } catch (error) {
-        console.error('Error getting Device ID:', error);
+        console.error('[DEVICE] Error getting Device ID:', error);
       }
     };
-
     fetchDeviceId();
   }, []);
 
+  // ------- Android 13+ notification permission -------
   useEffect(() => {
     reqPermissionAndroid();
   }, []);
 
   const reqPermissionAndroid = async () => {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-    );
-    if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-      Alert.alert('Permission Denied');
+    try {
+      if (Platform.OS === 'android' && Number(Platform.Version) >= 33) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        );
+        console.log('[PERM] POST_NOTIFICATIONS:', granted);
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Notification permission denied');
+        }
+      }
+    } catch (e) {
+      console.log('[PERM] request error:', e);
     }
   };
 
+  // ------- Disconnect call socket when app backgrounds -------
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'inactive' || state === 'background') {
         try {
           socket.disconnect();
-        } catch {}
+          console.log('[APPSTATE] Disconnected call socket on background');
+        } catch (e) {
+          console.log('[APPSTATE] Socket disconnect error:', e);
+        }
       }
     });
     return () => sub.remove();
   }, []);
 
+  // ------- Get FCM token & register with backend -------
   const getFCMToken = async () => {
     try {
       const fcmToken = await messaging().getToken();
-      myConsole('fcmTokenssss', fcmToken);
+      myConsole('fcmToken', fcmToken);
+      console.log('[FCM] token:', fcmToken);
       if (fcmToken) {
-        const platform = 'android';
-        await registerDevice(fcmToken, platform);
+        await registerDevice(fcmToken, 'android');
       }
     } catch (error) {
-      console.error('Error getting FCM token:', error);
+      console.error('[FCM] Error getting token:', error);
     }
   };
 
-  // Foreground Notifications
+  // Keep backend updated on token refresh
+  useEffect(() => {
+    const unsubscribe = messaging().onTokenRefresh(async newToken => {
+      console.log('[FCM] token refreshed:', newToken);
+      try {
+        await registerDevice(newToken, 'android');
+      } catch (e) {
+        console.log('[FCM] registerDevice refresh failed:', e);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // ------- Foreground FCM messages -------
   useEffect(() => {
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
-      console.log('Foreground message:', remoteMessage);
+      console.log('[FG] message:', JSON.stringify(remoteMessage));
       await onDisplayNotification(remoteMessage);
       const event = remoteMessage?.data?.event;
-      if (event) myConsole('eventttt', event);
+      if (event) myConsole('[FG] event', event);
     });
-
     return () => {
       unsubscribeForeground();
     };
   }, []);
 
-  // Background Notifications
-  useEffect(() => {
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      console.log('Background message:', remoteMessage);
-      await onDisplayNotification(remoteMessage);
-    });
-  }, []);
+  // ❗ Background handler is in index.js (setBackgroundMessageHandler). Do NOT add it here.
 
+  // ------- When user opens the app via a notification -------
   useEffect(() => {
     const unsubscribeNotificationOpened = messaging().onNotificationOpenedApp(
       remoteMessage => {
-        console.log(
-          'Notification caused app to open from background:',
-          remoteMessage,
-        );
-        // Handle navigation if needed
+        console.log('[OPENED from background]:', JSON.stringify(remoteMessage));
+        // TODO: navigate based on remoteMessage?.data if needed
       },
     );
 
@@ -146,11 +164,8 @@ const App = () => {
       .getInitialNotification()
       .then(remoteMessage => {
         if (remoteMessage) {
-          console.log(
-            'Notification caused app to open from quit state:',
-            remoteMessage,
-          );
-          // Handle navigation if needed
+          console.log('[OPENED from quit]:', JSON.stringify(remoteMessage));
+          // TODO: navigate based on remoteMessage?.data if needed
         }
       });
 
@@ -159,6 +174,18 @@ const App = () => {
     };
   }, []);
 
+  // ------- Notifee foreground events (tap, etc.) -------
+  useEffect(() => {
+    const sub = notifee.onForegroundEvent(({type, detail}) => {
+      if (type === EventType.PRESS) {
+        console.log('[NOTIF] pressed:', JSON.stringify(detail?.notification));
+        // TODO: navigate based on detail.notification?.data
+      }
+    });
+    return () => sub();
+  }, []);
+
+  // ------- Show a local notification with Notifee -------
   const onDisplayNotification = async (remoteMessage: any) => {
     try {
       await notifee.requestPermission();
@@ -166,21 +193,31 @@ const App = () => {
       const channelId = await notifee.createChannel({
         id: 'default',
         name: 'Default Channel',
+        importance: AndroidImportance.HIGH, // heads-up
       });
 
+      const title =
+        remoteMessage?.notification?.title ||
+        remoteMessage?.data?.title ||
+        'Notification';
+
+      const body =
+        remoteMessage?.notification?.body ||
+        remoteMessage?.data?.body ||
+        'You have a new message.';
+
       await notifee.displayNotification({
-        title: remoteMessage?.notification?.title || 'Notification',
-        body: remoteMessage?.notification?.body || 'You have a new message.',
+        title,
+        body,
         android: {
           channelId,
           smallIcon: 'ic_launcher',
-          pressAction: {
-            id: 'default',
-          },
+          pressAction: {id: 'default'},
         },
+        data: remoteMessage?.data || {},
       });
     } catch (error) {
-      console.error('Error displaying notification:', error);
+      console.error('[NOTIF] display error:', error);
     }
   };
 

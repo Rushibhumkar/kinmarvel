@@ -10,7 +10,6 @@ import CallingUsersList from './components/CallingUsersList';
 import {useGetMyData} from '../api/profile/profileFunc';
 import {useCall} from './hooks/useCall';
 
-// extracted hooks
 import useCallAudio from './hooks/useCallAudio';
 import useSignalingWire from './hooks/useSignalingWire';
 import useCallControls from './hooks/useCallControls';
@@ -52,6 +51,7 @@ const CallingMain = () => {
     setIncomingCall,
     stopOutgoingTone,
     stopIncomingTone,
+    endCall,
   });
 
   // high-level call controls
@@ -71,15 +71,40 @@ const CallingMain = () => {
       incomingCall,
     });
 
-  // play ring when an incoming call arrives
+  // show modal only when NOT already in a call
+  const showIncomingModal = !!incomingCall && !inCall;
+
+  // play ring only while incoming & not connected
   useEffect(() => {
-    if (incomingCall?.from) {
+    if (incomingCall?.from && !inCall) {
       setPeerId(incomingCall.from);
       playIncomingTone();
     } else {
       stopIncomingTone();
     }
-  }, [incomingCall]);
+  }, [incomingCall, inCall, playIncomingTone, stopIncomingTone]);
+
+  // ensure modal closes immediately on accept/reject even if signaling is slow
+  const onAcceptIncoming = React.useCallback(() => {
+    // Immediately transition UI to CallScreen
+    stopIncomingTone();
+    setIncomingCall(null);
+    setIsDialing(false);
+    setInCall(true);
+    handleAnswer();
+  }, [handleAnswer, setIncomingCall, stopIncomingTone]);
+  const onRejectIncoming = React.useCallback(() => {
+    handleReject();
+    setIncomingCall(null);
+  }, [handleReject, setIncomingCall]);
+
+  useEffect(() => {
+    if ((localStream || remoteStream) && !inCall) {
+      setInCall(true);
+      setIncomingCall(null);
+      stopIncomingTone();
+    }
+  }, [localStream, remoteStream, inCall, setIncomingCall, stopIncomingTone]);
 
   return (
     <View style={styles.container}>
@@ -115,13 +140,12 @@ const CallingMain = () => {
           onEndCall={handleEnd}
         />
       )}
-
       <IncomingCallModal
-        visible={!!incomingCall}
+        visible={showIncomingModal}
         callerId={incomingCall?.from ?? ''}
         mediaType={incomingCall?.mediaType ?? 'video'}
-        onAccept={handleAnswer}
-        onReject={handleReject}
+        onAccept={onAcceptIncoming}
+        onReject={onRejectIncoming}
       />
     </View>
   );

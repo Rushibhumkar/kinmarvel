@@ -1,6 +1,6 @@
 import {Alert} from 'react-native';
+import {useEffect} from 'react';
 import socket from '../services/socket';
-
 type MediaType = 'audio' | 'video';
 
 type UseCallControlsParams = {
@@ -72,6 +72,7 @@ export default function useCallControls({
     setIncomingCall(null);
     setIsDialing(false);
     setInCall(false);
+    setPeerId(null);
   };
 
   const handleReject = () => {
@@ -84,7 +85,31 @@ export default function useCallControls({
     endCall();
     setIsDialing(false);
     setInCall(false);
+    setPeerId(null);
   };
 
+  useEffect(() => {
+    const onPeerEnded = () => {
+      stopOutgoingTone();
+      stopIncomingTone();
+      endCall();
+      setIncomingCall(null);
+      setIsDialing(false);
+      setInCall(false);
+      setPeerId(null);
+    };
+    socket.on('call-ended', onPeerEnded);
+    return () => {
+      socket.off('call-ended', onPeerEnded);
+    };
+  }, [
+    endCall,
+    setIncomingCall,
+    setIsDialing,
+    setInCall,
+    setPeerId,
+    stopIncomingTone,
+    stopOutgoingTone,
+  ]);
   return {handleStartCall, handleAnswer, handleEnd, handleReject};
 }

@@ -27,8 +27,8 @@ const MessageInputBar: React.FC<MessageInputBarProps> = ({
           value={message}
           onChangeText={onChangeMessage}
           autoFocus={autoFocus}
+          multiline
         />
-
         <TouchableOpacity onPress={onAttachmentPress}>
           <Image
             source={require('../../../assets/icons/attachments.png')}

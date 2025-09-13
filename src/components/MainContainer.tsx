@@ -104,7 +104,10 @@ const MainContainer: React.FC<HeaderObjType> = ({
           </TouchableOpacity>
         )}
         {showAvatar && (
-          <CustomAvatar name={showAvatar} style={{height: 34, width: 34}} />
+          <CustomAvatar
+            name={showAvatar ?? ''}
+            style={{height: 34, width: 34}}
+          />
         )}
         <View
           style={[

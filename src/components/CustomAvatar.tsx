@@ -56,7 +56,7 @@ const colorMapping: {[key: string]: {bg: string; text: string}} = {
 const numberSymbolColor = {bg: '#546E7A', text: '#CFD8DC'};
 
 const CustomAvatar: React.FC<CustomAvatarProps> = ({
-  name,
+  name = 'ss',
   imgUrl,
   mb = 0,
   style,

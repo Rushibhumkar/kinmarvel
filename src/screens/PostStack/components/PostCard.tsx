@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Video from 'react-native-video';
 import Carousel from 'react-native-reanimated-carousel';
+import {myConsole} from '../../../utils/myConsole';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const H_MARGIN = 12; // card marginHorizontal
@@ -18,7 +19,7 @@ const ITEM_WIDTH = SCREEN_WIDTH - H_MARGIN * 2 - CARD_PADDING * 2;
 const AVATAR_FALLBACK =
   'https://ui-avatars.com/api/?background=EEE&color=111&name=';
 
-const formatWhen = iso => {
+const formatWhen = (iso: any) => {
   if (!iso) return '';
   const d = new Date(iso);
   const now = Date.now();
@@ -33,10 +34,9 @@ const formatWhen = iso => {
   return d.toDateString().slice(4);
 };
 
-const MediaCarousel = ({items}) => {
+const MediaCarousel = ({items}: any) => {
   if (!items || items.length === 0) return null;
   const [activeIndex, setActiveIndex] = useState(0);
-
   return (
     <View style={styles.mediaWrap}>
       <Carousel
@@ -48,7 +48,7 @@ const MediaCarousel = ({items}) => {
           const idx = Math.round(absProgress);
           if (idx !== activeIndex) setActiveIndex(idx);
         }}
-        renderItem={({item, index}) => {
+        renderItem={({item, index}: any) => {
           if (item?.type === 'video') {
             return (
               <Video
@@ -80,7 +80,12 @@ const MediaCarousel = ({items}) => {
   );
 };
 
-const PostCard = ({post}) => {
+const PostCard = ({
+  post,
+  onOpenComments,
+  onCommentCountChange,
+  onLikePress,
+}: any) => {
   const author = post?.createdBy || {};
   const name =
     author?.fullName ||
@@ -133,7 +138,7 @@ const PostCard = ({post}) => {
       {/* Hashtags */}
       {tags.length ? (
         <View style={styles.tagsRow}>
-          {tags.map((t, i) => (
+          {tags.map((t: any, i: any) => (
             <Text key={`${t}-${i}`} style={styles.tagText}>
               #{t}
             </Text>
@@ -146,13 +151,20 @@ const PostCard = ({post}) => {
         <TouchableOpacity
           style={styles.footerBtn}
           activeOpacity={0.7}
-          onPress={() => console.log('like pressed', post?._id)}>
+          onPress={() =>
+            onLikePress
+              ? onLikePress(post)
+              : myConsole('[PostCard] like pressed', {postId: post?._id})
+          }>
           <Text style={styles.footerBtnText}>❤ {post?.likeCount ?? 0}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerBtn}
           activeOpacity={0.7}
-          onPress={() => console.log('comment pressed', post?._id)}>
+          onPress={() => {
+            myConsole('[PostCard] open comments', {postId: post?._id});
+            onOpenComments?.(post);
+          }}>
           <Text style={styles.footerBtnText}>💬 {post?.commentCount ?? 0}</Text>
         </TouchableOpacity>
       </View>
