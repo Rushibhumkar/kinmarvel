@@ -20,7 +20,7 @@ import {sizes} from '../../../const';
 const MessageComponent = ({
   senderId,
   data,
-  selectedMessages,
+  isSelected,
   onToggleSelect,
 }: any) => {
   const [viewFullImg, setViewFullImg] = useState(false);
@@ -51,7 +51,6 @@ const MessageComponent = ({
   const isSender =
     (typeof data?.sender === 'string' ? data.sender : data?.sender?._id) ===
     senderId;
-  const isSelected = selectedMessages?.some?.(m => m._id === data._id);
   myConsole('dataaaa', data);
   return (
     <TouchableOpacity
@@ -315,7 +314,16 @@ const MessageComponent = ({
   );
 };
 
-export default MessageComponent;
+export default React.memo(
+  MessageComponent,
+  (prev, next) =>
+    prev.senderId === next.senderId &&
+    prev.isSelected === next.isSelected &&
+    prev.data?._id === next.data?._id &&
+    prev.data?.updatedAt === next.data?.updatedAt &&
+    prev.data?.isSeen === next.data?.isSeen &&
+    prev.data?.isDelivered === next.data?.isDelivered,
+);
 
 const styles = StyleSheet.create({
   myMessageContainer: {

@@ -390,6 +390,31 @@ const ChattingScreen = ({navigation, route}: any) => {
 
   const endReachedTsRef = useRef(0);
 
+  const selectedSet = useMemo(
+    () => new Set(selectedMessages.map(m => m._id)),
+    [selectedMessages],
+  );
+
+  const handleToggleSelect = useCallback((msg: any) => {
+    setSelectedMessages(prev =>
+      prev.some(m => m._id === msg._id)
+        ? prev.filter(m => m._id !== msg._id)
+        : [...prev, msg],
+    );
+  }, []);
+
+  const renderItem = useCallback(
+    ({item}: {item: any}) => (
+      <MessageComponent
+        data={item}
+        senderId={senderId}
+        isSelected={selectedSet.has(item?._id)}
+        onToggleSelect={handleToggleSelect}
+      />
+    ),
+    [handleToggleSelect, senderId, selectedSet],
+  );
+
   return (
     <MainContainer
       title={
@@ -476,26 +501,8 @@ const ChattingScreen = ({navigation, route}: any) => {
               {paddingBottom: keyboardHeight || 20},
             ]}
             keyboardShouldPersistTaps="handled"
-            renderItem={({item}) =>
-              item ? (
-                <MessageComponent
-                  data={item}
-                  senderId={senderId}
-                  selectedMessages={selectedMessages}
-                  onToggleSelect={(msg: any) => {
-                    setSelectedMessages(prev =>
-                      prev.some(m => m._id === msg._id)
-                        ? prev.filter(m => m._id !== msg._id)
-                        : [...prev, msg],
-                    );
-                  }}
-                />
-              ) : (
-                <View>
-                  <CustomText>No message</CustomText>
-                </View>
-              )
-            }
+            renderItem={renderItem}
+            extraData={selectedMessages}
             ListFooterComponent={
               <View
                 style={{height: keyboardHeight ? keyboardHeight + 20 : 20}}
