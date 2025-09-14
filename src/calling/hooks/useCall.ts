@@ -198,7 +198,7 @@ export const useCall = (userId: string) => {
     }
   };
   const endCall = () => {
-    if (callEndedRef.current) return; // 🔐 prevent infinite loop
+    if (callEndedRef.current) return;
     callEndedRef.current = true;
 
     console.log('[Call] Ending call');
@@ -212,11 +212,8 @@ export const useCall = (userId: string) => {
 
       setRemoteStream(null);
       setLocalStream(null);
-
-      socket.emit('end-call', {to: userId});
-      console.log('[Socket] Emitted end-call event');
     } catch (error) {
-      console.error('[Call] Error while ending call:', error);
+      console.warn('[Call] Error during endCall cleanup', error);
     }
   };
 

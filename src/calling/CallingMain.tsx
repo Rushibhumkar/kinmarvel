@@ -14,6 +14,7 @@ import useCallAudio from './hooks/useCallAudio';
 import useSignalingWire from './hooks/useSignalingWire';
 import useCallControls from './hooks/useCallControls';
 import {myConsole} from '../utils/myConsole';
+import CallEventEmitter from './services/CallEventEmitter';
 
 const CallingMain = () => {
   const navigation = useNavigation();
@@ -78,23 +79,28 @@ const CallingMain = () => {
 
   // play ring only while incoming & not connected
   useEffect(() => {
-    if (incomingCall?.from && !inCall) {
-      setPeerId(incomingCall.from);
-      playIncomingTone();
-    } else {
+    if (remoteStream && !inCall) {
+      console.log('[CallState] remoteStream detected → enter inCall');
+      setInCall(true);
+      setIncomingCall(null);
       stopIncomingTone();
     }
-  }, [incomingCall, inCall, playIncomingTone, stopIncomingTone]);
+  }, [remoteStream, inCall, setIncomingCall, stopIncomingTone]);
 
   // ensure modal closes immediately on accept/reject even if signaling is slow
   const onAcceptIncoming = React.useCallback(() => {
-    // Immediately transition UI to CallScreen
     stopIncomingTone();
     setIncomingCall(null);
     setIsDialing(false);
-    setInCall(true);
+    setInCall(prev => (prev ? prev : true));
     handleAnswer();
-  }, [handleAnswer, setIncomingCall, stopIncomingTone]);
+  }, [
+    handleAnswer,
+    setIncomingCall,
+    stopIncomingTone,
+    setIsDialing,
+    setInCall,
+  ]);
   const onRejectIncoming = React.useCallback(() => {
     handleReject();
     setIncomingCall(null);
@@ -102,11 +108,27 @@ const CallingMain = () => {
 
   useEffect(() => {
     if (remoteStream && !inCall) {
+      console.log('[CallState] remoteStream detected → enter inCall');
       setInCall(true);
       setIncomingCall(null);
       stopIncomingTone();
     }
   }, [remoteStream, inCall, setIncomingCall, stopIncomingTone]);
+
+  useEffect(() => {
+    const handleGlobalIncomingCall = (payload: any) => {
+      console.log('[Global Incoming Call]', payload);
+      setIncomingCall(payload);
+      playIncomingTone();
+    };
+
+    CallEventEmitter.on('incoming-call', handleGlobalIncomingCall);
+
+    return () => {
+      CallEventEmitter.off('incoming-call', handleGlobalIncomingCall);
+    };
+  }, [setIncomingCall, playIncomingTone]);
+
   myConsole('inCallsss', inCall);
   return (
     <View style={styles.container}>

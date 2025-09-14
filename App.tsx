@@ -25,6 +25,7 @@ import {myConsole} from './src/utils/myConsole';
 import {sizes} from './src/const';
 import socket from './src/calling/services/socket';
 import {ToastProvider} from 'react-native-toast-notifications';
+import CallEventEmitter from './src/calling/services/CallEventEmitter';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator();
@@ -184,6 +185,23 @@ const App = () => {
     });
     return () => sub();
   }, []);
+
+  useEffect(() => {
+    if (!userToken) return;
+
+    socket.on('incoming-call', payload => {
+      myConsole('[Socket] Incoming Call Event:', payload);
+
+      // Broadcast the incoming call event globally
+      // E.g., via a state management solution (Redux, Context API, or an event emitter)
+      // Example (using EventEmitter):
+      CallEventEmitter.emit('incoming-call', payload);
+    });
+
+    return () => {
+      socket.off('incoming-call');
+    };
+  }, [userToken]);
 
   // ------- Show a local notification with Notifee -------
   const onDisplayNotification = async (remoteMessage: any) => {
