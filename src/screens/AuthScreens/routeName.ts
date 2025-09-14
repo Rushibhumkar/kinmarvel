@@ -44,6 +44,9 @@ export const profileRoute = {
   FollowersCard: 'FollowersCard',
   Hierarchy: 'Hierarchy',
   AddMember: 'AddMember',
+  CallingMain: 'CallingMain',
+  CallingUsersList: 'CallingUsersList',
+  CallScreen: 'CallScreen',
 };
 
 export const commonRoute = {

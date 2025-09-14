@@ -1,5 +1,4 @@
 import {useEffect} from 'react';
-import {getData} from '../../hooks/useAsyncStorage';
 import socket from '../services/socket';
 
 type UseSignalingWireParams = {
@@ -43,8 +42,7 @@ export default function useSignalingWire({
       setInCall(true);
       setIncomingCall(null);
     };
-
-    const onEnded = () => {
+    const onEnded = (payload?: {from?: string}) => {
       stopOutgoingTone();
       stopIncomingTone();
       endCall();
@@ -57,11 +55,15 @@ export default function useSignalingWire({
     socket.on('call-rejected', onRejected);
     socket.on('call-answered', onAnswered);
     socket.on('call-ended', onEnded);
+    socket.on('end-call', onEnded); // <-- ADD
+    socket.on('user-disconnected', onEnded);
 
     return () => {
       socket.off('call-rejected', onRejected);
       socket.off('call-answered', onAnswered);
       socket.off('call-ended', onEnded);
+      socket.off('end-call', onEnded); // <-- ADD
+      socket.off('user-disconnected', onEnded);
       // ⛔️ No connect/disconnect here anymore
       stopOutgoingTone();
       stopIncomingTone();

@@ -1,5 +1,5 @@
 // src/calling/components/CallingUsersList.tsx
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -26,7 +26,21 @@ type User = {
   phone?: string;
 };
 
+const DEBOUNCE_MS = 300;
+
 const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
+  // raw input from the search field
+  const [query, setQuery] = useState('');
+  const canLoadMoreRef = useRef(true);
+
+  // debounce the query so we only hit backend after a pause in typing
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // call backend with just the search value (backend handles filtering/pagination)
   const {
     data,
     isLoading,
@@ -34,33 +48,19 @@ const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetAllUsers();
+  } = useGetAllUsers(debouncedQuery, 10); // <-- pass search param only
 
-  const [query, setQuery] = useState('');
-
-  // Flatten paginated users
+  // Flatten paginated users (already filtered server-side by debouncedQuery)
   const users: User[] = useMemo(
     () => data?.pages.flatMap((p: any) => p?.data?.users ?? []) ?? [],
     [data],
   );
 
-  // Remove self
-  const withoutSelf = useMemo(
+  // Optionally remove self locally (kept — harmless and not search-related)
+  const usersToShow = useMemo(
     () => users.filter(u => u?._id !== currentUserId),
     [users, currentUserId],
   );
-
-  // Filter by search query (firstName, lastName, phone)
-  const q = query.trim().toLowerCase();
-  const filteredUsers = useMemo(() => {
-    if (!q) return withoutSelf;
-    return withoutSelf.filter(u => {
-      const fn = (u.firstName || '').toLowerCase();
-      const ln = (u.lastName || '').toLowerCase();
-      const ph = (u.phone || '').toLowerCase();
-      return fn.includes(q) || ln.includes(q) || ph.includes(q);
-    });
-  }, [withoutSelf, q]);
 
   const keyExtractor = useCallback((item: User) => item._id, []);
 
@@ -103,12 +103,12 @@ const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
   );
 
   const handleLoadMore = useCallback(() => {
-    // Avoid paginating while searching (local filter only)
-    if (q) return;
+    if (!canLoadMoreRef.current) return;
     if (hasNextPage && !isFetchingNextPage) {
+      canLoadMoreRef.current = false;
       fetchNextPage();
     }
-  }, [q, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const clearSearch = useCallback(() => setQuery(''), []);
 
@@ -157,7 +157,7 @@ const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
 
   return (
     <FlatList
-      data={filteredUsers}
+      data={usersToShow}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       contentContainerStyle={styles.listContent}
@@ -168,12 +168,12 @@ const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
       ListEmptyComponent={
         <View style={styles.centerWrap}>
           <Text style={styles.emptyTxt}>
-            {q ? 'No users match your search' : 'No users found'}
+            {debouncedQuery ? 'No users match your search' : 'No users found'}
           </Text>
         </View>
       }
       ListFooterComponent={
-        hasNextPage && isFetchingNextPage && !q ? (
+        isFetchingNextPage ? (
           <View style={styles.footerLoading}>
             <ActivityIndicator size="small" color="#007AFF" />
           </View>
@@ -181,6 +181,9 @@ const CallingUsersList: React.FC<Props> = ({currentUserId, onStartCall}) => {
           <View style={{height: 12}} />
         )
       }
+      onMomentumScrollBegin={() => {
+        canLoadMoreRef.current = true;
+      }}
       showsVerticalScrollIndicator={false}
     />
   );

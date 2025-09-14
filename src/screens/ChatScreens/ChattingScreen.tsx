@@ -102,6 +102,7 @@ const ChattingScreen = ({navigation, route}: any) => {
   // Keyboard & list refs
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const flatListRef = useRef<FlatList<any> | null>(null);
+  const cameraRef = useRef(null);
 
   // Socket ref (avoids stale closures)
   const socketRef = useRef<Socket | null>(null);
@@ -238,16 +239,22 @@ const ChattingScreen = ({navigation, route}: any) => {
 
   /* -------------------------------- Handlers -------------------------------- */
 
-  const sendMessage = (): void => {
+  const sendMessage = (override?: {attachments?: any[]}): void => {
     const s = socketRef.current;
     if (!s || !senderId || !receiverId) return;
-    if (!message.trim() && !file && !location && !contact) return;
+    const effectiveAttachments = override?.attachments ?? file?.attachments;
+    if (!message.trim() && !effectiveAttachments && !location && !contact) {
+      console.log('sendMessage:earlyReturn:noContent');
+      return;
+    }
 
     const newMessage: MsgDataType = {
       receiver: receiverId,
       text: message,
       sender: senderId,
-      ...(file?.attachments?.length ? {attachments: file.attachments} : {}),
+      ...(effectiveAttachments?.length
+        ? {attachments: effectiveAttachments}
+        : {}),
       ...(location &&
       location.latitude !== undefined &&
       location.longitude !== undefined
@@ -273,12 +280,11 @@ const ChattingScreen = ({navigation, route}: any) => {
           }
         : {}),
     };
-
     s.emit('sendMessage', newMessage);
 
     // Reset composers
     setMessage('');
-    setFile(null);
+    if (!override?.attachments) setFile(null);
     setContact(undefined);
     setLocation(undefined);
     setImageViewModalVisible(false);
@@ -321,6 +327,7 @@ const ChattingScreen = ({navigation, route}: any) => {
   };
 
   const setCamera = () => {
+    console.log('UI:Camera:openPressed');
     setAttachmentsPopup(false);
     setCameraVisible(true);
   };
@@ -339,12 +346,13 @@ const ChattingScreen = ({navigation, route}: any) => {
         const destFilePath = `${RNFS.DownloadDirectoryPath}/${fileName}`;
         await RNFS.moveFile(filePath, destFilePath);
         setCapturedImage(`file://${destFilePath}`);
+        const finalUri = `file://${destFilePath}`;
+        setCapturedImage(finalUri);
       } else {
         setCapturedImage(uri);
+        setCapturedImage(uri);
       }
-    } catch (error) {
-      myConsole('saveCapturedImage:error', error);
-    }
+    } catch (error) {}
   };
 
   const sendCapturedImage = async (uri: string | null) => {
@@ -352,13 +360,13 @@ const ChattingScreen = ({navigation, route}: any) => {
     sendCapturedImageHelper({
       uri,
       onSuccess: fileData => {
-        setFile(fileData);
         setCameraVisible(false);
         setCapturedImage(null);
-        sendMessage();
+        // send immediately with attachments override to avoid state update race
+        sendMessage({attachments: fileData?.attachments || []});
       },
       onError: () => {
-        // optional: toast.error('Failed to process image');
+        myConsole('sendCapturedImage:onError', 'helper failed');
       },
     });
   };
@@ -545,7 +553,7 @@ const ChattingScreen = ({navigation, route}: any) => {
 
         {cameraVisible && (
           <CameraCaptureView
-            cameraRef={useRef(null)}
+            cameraRef={cameraRef}
             cameraType={cameraType}
             switchCamera={switchCamera}
             onBack={() => setCameraVisible(false)}

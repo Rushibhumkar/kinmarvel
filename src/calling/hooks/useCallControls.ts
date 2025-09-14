@@ -1,9 +1,11 @@
 import {Alert} from 'react-native';
 import {useEffect} from 'react';
 import socket from '../services/socket';
+import React from 'react';
 type MediaType = 'audio' | 'video';
 
 type UseCallControlsParams = {
+  userId?: string;
   peerId: string | null;
   setPeerId: (id: string | null) => void;
   setIsDialing: (v: boolean) => void;
@@ -26,6 +28,7 @@ type UseCallControlsParams = {
 };
 
 export default function useCallControls({
+  userId,
   peerId,
   setPeerId,
   setIsDialing,
@@ -51,20 +54,28 @@ export default function useCallControls({
     }
   };
 
+  const peerIdRef = React.useRef<string | null>(null);
+  useEffect(() => {
+    peerIdRef.current = peerId;
+  }, [peerId]);
+
   const handleAnswer = async () => {
     try {
       await answerCall();
       stopIncomingTone();
       setIncomingCall(null);
       setInCall(true);
+      setPeerId(incomingCall?.from ?? peerId);
     } catch (err) {
       Alert.alert('Answer Error', 'Could not answer call');
     }
   };
 
   const handleEnd = () => {
-    if (peerId) {
-      socket.emit('end-call', {to: peerId});
+    const to = peerIdRef.current || incomingCall?.from || peerId || undefined;
+    if (to) {
+      socket.emit('end-call', {to, from: userId});
+      socket.emit('call-ended', {to, from: userId});
     }
     stopOutgoingTone();
     stopIncomingTone();
@@ -99,8 +110,10 @@ export default function useCallControls({
       setPeerId(null);
     };
     socket.on('call-ended', onPeerEnded);
+    socket.on('end-call', onPeerEnded);
     return () => {
       socket.off('call-ended', onPeerEnded);
+      socket.off('end-call', onPeerEnded);
     };
   }, [
     endCall,

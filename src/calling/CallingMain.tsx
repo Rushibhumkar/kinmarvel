@@ -13,6 +13,7 @@ import {useCall} from './hooks/useCall';
 import useCallAudio from './hooks/useCallAudio';
 import useSignalingWire from './hooks/useSignalingWire';
 import useCallControls from './hooks/useCallControls';
+import {myConsole} from '../utils/myConsole';
 
 const CallingMain = () => {
   const navigation = useNavigation();
@@ -57,6 +58,7 @@ const CallingMain = () => {
   // high-level call controls
   const {handleStartCall, handleAnswer, handleEnd, handleReject} =
     useCallControls({
+      userId,
       peerId,
       setPeerId,
       setIsDialing,
@@ -99,13 +101,13 @@ const CallingMain = () => {
   }, [handleReject, setIncomingCall]);
 
   useEffect(() => {
-    if ((localStream || remoteStream) && !inCall) {
+    if (remoteStream && !inCall) {
       setInCall(true);
       setIncomingCall(null);
       stopIncomingTone();
     }
-  }, [localStream, remoteStream, inCall, setIncomingCall, stopIncomingTone]);
-
+  }, [remoteStream, inCall, setIncomingCall, stopIncomingTone]);
+  myConsole('inCallsss', inCall);
   return (
     <View style={styles.container}>
       {!inCall && (
