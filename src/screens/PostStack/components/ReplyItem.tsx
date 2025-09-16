@@ -17,6 +17,7 @@ import {
 } from '../../../hooks/comments/useReplyMutations';
 import CommentActions from './CommentActions';
 import {color} from '../../../const/color';
+import ReplyComposer from './ReplyComposer';
 
 /* ===========================
    COMPONENT: Single Reply Row
@@ -25,26 +26,47 @@ const ReplyItem = ({
   postId,
   commentId,
   reply,
+  currentUser,
   onAfterEdit,
   onAfterDelete,
+  onCreateNestedReply,
 }: any) => {
   const initialLiked = !!reply?.isLikedByMe;
   const initialCount = reply?.likeCount ?? 0;
 
   const [liked, setLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialCount);
+  const [showReplyInput, setShowReplyInput] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(reply?.content || '');
 
   const authorName = useMemo(() => {
-    const by = reply?.by || {};
-    return (
-      by?.fullName ||
-      `${by?.firstName || ''} ${by?.lastName || ''}`.trim() ||
-      'User'
-    );
-  }, [reply]);
+    const by = reply?.by;
+    myConsole('byyyyy', by);
+    if (by && typeof by === 'object') {
+      return (
+        by.fullName ||
+        `${by?.firstName || ''} ${by?.lastName || ''}`.trim() ||
+        by?.userName ||
+        'User'
+      );
+    }
+    // if API returned only an id (string) and it matches current user, use current user's name
+    if (
+      typeof by === 'string' &&
+      currentUser &&
+      (by === currentUser._id || by === currentUser.id)
+    ) {
+      return (
+        currentUser.fullName ||
+        `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() ||
+        currentUser.userName ||
+        'You'
+      );
+    }
+    return 'User';
+  }, [reply, currentUser]);
 
   const {mutateAsync: toggleLikeReq, isPending: liking} = useLikeUnlikeReply({
     postId,
@@ -166,8 +188,31 @@ const ReplyItem = ({
             ]);
           }
         }}
-        showReplyButton={false}
+        onReply={() => setShowReplyInput(v => !v)}
+        showReplyButton={true}
       />
+
+      {showReplyInput ? (
+        <View style={{marginTop: 6, paddingLeft: 6}}>
+          <ReplyComposer
+            postId={postId}
+            commentId={commentId}
+            replyTo={reply?.by?._id || reply?.by || null}
+            replyingUser={
+              typeof reply?.by === 'object'
+                ? {_id: reply?.by?._id, userName: reply?.by?.userName}
+                : null
+            }
+            onSubmitted={(res: any) => {
+              const newR = res?.reply;
+              if (newR) {
+                onCreateNestedReply?.(newR);
+              }
+              setShowReplyInput(false);
+            }}
+          />
+        </View>
+      ) : null}
 
       {/* Inline Edit Modal */}
       <Modal animationType="fade" visible={isEditing} transparent>

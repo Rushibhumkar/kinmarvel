@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
   Dimensions,
   Image,
@@ -99,6 +99,17 @@ const PostCard = ({
   const hasLocation = !!(loc?.name || loc?.address);
   const tags = Array.isArray(post?.hashTags) ? post.hashTags : [];
 
+  const lastTapRef = useRef<number>(0);
+  const handleMediaTap = () => {
+    const now = Date.now();
+    if (now - (lastTapRef.current || 0) < 300) {
+      // double tap => like only if not already liked
+      if (!post?.isLikedByMe) {
+        onLikePress?.(post, 'like');
+      }
+    }
+    lastTapRef.current = now;
+  };
   return (
     <View style={styles.card}>
       {/* Header */}
@@ -132,8 +143,9 @@ const PostCard = ({
         </View>
       ) : null}
 
-      {/* Media (carousel with images/videos) */}
-      <MediaCarousel items={media} />
+      <TouchableOpacity activeOpacity={1} onPress={handleMediaTap}>
+        <MediaCarousel items={media} />
+      </TouchableOpacity>
 
       {/* Hashtags */}
       {tags.length ? (
@@ -151,12 +163,13 @@ const PostCard = ({
         <TouchableOpacity
           style={styles.footerBtn}
           activeOpacity={0.7}
-          onPress={() =>
-            onLikePress
-              ? onLikePress(post)
-              : myConsole('[PostCard] like pressed', {postId: post?._id})
-          }>
-          <Text style={styles.footerBtnText}>❤ {post?.likeCount ?? 0}</Text>
+          onPress={() => {
+            const action = post?.isLikedByMe ? 'unlike' : 'like';
+            onLikePress?.(post, action);
+          }}>
+          <Text style={styles.footerBtnText}>
+            {post?.isLikedByMe ? '❤️' : '🤍'} {post?.likeCount ?? 0}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerBtn}

@@ -17,7 +17,9 @@ const CommentActions = ({
   onToggleLike,
   loadingLike = false,
   onReply,
-  onMore,
+  onMore, // now labeled "Edit/Delete"
+  onShowReplies, // NEW: toggle nested comments
+  repliesCount = 0,
   showReplyButton = true,
 }: any) => {
   return (
@@ -42,8 +44,15 @@ const CommentActions = ({
       ) : null}
 
       <Pressable style={styles.btn} onPress={onMore}>
-        <Text style={styles.btnText}>More</Text>
+        <Text style={styles.btnText}>Edit/Delete</Text>
       </Pressable>
+      {onShowReplies ? (
+        <Pressable style={styles.btn} onPress={onShowReplies}>
+          <Text style={styles.btnText}>
+            More{repliesCount ? ` (${repliesCount})` : ''}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 };

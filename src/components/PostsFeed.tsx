@@ -6,7 +6,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import {fetchPosts} from '../api/posts/postFunc';
+import {fetchPosts, likePost} from '../api/posts/postFunc';
 import PostCard from '../screens/PostStack/components/PostCard';
 import {myConsole} from '../utils/myConsole';
 import CommentSheet from '../screens/PostStack/components/CommentSheet';
@@ -117,6 +117,39 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
     [loadingMore],
   );
 
+  const applyLikeLocally = useCallback((postId: string, nextLiked: boolean) => {
+    setPosts(prev =>
+      prev.map(p =>
+        p._id === postId
+          ? {
+              ...p,
+              isLikedByMe: nextLiked,
+              likeCount: Math.max(0, (p.likeCount || 0) + (nextLiked ? 1 : -1)),
+            }
+          : p,
+      ),
+    );
+  }, []);
+
+  const handleLikeToggle = useCallback(
+    async (post: any, explicitAction?: 'like' | 'unlike') => {
+      const currentLiked = !!post?.isLikedByMe;
+      const targetAction = explicitAction ?? (currentLiked ? 'unlike' : 'like');
+      const nextLiked = targetAction === 'like';
+
+      // optimistic update
+      applyLikeLocally(post._id, nextLiked);
+      try {
+        await likePost(post._id, targetAction);
+      } catch (e) {
+        // rollback on failure
+        applyLikeLocally(post._id, currentLiked);
+        console.log('[PostsFeed] like toggle failed:', e);
+      }
+    },
+    [applyLikeLocally],
+  );
+
   if (initialLoading && posts.length === 0) {
     return (
       <View style={styles.initialLoader}>
@@ -134,6 +167,7 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
             post={item}
             onOpenComments={handleOpenComments}
             onCommentCountChange={handleCommentCountChange}
+            onLikePress={handleLikeToggle}
           />
         )}
         contentContainerStyle={styles.listContent}

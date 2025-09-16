@@ -8,13 +8,13 @@ import IncomingCallModal from './components/IncomingCallModal';
 import CallingUsersList from './components/CallingUsersList';
 
 import {useGetMyData} from '../api/profile/profileFunc';
-import {useCall} from './hooks/useCall';
 
 import useCallAudio from './hooks/useCallAudio';
 import useSignalingWire from './hooks/useSignalingWire';
 import useCallControls from './hooks/useCallControls';
 import {myConsole} from '../utils/myConsole';
 import CallEventEmitter from './services/CallEventEmitter';
+import {useCall} from './hooks/useCall';
 
 const CallingMain = () => {
   const navigation = useNavigation();

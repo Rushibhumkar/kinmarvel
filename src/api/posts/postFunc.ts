@@ -153,6 +153,18 @@ const trimCacheSize = (maxEntries: number) => {
   }
 };
 
+export type LikeAction = 'like' | 'unlike';
+
+export const likePost = async (postId: string, action: LikeAction) => {
+  const {data} = await API_AXIOS.post(`/post/${postId}/like`, {action});
+  return data;
+};
+
+export const togglePostLike = async (postId: string, isLikedByMe?: boolean) => {
+  const action: LikeAction = isLikedByMe ? 'unlike' : 'like';
+  return likePost(postId, action);
+};
+
 export const invalidatePostsCache = (
   p?: Partial<{limit: number; page: number; type: 'post' | 'reel'}>,
 ) => {

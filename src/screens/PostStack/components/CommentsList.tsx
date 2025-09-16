@@ -1,5 +1,5 @@
 // src/screens/PostStack/components/CommentsList.tsx
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -12,6 +12,7 @@ import {useComments} from '../../../hooks/comments/useComments';
 import EmptyComments from './EmptyComments';
 import {myConsole} from '../../../utils/myConsole';
 import CommentItem from './CommentItem';
+import {getData} from '../../../hooks/useAsyncStorage';
 
 /* ===========================
    COMPONENT: Comments FlatList
@@ -27,13 +28,30 @@ const CommentsList = ({postId, limit = 10}: any) => {
     fetchNextPage,
   } = useComments({postId, limit});
 
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  useEffect(() => {
+    (async () => {
+      // try a few common keys; keep silent if not found
+      const keys = ['user', 'currentUser', 'userInfo', 'me'];
+      for (const k of keys) {
+        try {
+          const u = await getData(k as any);
+          if (u && (u._id || u.id)) {
+            setCurrentUser(u);
+            break;
+          }
+        } catch {}
+      }
+    })();
+  }, []);
+
   const [localHidden, setLocalHidden] = useState<Record<string, boolean>>({});
 
   const visibleComments = useMemo(
     () => comments.filter((c: any) => !localHidden[c?._id]),
     [comments, localHidden],
   );
-
+  myConsole('commentsssee', comments);
   const onRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
@@ -67,6 +85,7 @@ const CommentsList = ({postId, limit = 10}: any) => {
         <CommentItem
           postId={postId}
           comment={item}
+          currentUser={currentUser}
           onAfterDelete={(id: string) => {
             setLocalHidden(prev => ({...prev, [id]: true}));
             myConsole('[CommentsList] removed comment', id);

@@ -19,6 +19,7 @@ import {
 import {useCreateReply} from '../../../hooks/comments/useReplyMutations';
 import {myConsole} from '../../../utils/myConsole';
 import {color} from '../../../const/color';
+import {useCommentReplies} from '../../../hooks/comments/useComments';
 
 /* ===========================
    COMPONENT: Single Comment Row
@@ -26,6 +27,7 @@ import {color} from '../../../const/color';
 const CommentItem = ({
   postId,
   comment,
+  currentUser,
   onAfterDelete,
   onAfterReplyAdded,
 }: any) => {
@@ -34,9 +36,14 @@ const CommentItem = ({
   const [replies, setReplies] = useState<any[]>(
     Array.isArray(comment?.replies) ? comment.replies : [],
   );
+
   const [replyCount, setReplyCount] = useState(
     comment?.replyCount ?? replies.length ?? 0,
   );
+
+  const [showReplies, setShowReplies] = useState(false);
+  const [repliesPage, setRepliesPage] = useState(1);
+  const repliesLimit = 10;
 
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +60,32 @@ const CommentItem = ({
   const {mutateAsync: createReplyReq, isPending: replying} = useCreateReply({
     postId,
   });
+
+  // fetch replies when sheet "More" is tapped (showReplies = true)
+  const {
+    data: repliesData,
+    isFetching: fetchingReplies,
+    refetch: refetchReplies,
+  } = useCommentReplies({
+    commentId: comment?._id,
+    page: repliesPage,
+    limit: repliesLimit,
+    enabled: showReplies,
+  });
+
+  React.useEffect(() => {
+    if (repliesData?.data?.replies) {
+      const list = repliesData.data.replies;
+      setReplies(prev =>
+        repliesPage === 1
+          ? list
+          : [...prev, ...list.filter(n => !prev.find(p => p?._id === n?._id))],
+      );
+      const total = repliesData?.data?.pagination?.total;
+      if (typeof total === 'number') setReplyCount(total);
+    }
+  }, [repliesData, repliesPage]);
+
   const authorName = useMemo(() => {
     const by = comment?.by || {};
     return (
@@ -183,6 +216,18 @@ const CommentItem = ({
             {text: 'Cancel', style: 'cancel'},
           ])
         }
+        onShowReplies={() => {
+          setShowReplies(v => {
+            const next = !v;
+            if (next) {
+              // reset to first page and fetch
+              setRepliesPage(1);
+              refetchReplies();
+            }
+            return next;
+          });
+        }}
+        repliesCount={replyCount}
         showReplyButton
       />
 
@@ -208,12 +253,18 @@ const CommentItem = ({
       ) : null}
 
       {/* Replies */}
-      {replyCount > 0 ? (
+      {showReplies ? (
         <View style={styles.repliesWrap}>
+          {fetchingReplies ? (
+            <Text style={{color: '#6b7280', marginBottom: 6}}>
+              Loading replies…
+            </Text>
+          ) : null}
           {replies.map((r: any) => (
             <ReplyItem
               key={r?._id}
               postId={postId}
+              currentUser={currentUser}
               commentId={comment?._id}
               reply={r}
               onAfterEdit={(updated: any) => {
@@ -230,8 +281,23 @@ const CommentItem = ({
                 setReplies(prev => prev.filter(it => it?._id !== replyId));
                 setReplyCount((prev: any) => Math.max(0, prev - 1));
               }}
+              onCreateNestedReply={(newR: any) => {
+                setReplies(prev => [newR, ...prev]);
+                setReplyCount((prev: any) => prev + 1);
+              }}
             />
           ))}
+          {showReplies &&
+            (repliesData?.data?.pagination?.page ?? 1) <
+              (repliesData?.data?.pagination?.totalPages ?? 1) && (
+              <Pressable
+                style={{paddingVertical: 8}}
+                onPress={() => setRepliesPage(p => p + 1)}>
+                <Text style={{color: '#2563eb', fontWeight: '700'}}>
+                  Load more replies
+                </Text>
+              </Pressable>
+            )}
           {replying ? (
             <View style={{paddingVertical: 6}}>
               <Text style={{color: '#6b7280'}}>Posting reply…</Text>

@@ -1,7 +1,10 @@
 // src/hooks/comments/useComments.ts
-import {useInfiniteQuery} from '@tanstack/react-query';
+import {useInfiniteQuery, useQuery} from '@tanstack/react-query';
 import {myConsole} from '../../utils/myConsole';
-import {getPostCommentsFunc} from '../../api/postComment/postCommentFunc';
+import {
+  getCommentRepliesFunc,
+  getPostCommentsFunc,
+} from '../../api/postComment/postCommentFunc';
 
 /* ===========================
    HOOK: Fetch & paginate comments for a post
@@ -33,4 +36,22 @@ export function useComments({postId, limit = 10}: any) {
     ...query,
     comments: flatComments,
   };
+}
+
+/* ===========================
+   HOOK: Fetch replies for a comment
+   =========================== */
+export function useCommentReplies({
+  commentId,
+  page = 1,
+  limit = 10,
+  enabled = false,
+}: any) {
+  return useQuery({
+    queryKey: ['commentReplies', commentId, page, limit],
+    queryFn: () => getCommentRepliesFunc({commentId, page, limit}),
+    enabled,
+    keepPreviousData: true,
+    staleTime: 1000 * 60 * 5,
+  });
 }

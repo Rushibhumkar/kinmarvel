@@ -64,9 +64,7 @@ export async function getPostCommentsFunc({postId, page = 1, limit = 10}: any) {
   const params: any = {page, limit};
 
   try {
-    myConsole('[getPostCommentsFunc] -> GET', {url, params});
     const {data} = await API_AXIOS.get(url, {params});
-    myConsole('[getPostCommentsFunc] <- RESPONSE', data);
     return data;
   } catch (error: any) {
     const status = error?.response?.status;
@@ -435,3 +433,25 @@ export async function likeUnlikeCommentReplyFunc({
 //     "message": "Reply liked",
 //     "likeCount": 1
 // }
+
+/* ===========================
+   GET: Comment replies (with pagination)
+   =========================== */
+export async function getCommentRepliesFunc({
+  commentId,
+  page = 1,
+  limit = 10,
+}: any) {
+  const url = `/comments/${encodeURIComponent(String(commentId))}/replies`;
+  const params: any = {page, limit};
+  try {
+    const {data} = await API_AXIOS.get(url, {params});
+    myConsole('[getCommentRepliesFunc] <- RESPONSE', data);
+    return data;
+  } catch (error: any) {
+    const status = error?.response?.status;
+    const errData = error?.response?.data;
+    myConsole('[getCommentRepliesFunc] !! ERROR', {status, errData});
+    throw error;
+  }
+}
