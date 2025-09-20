@@ -80,12 +80,7 @@ const MediaCarousel = ({items}: any) => {
   );
 };
 
-const PostCard = ({
-  post,
-  onOpenComments,
-  onCommentCountChange,
-  onLikePress,
-}: any) => {
+const PostCard = ({post, onOpenComments, onLikePress}: any) => {
   const author = post?.createdBy || {};
   const name =
     author?.fullName ||

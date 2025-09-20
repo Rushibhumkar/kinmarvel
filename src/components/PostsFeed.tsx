@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
+  DeviceEventEmitter,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -91,6 +92,13 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
     loadPage(1);
   }, [loadPage]);
 
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('post:added', () => {
+      // pull fresh list when a new post is created
+      loadPage(1, {refresh: true});
+    });
+    return () => sub.remove();
+  }, [loadPage]);
   const onRefresh = useCallback(() => {
     try {
       onExternalRefresh?.();

@@ -17,6 +17,7 @@ export interface CreatePostPayload {
     address?: string;
   };
   files?: PostFile[];
+  collaborators?: string[];
   visible_to: VisibleTo;
 }
 
@@ -54,15 +55,23 @@ export const createPost = async (postData: CreatePostPayload) => {
         formData.append('files', file as any);
       });
     }
+    if (postData.collaborators && postData.collaborators.length > 0) {
+      formData.append('collaborators', JSON.stringify(postData.collaborators));
+    }
     formData.append('visible_to', postData.visible_to);
 
     const {data} = await API_AXIOS.post('/post', formData, {
       headers: {'Content-Type': 'multipart/form-data'},
     });
 
-    // Optional: invalidate the first-page cache for this type so next read is fresh
+    // Invalidate cache + immediately fetch fresh posts ONLY when post is added
     invalidatePostsCache({page: 1, limit: DEFAULT_LIMIT, type: postData.type});
-
+    fetchPosts({
+      page: 1,
+      limit: DEFAULT_LIMIT,
+      type: postData.type,
+      forceRefresh: true,
+    }).catch(() => {}); // fire-and-forget refresh
     return data;
   } catch (error: any) {
     console.error('Error creating post:', error?.response || error);

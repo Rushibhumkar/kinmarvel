@@ -40,6 +40,7 @@ import {
   useKeyboardHeight,
   useMarkSeenOnFocus,
 } from './hooks/chatHelpers';
+import Video from 'react-native-video';
 
 const ChattingScreen = ({navigation, route}: any) => {
   const toast = useAppToast();
@@ -52,7 +53,6 @@ const ChattingScreen = ({navigation, route}: any) => {
   const {data: myData} = useGetMyData();
   const senderId: string | undefined = myData?.data?._id;
 
-  // helper to normalize user id whether it's a string or an object
   const getId = (v: any): string | undefined =>
     typeof v === 'string' ? v : v?._id;
   // Figure out who the other person is (peer user object if available)
@@ -418,6 +418,8 @@ const ChattingScreen = ({navigation, route}: any) => {
         senderId={senderId}
         isSelected={selectedSet.has(item?._id)}
         onToggleSelect={handleToggleSelect}
+        isComeFromAnotherScreen={isComeFromAnotherScreen}
+        media={media}
       />
     ),
     [handleToggleSelect, senderId, selectedSet],
@@ -476,7 +478,15 @@ const ChattingScreen = ({navigation, route}: any) => {
               },
             ]
       }
-      isBack>
+      isBack={() => {
+        if (isComeFromAnotherScreen) {
+          navigation.navigate(chatRoute.ChatsList, {
+            isComeFromAnotherScreen: false,
+          });
+        } else {
+          navigation.pop();
+        }
+      }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={
@@ -540,16 +550,18 @@ const ChattingScreen = ({navigation, route}: any) => {
           />
         )}
 
-        <FilePreviewModal
-          visible={imageViewModalVisible}
-          onClose={() => setImageViewModalVisible(false)}
-          file={file}
-          message={message}
-          onChangeMessage={setMessage}
-          onSend={sendMessage}
-          keyboardHeight={keyboardHeight}
-          toggleAttachmentPopup={() => setAttachmentsPopup(!attachmentsPopup)}
-        />
+        {!isComeFromAnotherScreen && (
+          <FilePreviewModal
+            visible={imageViewModalVisible}
+            onClose={() => setImageViewModalVisible(false)}
+            file={file}
+            message={message}
+            onChangeMessage={setMessage}
+            onSend={sendMessage}
+            keyboardHeight={keyboardHeight}
+            toggleAttachmentPopup={() => setAttachmentsPopup(!attachmentsPopup)}
+          />
+        )}
 
         {cameraVisible && (
           <CameraCaptureView

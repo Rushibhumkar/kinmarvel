@@ -22,12 +22,15 @@ const MessageComponent = ({
   data,
   isSelected,
   onToggleSelect,
+  isComeFromAnotherScreen,
+  media,
 }: any) => {
   const [viewFullImg, setViewFullImg] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [isPaused, setIsPaused] = useState(false);
   const [loadError, setLoadError] = useState(false);
-
+  myConsole('iscomeddd', isComeFromAnotherScreen);
+  myConsole('imedd', media);
   const handleImageClick = (uri: string) => {
     setSelectedImage(uri);
     setViewFullImg(true);
@@ -51,7 +54,6 @@ const MessageComponent = ({
   const isSender =
     (typeof data?.sender === 'string' ? data.sender : data?.sender?._id) ===
     senderId;
-  myConsole('dataaaa', data);
   return (
     <TouchableOpacity
       activeOpacity={0.9}

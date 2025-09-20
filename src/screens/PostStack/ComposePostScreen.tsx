@@ -13,6 +13,7 @@ import {myConsole} from '../../utils/myConsole';
 import useLocationPermission from '../../hooks/useLocationPermission';
 import LocationPickerBottomSheet from '../../components/LocationPickerBottomSheet';
 import {useAppToast} from '../../components/toast/AppToast';
+import TagPeopleModal from './components/TagPeopleModal';
 
 type SelectedLocation = {
   address: string;
@@ -27,6 +28,11 @@ const ComposePostScreen = () => {
   const route = useRoute();
   const {media: routeMedia = [] as any[]} = (route.params as any) || {};
 
+  const [taggedUsers, setTaggedUsers] = useState<
+    {_id: string; userName: string}[]
+  >([]);
+  const collaboratorIds = taggedUsers.map(u => u._id);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [caption, setCaption] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,7 +43,8 @@ const ComposePostScreen = () => {
     'followers',
   );
 
-  // NEW: location state + sheet visibility
+  const [tagModalVisible, setTagModalVisible] = useState(false);
+
   const [locationSheetVisible, setLocationSheetVisible] = useState(false);
   const [selectedLocation, setSelectedLocation] =
     useState<SelectedLocation>(null);
@@ -65,19 +72,16 @@ const ComposePostScreen = () => {
             address: selectedLocation.address || '',
           }
         : undefined;
-
+      myConsole('collaboratorIds', collaboratorIds);
       const postData = {
         type: 'post' as const,
         desc: caption,
+        collaborators: collaboratorIds,
         ...(locationForApi ? {location: locationForApi} : {}),
         files,
         visible_to: visibility,
       };
-      console.log('[post] payload.location →', locationForApi ?? 'OMITTED');
-      console.log('[post] payload.location →', selectedLocation ?? 'OMITTED');
-
       myConsole('Creating post with data:', JSON.stringify(postData, null, 2));
-
       const response = await createPost(postData);
       myConsole('Create post API response:', JSON.stringify(response, null, 2));
 
@@ -100,6 +104,7 @@ const ComposePostScreen = () => {
         // @ts-ignore
         onLeftPress={() => navigation.goBack()}
       />
+
       <FlatList
         data={Array.isArray(media) ? media : []}
         horizontal
@@ -116,25 +121,13 @@ const ComposePostScreen = () => {
       <PostComposer
         onShowHidePress={() => setModalVisible(true)}
         caption={caption}
+        taggedUsers={taggedUsers}
+        onTagPress={() => setTagModalVisible(true)}
         onLocationPress={async () => {
-          console.log(
-            '[location] before request → hasPermission:',
-            hasPermission,
-            'coords:',
-            location,
-          );
           try {
             await requestLocationPermission();
-          } catch (e) {
-            console.log('[location] request error (ignored):', e);
           } finally {
-            console.log(
-              '[location] after request → hasPermission:',
-              hasPermission,
-              'coords:',
-              location,
-            );
-            setLocationSheetVisible(true); // open Places UI regardless
+            setLocationSheetVisible(true);
           }
         }}
         setCaption={setCaption}
@@ -142,23 +135,13 @@ const ComposePostScreen = () => {
         selectedLocation={selectedLocation}
       />
 
-      {/* Show/Hide audience modal */}
       <ShowHideModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onSelect={place => {
-          setSelectedLocation({
-            address: place.address,
-            placeId: place.placeId,
-            lat: place.lat ?? location?.latitude ?? null,
-            lng: place.lng ?? location?.longitude ?? null,
-          });
-          console.log('[location] selectedLocation set →', {
-            address: place.address,
-            placeId: place.placeId,
-            lat: place.lat ?? location?.latitude ?? null,
-            lng: place.lng ?? location?.longitude ?? null,
-          });
+        selected={visibility}
+        onSelect={val => {
+          setVisibility(val);
+          setModalVisible(false);
         }}
       />
 
@@ -178,7 +161,6 @@ const ComposePostScreen = () => {
         </CustomText>
       </TouchableOpacity>
 
-      {/* NEW: Google Places Autocomplete Bottom Sheet */}
       <LocationPickerBottomSheet
         visible={locationSheetVisible}
         onClose={() => setLocationSheetVisible(false)}
@@ -193,6 +175,21 @@ const ComposePostScreen = () => {
         modalHeight={600}
         placeholder="Search location..."
         initialValue={selectedLocation?.address || ''}
+      />
+
+      <TagPeopleModal
+        visible={tagModalVisible}
+        onClose={() => setTagModalVisible(false)}
+        preselectedIds={taggedUsers.map(u => u._id)}
+        onConfirm={users => {
+          const uniq: Record<string, {_id: string; userName: string}> = {};
+          users.forEach(u => {
+            if (!u._id) return;
+            uniq[u._id] = {_id: u._id, userName: u.userName || 'user'};
+          });
+          setTaggedUsers(Object.values(uniq));
+          setTagModalVisible(false);
+        }}
       />
     </View>
   );

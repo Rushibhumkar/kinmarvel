@@ -17,7 +17,9 @@ const PostComposer = ({
   caption,
   setCaption,
   visibility,
+  onTagPress,
   selectedLocation,
+  taggedUsers = [],
 }: any) => {
   return (
     <View style={styles.container}>
@@ -29,13 +31,35 @@ const PostComposer = ({
         onChangeText={setCaption}
         multiline
       />
-      <TouchableOpacity style={styles.linkRow}>
+      <TouchableOpacity style={styles.linkRow} onPress={onTagPress}>
         <Image
           source={require('../../../assets/icons/user.png')}
           style={styles.icon}
         />
         <CustomText style={styles.linkText}>Tag People</CustomText>
       </TouchableOpacity>
+      {taggedUsers?.length ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            marginTop: 8,
+            marginLeft: 30,
+          }}>
+          {taggedUsers.map((u: any) => (
+            <CustomText
+              key={u._id}
+              style={{
+                color: '#3687d3ff',
+                marginRight: 8,
+                marginBottom: 6,
+                fontWeight: '600',
+              }}>
+              @{u.userName}
+            </CustomText>
+          ))}
+        </View>
+      ) : null}
       <TouchableOpacity style={styles.linkRow} onPress={onLocationPress}>
         <Image
           source={require('../../../assets/icons/location.png')}

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   GestureResponderEvent,
   Image,
+  ViewStyle,
 } from 'react-native';
 import {sizes} from '../const';
 
@@ -16,6 +17,7 @@ interface CustomBottomModalProps {
   children: ReactNode;
   modalHeight?: number;
   backgroundColor?: string;
+  customStyling?: ViewStyle;
 }
 
 const CustomBottomModal: React.FC<CustomBottomModalProps> = ({
@@ -24,6 +26,7 @@ const CustomBottomModal: React.FC<CustomBottomModalProps> = ({
   children,
   modalHeight = 400,
   backgroundColor = '#fff',
+  customStyling,
 }) => {
   return (
     <Modal
@@ -38,7 +41,11 @@ const CustomBottomModal: React.FC<CustomBottomModalProps> = ({
        
       </TouchableOpacity> */}
       <View
-        style={[styles.modalContainer, {backgroundColor, height: modalHeight}]}>
+        style={[
+          styles.modalContainer,
+          {backgroundColor, height: modalHeight},
+          customStyling,
+        ]}>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <Image
             source={require('../assets/icons/close.png')}

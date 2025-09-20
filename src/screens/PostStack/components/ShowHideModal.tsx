@@ -11,40 +11,59 @@ import {
 import CustomText from '../../../components/CustomText';
 import {color} from '../../../const/color';
 
-const options = ['Self', 'Public', 'Followers'];
+const options = [
+  {label: 'Self', value: 'self'},
+  {label: 'Public', value: 'public'},
+  {label: 'Followers', value: 'followers'},
+] as const;
 
+type Audience = 'self' | 'public' | 'followers';
 type ShowHideModalProps = {
   visible: boolean;
   onClose: () => void;
-  onSelect: (option: string) => void;
+  selected?: Audience;
+  onSelect: (option: Audience) => void;
 };
 
 const ShowHideModal: React.FC<ShowHideModalProps> = ({
   visible,
+  selected,
   onClose,
   onSelect,
 }) => {
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.modal}>
-              <Text style={styles.title}>Who can see your post?</Text>
+              <CustomText style={styles.title}>
+                Who can see your post?
+              </CustomText>
               <FlatList
                 data={options}
-                keyExtractor={item => item}
-                renderItem={({item}) => (
-                  <TouchableOpacity
-                    style={styles.option}
-                    onPress={() => {
-                      onSelect(item);
-                    }}>
-                    <CustomText style={{color: color.titleColor}}>
-                      {item}
-                    </CustomText>
-                  </TouchableOpacity>
-                )}
+                keyExtractor={item => item.value}
+                renderItem={({item}) => {
+                  const isActive = item.value === selected;
+                  return (
+                    <TouchableOpacity
+                      style={[styles.option, isActive && styles.optionActive]}
+                      onPress={() => onSelect(item.value)}
+                      activeOpacity={0.7}>
+                      <CustomText
+                        style={[
+                          {color: color.titleColor},
+                          isActive && styles.optionActiveText,
+                        ]}>
+                        {item.label}
+                      </CustomText>
+                    </TouchableOpacity>
+                  );
+                }}
               />
               <TouchableOpacity onPress={onClose} style={styles.cancel}>
                 <Text style={{color: 'red'}}>Cancel</Text>
@@ -78,11 +97,20 @@ const styles = StyleSheet.create({
   },
   option: {
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
+    // borderBottomWidth: 1,
+    // borderColor: '#eee',
+    paddingHorizontal: 12,
   },
   cancel: {
     marginTop: 10,
     alignItems: 'center',
+  },
+  optionActive: {
+    backgroundColor: '#fec9c9ff',
+    borderColor: '#dbe6ff',
+    borderRadius: 12,
+  },
+  optionActiveText: {
+    fontWeight: '700',
   },
 });

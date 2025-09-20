@@ -24,6 +24,8 @@ import PostsFeed from '../../components/PostsFeed';
 import {useFocusEffect} from '@react-navigation/native';
 import {getData} from '../../hooks/useAsyncStorage';
 import socket from '../../calling/services/socket';
+import useCall from '../../hooks/useCall';
+import {myConsole} from '../../utils/myConsole';
 
 const AllStories = ({navigation}: any) => {
   const {
@@ -42,7 +44,7 @@ const AllStories = ({navigation}: any) => {
     data: storyById,
     isLoading: myStoryLoad,
     isError: myStoryErr,
-  } = useGetUserStories(senderId);
+  } = useGetUserStories('hh');
   const {
     data: pushNotis,
     isLoading: pushNotiLoad,
@@ -59,6 +61,8 @@ const AllStories = ({navigation}: any) => {
       setRefreshing(false);
     }
   };
+  const userId = myData?.data?._id;
+  myConsole('userIDdd', userId);
 
   useFocusEffect(
     React.useCallback(() => {
