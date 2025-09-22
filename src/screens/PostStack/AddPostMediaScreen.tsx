@@ -63,7 +63,7 @@ const AddPostMediaScreen: React.FC = () => {
           sizeMode={mediaSizeMode}
         />
 
-        {selectedMedia.length > 0 && (
+        {/* {selectedMedia.length > 0 && (
           <TouchableOpacity
             style={styles.portraitBtn}
             onPress={() => {
@@ -79,7 +79,7 @@ const AddPostMediaScreen: React.FC = () => {
               {mediaSizeMode.charAt(0).toUpperCase() + mediaSizeMode.slice(1)}
             </CustomText>
           </TouchableOpacity>
-        )}
+        )} */}
       </View>
     </SafeAreaView>
   );

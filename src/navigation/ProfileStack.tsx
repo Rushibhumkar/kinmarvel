@@ -13,7 +13,6 @@ import RateUs from '../screens/ProfileScreens/RateUs';
 import Hierarchy from '../screens/CommonScreens/Hierarchy';
 import AddMember from '../screens/CommonScreens/AddMember';
 import ProfPostsDetails from '../screens/ProfileScreens/ProfPostsDetails';
-import CallingMain from '../calling/CallingMain';
 
 const Stack = createNativeStackNavigator();
 
@@ -53,7 +52,6 @@ const ProfileStack = () => {
         name={profileRoute.FollowersFollowing}
         component={FollowersFollowing}
       />
-      <Stack.Screen name={'CallingMain'} component={CallingMain} />
     </Stack.Navigator>
   );
 };

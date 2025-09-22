@@ -1,3 +1,4 @@
+import {useQuery} from '@tanstack/react-query';
 import {API_AXIOS} from '../axiosInstance';
 
 // -----------------------------
@@ -192,3 +193,49 @@ export const invalidatePostsCache = (
 
 // Kick off a best-effort warm of the default first page (10 posts)
 void warmPostsCache('post');
+
+export interface FetchPostsParams {
+  limit?: number;
+  page?: number;
+}
+
+/* -----------------------------
+   API call: getUserPosts
+----------------------------- */
+export const getUserPosts = async (
+  userId: string,
+  params: FetchPostsParams = {},
+) => {
+  const limit = params.limit ?? DEFAULT_LIMIT;
+  const page = params.page ?? DEFAULT_PAGE;
+  const type = params.type ?? 'all';
+
+  const {data} = await API_AXIOS.get(`/post/user/${userId}`, {
+    params: {limit, page, type},
+  });
+
+  return data;
+};
+
+/* -----------------------------
+   Hook: useGetUserPosts
+----------------------------- */
+export const useGetUserPosts = (userId: string, params?: FetchPostsParams) =>
+  useQuery({
+    queryKey: ['postsByUser', userId, params],
+    queryFn: () => getUserPosts(userId, params),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+  });
+
+/* -----------------------------
+   API call: deletePost
+----------------------------- */
+export const deletePost = async (postId: string) => {
+  const {data} = await API_AXIOS.delete(`/post/${postId}`);
+  // Invalidate cache so deleted post disappears
+  invalidatePostsCache();
+  return data;
+};

@@ -9,7 +9,7 @@ export const registerDevice = async (deviceToken: string, platform: string) => {
       platform: platform,
     };
     const {data} = await API_AXIOS.post('/notification/devices', requestData);
-    // myConsole('lsdkjflkdsf', data);
+    myConsole('registerdevicefunction', data);
     return data;
   } catch (error: any) {
     console.log('Error:', error);

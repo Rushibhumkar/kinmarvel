@@ -124,7 +124,7 @@ const ProfileMain: React.FC = ({navigation}: any) => {
         visible={postNextScrModal}
         onClose={() => setPostNextScrModal(false)}>
         <View>
-          {['Posts', 'Saved', 'Collaborations'].map((item, index) => (
+          {['Posts', 'Collaborations'].map((item, index) => (
             <TouchableOpacity
               key={index}
               style={{

@@ -112,9 +112,10 @@ const App = () => {
 
   // ------- Get FCM token & register with backend -------
   const getFCMToken = async () => {
+    console.log('getfcmtokenfunctioncall');
     try {
       const fcmToken = await messaging().getToken();
-      myConsole('fcmToken', fcmToken);
+      myConsole('fcmTokennn', fcmToken);
       console.log('[FCM] token:', fcmToken);
       if (fcmToken) {
         await registerDevice(fcmToken, 'android');
@@ -149,8 +150,6 @@ const App = () => {
       unsubscribeForeground();
     };
   }, []);
-
-  // ❗ Background handler is in index.js (setBackgroundMessageHandler). Do NOT add it here.
 
   // ------- When user opens the app via a notification -------
   useEffect(() => {

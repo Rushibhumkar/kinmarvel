@@ -14,6 +14,7 @@ import useLocationPermission from '../../hooks/useLocationPermission';
 import LocationPickerBottomSheet from '../../components/LocationPickerBottomSheet';
 import {useAppToast} from '../../components/toast/AppToast';
 import TagPeopleModal from './components/TagPeopleModal';
+import {useQueryClient} from '@tanstack/react-query';
 
 type SelectedLocation = {
   address: string;
@@ -27,7 +28,7 @@ const ComposePostScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const {media: routeMedia = [] as any[]} = (route.params as any) || {};
-
+  const queryClient = useQueryClient();
   const [taggedUsers, setTaggedUsers] = useState<
     {_id: string; userName: string}[]
   >([]);
@@ -86,6 +87,7 @@ const ComposePostScreen = () => {
       myConsole('Create post API response:', JSON.stringify(response, null, 2));
 
       toast.success('Post added successfully');
+      queryClient.invalidateQueries({queryKey: ['postsByUser']});
       // @ts-ignore
       navigation.navigate('HomeStack', {screen: homeRoute.AllStories});
     } catch (err) {

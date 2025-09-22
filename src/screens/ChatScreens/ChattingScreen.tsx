@@ -6,6 +6,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import MainContainer from '../../components/MainContainer';
 import {useGetMyData} from '../../api/profile/profileFunc';
@@ -40,7 +41,6 @@ import {
   useKeyboardHeight,
   useMarkSeenOnFocus,
 } from './hooks/chatHelpers';
-import Video from 'react-native-video';
 
 const ChattingScreen = ({navigation, route}: any) => {
   const toast = useAppToast();
@@ -424,7 +424,7 @@ const ChattingScreen = ({navigation, route}: any) => {
     ),
     [handleToggleSelect, senderId, selectedSet],
   );
-
+  myConsole('rrrr', data?.receiver);
   return (
     <MainContainer
       title={
@@ -462,20 +462,44 @@ const ChattingScreen = ({navigation, route}: any) => {
           : [
               {
                 imageSource: require('../../assets/icons/video-call.png'),
-                onPress: () => null,
+                onPress: () => {
+                  const phoneNumber = data?.receiver?.phone;
+                  if (!phoneNumber) return;
+
+                  if (Platform.OS === 'ios') {
+                    const facetimeUrl = `facetime:${phoneNumber}`;
+                    Linking.openURL(facetimeUrl).catch(err =>
+                      console.error('Failed to open FaceTime:', err),
+                    );
+                  } else {
+                    // Android: fallback (here just open dialer for now)
+                    const telUrl = `tel:${phoneNumber}`;
+                    Linking.openURL(telUrl).catch(err =>
+                      console.error('Failed to open dialer:', err),
+                    );
+                  }
+                },
                 size: 28,
               },
               {
                 imageSource: require('../../assets/icons/call.png'),
-                onPress: () => null,
+                onPress: () => {
+                  const phoneNumber = data?.receiver?.phone;
+                  if (phoneNumber) {
+                    const telUrl = `tel:${phoneNumber}`;
+                    Linking.openURL(telUrl).catch(err =>
+                      console.error('Failed to open dialer:', err),
+                    );
+                  }
+                },
                 color: color.mainColor,
                 size: 20,
               },
-              {
-                imageSource: require('../../assets/icons/verThreeDots.png'),
-                onPress: () => null,
-                color: color.mainColor,
-              },
+              // {
+              //   imageSource: require('../../assets/icons/verThreeDots.png'),
+              //   onPress: () => null,
+              //   color: color.mainColor,
+              // },
             ]
       }
       isBack={() => {

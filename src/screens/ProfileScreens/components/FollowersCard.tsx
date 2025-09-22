@@ -24,7 +24,6 @@ const FollowersCard = ({data}: any) => {
       </View>
     );
   }
-
   if (userErr) {
     return (
       <View style={styles.userItem}>

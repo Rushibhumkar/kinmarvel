@@ -15,6 +15,7 @@ import ProfileStack from './ProfileStack';
 import HomeStack from './HomeStack';
 import ChatStack from './ChatStack';
 import PostStack from './PostStack';
+import CallStack from './CallStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -32,6 +33,45 @@ const BottomTabs = () => {
         tabBarInactiveTintColor: '#A0A0A0',
       })}
       initialRouteName="HomeStack">
+      <Tab.Screen
+        name="HomeStack"
+        component={HomeStack}
+        options={{
+          tabBarLabel: 'Stories',
+          tabBarIcon: ({focused, size}) =>
+            focused ? (
+              <Image
+                source={require('../assets/bottomIcons/storyActive.png')}
+                style={{height: 24, width: 24}}
+              />
+            ) : (
+              <Image
+                source={require('../assets/bottomIcons/storyInactive.png')}
+                style={{height: 24, width: 24}}
+              />
+            ),
+        }}
+      />
+
+      <Tab.Screen
+        name="ChatStack" // This should be the same as your route name
+        component={ChatStack} // This should be the ChatStack navigator component
+        options={{
+          tabBarLabel: 'Chats',
+          tabBarIcon: ({focused, size}) =>
+            focused ? (
+              <Image
+                source={require('../assets/bottomIcons/messageActive.png')}
+                style={{height: 24, width: 24}}
+              />
+            ) : (
+              <Image
+                source={require('../assets/bottomIcons/messageInactive.png')}
+                style={{height: 24, width: 24}}
+              />
+            ),
+        }}
+      />
       <Tab.Screen
         name="PostStack"
         component={PostStack}
@@ -59,44 +99,29 @@ const BottomTabs = () => {
           },
         })}
       />
+
       <Tab.Screen
-        name="HomeStack"
-        component={HomeStack}
+        name="CallStack"
+        component={CallStack}
         options={{
-          tabBarLabel: 'Stories',
+          tabBarLabel: 'Call',
           tabBarIcon: ({focused, size}) =>
             focused ? (
               <Image
-                source={require('../assets/bottomIcons/storyActive.png')}
+                source={require('../assets/bottomIcons/callInactive.png')}
                 style={{height: 24, width: 24}}
+                tintColor={color.mainColor}
               />
             ) : (
               <Image
-                source={require('../assets/bottomIcons/storyInactive.png')}
+                source={require('../assets/bottomIcons/callInactive.png')}
                 style={{height: 24, width: 24}}
+                tintColor={'#aca7a7ff'}
               />
             ),
         }}
       />
-      <Tab.Screen
-        name="ChatStack" // This should be the same as your route name
-        component={ChatStack} // This should be the ChatStack navigator component
-        options={{
-          tabBarLabel: 'Chats',
-          tabBarIcon: ({focused, size}) =>
-            focused ? (
-              <Image
-                source={require('../assets/bottomIcons/messageActive.png')}
-                style={{height: 24, width: 24}}
-              />
-            ) : (
-              <Image
-                source={require('../assets/bottomIcons/messageInactive.png')}
-                style={{height: 24, width: 24}}
-              />
-            ),
-        }}
-      />
+
       <Tab.Screen
         name="ProfileStack"
         component={ProfileStack}
@@ -135,7 +160,6 @@ const getRouteName = (route: any) => {
     routeName === profileRoute.CallScreen ||
     routeName === profileRoute.RateUs ||
     routeName === profileRoute.CallingUsersList ||
-    routeName === profileRoute.CallingMain ||
     routeName === profileRoute.ProfPostsDetails ||
     routeName === profileRoute.AddMember ||
     routeName === homeRoute.ViewStory ||

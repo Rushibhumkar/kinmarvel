@@ -11,13 +11,12 @@ import {myConsole} from '../../utils/myConsole';
 import {capitalizeFirstLetter} from '../../utils/commonFunction';
 import CustomErrorMessage from '../../components/CustomErrorMessage';
 import FollowersCard from './components/FollowersCard';
-import {color} from '../../const/color';
-import OnlyLoader from '../../components/LoadingCompo/OnlyLoader';
 import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
 import {sizes} from '../../const';
 
 const FollowersFollowing = ({route, navigation}: any) => {
   const {data, titleName} = route.params;
+  myConsole('dataaa', data);
   return (
     <MainContainer title={capitalizeFirstLetter(titleName)} isBack>
       <View style={styles.container}>
@@ -29,11 +28,6 @@ const FollowersFollowing = ({route, navigation}: any) => {
             keyExtractor={item => item._id}
             renderItem={({item}) => <FollowersCard data={item} />}
             ListEmptyComponent={
-              // <View style={styles.loaderContainer}>
-              //   <ActivityIndicator size="large" color={color.mainColor} />
-              //   <Text style={styles.loaderText}>Loading...</Text>
-              // </View>
-              // <OnlyLoader />
               <LoadingCompo style={{minHeight: sizes.height - 100}} />
             }
           />

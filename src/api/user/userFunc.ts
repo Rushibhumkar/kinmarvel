@@ -52,3 +52,44 @@ export const useGetUserById = (userId: string) => {
     refetchOnWindowFocus: false,
   });
 };
+
+// -----------------------------
+// PATCH: Block / Unblock User
+// -----------------------------
+export const blockUser = async (userId: string) => {
+  try {
+    const {data} = await API_AXIOS.patch(`/user/block/${userId}`);
+    return data;
+  } catch (error: any) {
+    console.error(`Error blocking user ${userId}:`, error.response || error);
+    throw error;
+  }
+};
+
+export const unblockUser = async (userId: string) => {
+  try {
+    const {data} = await API_AXIOS.patch(`/user/unblock/${userId}`);
+    return data;
+  } catch (error: any) {
+    console.error(`Error unblocking user ${userId}:`, error.response || error);
+    throw error;
+  }
+};
+
+// -----------------------------
+// POST: Check if username exists
+// -----------------------------
+export const checkUsernameExists = async (username: string) => {
+  try {
+    const {data} = await API_AXIOS.post('/auth/check-username-exists', {
+      username,
+    });
+    return data;
+  } catch (error: any) {
+    console.error(
+      `Error checking username ${username}:`,
+      error.response || error,
+    );
+    throw error;
+  }
+};

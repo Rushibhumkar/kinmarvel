@@ -21,7 +21,6 @@ import {
   useGetTreeByUserId,
 } from '../../api/userTree/userTreeFunc';
 import {getTextWithLength2} from '../../utils/commonFunction';
-import moment from 'moment';
 import FullHeightLoader from '../../components/LoadingCompo/FullHeightLoader';
 import CustomErrorMessage from '../../components/CustomErrorMessage';
 import CustomModal from '../../components/CustomModal';
@@ -44,10 +43,11 @@ const RelativeItem = ({
   const isMatch =
     matchedName && info.name.toLowerCase() === matchedName.toLowerCase();
   const isMe = myData?.data?._id === 's';
-  // myConsole('infooooo', info);
+  myConsole('infooooo', info);
   return (
     <TouchableOpacity
       style={[styles.item, style, isMatch && {backgroundColor: '#4a5'}]}
+      // disabled={!info.isVerified}
       // disabled={showingParent}
       onPress={() => onSelectPerson(info)}>
       <Text style={{color: '#fff', fontWeight: 'bold'}}>
@@ -90,6 +90,8 @@ const Hierarchy = ({navigation}: any) => {
     isError: treeByIdErr,
     refetch: treeByIdRefetch,
   } = useGetTreeByUserId(showingParent ? parentTreeId : null);
+  // myConsole('myTreeData', myTreeData);
+  // myConsole('treeByIdData', treeByIdData);
   const onRefresh = async () => {
     setRefreshing(true);
     if (showingParent) {
@@ -112,6 +114,11 @@ const Hierarchy = ({navigation}: any) => {
       relation: node.relation || '',
       dob: node.dob || node.memberId?.dob || '',
       gender: node.gender || node.memberId?.gender || '',
+      isVerified:
+        node.isVerified ??
+        node.memberTreeId?.isVerified ??
+        node.memberTreeId?.userId?.isVerified ??
+        false,
       spouse: node.spouse?.length ? node.spouse[0] : null,
       children: (node.children || node.memberTreeId?.children || []).map(
         (child: any) => transformTreeData(child),
@@ -185,7 +192,7 @@ const Hierarchy = ({navigation}: any) => {
     }
   };
   // myConsole('myData?.data?._id', myData?.data?._id);
-  // myConsole('selectedPerson._id', selectedPerson);
+  myConsole('selectedPerso', selectedPerson);
   return (
     <SafeAreaView style={styles.main}>
       <HierarchyHeader />
@@ -239,7 +246,6 @@ const Hierarchy = ({navigation}: any) => {
                         ? selectedPerson._id
                         : undefined,
                   };
-
                   setPendingNewMember(payload);
                   setModalVisible(false);
                   setConfirmModalVisible(true);
@@ -373,6 +379,7 @@ const Hierarchy = ({navigation}: any) => {
                 {...props}
                 matchedName={matchedName}
                 onSelectPerson={person => {
+                  myConsole('ssssssss', person);
                   setSelectedPerson(person);
                   setModalVisible(true);
                 }}

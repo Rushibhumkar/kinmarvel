@@ -64,3 +64,7 @@ export const postRoute = {
   ComposePost: 'ComposePost',
   AddPostMedia: 'AddPostMedia',
 };
+
+export const callRoute = {
+  CallingMain: 'CallingMain',
+};
