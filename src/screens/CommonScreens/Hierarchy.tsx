@@ -17,6 +17,7 @@ import {color} from '../../const/color';
 import {myConsole} from '../../utils/myConsole';
 import {
   addMemberToTree,
+  createUserTree,
   useGetMyTree,
   useGetTreeByUserId,
 } from '../../api/userTree/userTreeFunc';
@@ -83,6 +84,7 @@ const Hierarchy = ({navigation}: any) => {
   } = useGetMyTree();
 
   const parentTreeId = myTreeData?.data?.parentTreeId;
+  myConsole('myTreeData', myTreeData);
 
   const {
     data: treeByIdData,
@@ -101,7 +103,33 @@ const Hierarchy = ({navigation}: any) => {
     }
     setRefreshing(false);
   };
+
+  React.useEffect(() => {
+    if (myTreeData && !myTreeData?.data) {
+      (async () => {
+        try {
+          setRefreshing(true);
+          await createUserTree();
+          await refetchMyTree();
+        } catch (e: any) {
+          const errMsg =
+            'Add Date of Birth and Gender to create your family tree';
+          Alert.alert('Error', errMsg, [
+            {
+              text: 'Add Data',
+              onPress: () => navigation.navigate(profileRoute.ProfileSetup),
+            },
+            {text: 'OK', style: 'cancel'},
+          ]);
+        } finally {
+          setRefreshing(false);
+        }
+      })();
+    }
+  }, [myTreeData]);
+
   const transformTreeData = (node: any): any => {
+    myConsole('nodeeee', node);
     return {
       _id: node.userId || node.memberTreeId?.userId?._id || '',
       name:

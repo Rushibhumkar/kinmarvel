@@ -17,19 +17,20 @@ export const getAllUsers = async (searchValue = '', page = 1, limit = 10) => {
   }
 };
 
-export const useGetAllUsers = (searchValue = '', limit = 10) => {
+export const useGetAllUsers = (searchValue = '', limit = 20) => {
   return useInfiniteQuery({
-    queryKey: ['allUsers', searchValue, limit], // Query key includes searchValue and limit to refetch when they change
-    queryFn: ({pageParam = 1}) => getAllUsers(searchValue, pageParam, limit),
-    getNextPageParam: (lastPage, allPages) => {
-      // If the last page contains less than the limit, no more pages are available
-      if (lastPage && lastPage.length < limit) {
-        return undefined; // No more pages
-      }
-      return allPages.length + 1; // Next page will be the next index in allPages
+    queryKey: ['allUsers', searchValue, limit],
+    queryFn: async ({pageParam = 1}) => {
+      const response = await getAllUsers(searchValue, pageParam, limit);
+      return response?.data || response; // adjust based on your API structure
     },
-    staleTime: 1000 * 60 * 5,
+    getNextPageParam: (lastPage, allPages) => {
+      const users = lastPage?.users || [];
+      if (users.length < limit) return undefined;
+      return allPages.length + 1;
+    },
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
   });
 };
 

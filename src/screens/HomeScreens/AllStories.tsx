@@ -44,13 +44,7 @@ const AllStories = ({navigation}: any) => {
     data: storyById,
     isLoading: myStoryLoad,
     isError: myStoryErr,
-  } = useGetUserStories('hh');
-  const {
-    data: pushNotis,
-    isLoading: pushNotiLoad,
-    isError: pushNotiErr,
-  } = useNotifications();
-  // myConsole('storyById', storyById);
+  } = useGetUserStories(senderId);
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = async () => {
@@ -62,7 +56,6 @@ const AllStories = ({navigation}: any) => {
     }
   };
   const userId = myData?.data?._id;
-  myConsole('userIDdd', userId);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -190,19 +183,20 @@ const AllStories = ({navigation}: any) => {
                   </CustomText>
                 </View>
               )}
-
               {/* Other Users’ Stories */}
-              {allStories?.data?.length > 0 &&
-                filteredStories.map((storyGroup: any) => {
-                  const user = storyGroup.user;
+              {Array.isArray(filteredStories) &&
+                filteredStories.length > 0 &&
+                filteredStories.map((storyGroup: any, idx: number) => {
+                  const user = storyGroup?.user;
+                  if (!user || !storyGroup?.stories?.length) return null;
                   return (
-                    <View key={user._id} style={styles.statusItem}>
+                    <View key={user._id || idx} style={styles.statusItem}>
                       <TouchableOpacity
                         style={styles.storySelectBtn}
                         onPress={() =>
                           navigation.navigate(homeRoute.ViewStory, {
                             data: storyGroup.stories,
-                            user: allStories?.data[0]?.user,
+                            user: allStories?.data?.[0]?.user || user,
                           })
                         }>
                         <Image
@@ -216,9 +210,11 @@ const AllStories = ({navigation}: any) => {
                         />
                       </TouchableOpacity>
                       <CustomText style={styles.statusText}>
-                        {user.firstName.length > 12
-                          ? `${user.firstName.slice(0, 12)}...`
-                          : user.firstName}
+                        {user?.firstName
+                          ? user.firstName.length > 12
+                            ? `${user.firstName.slice(0, 12)}...`
+                            : user.firstName
+                          : 'Unknown'}
                       </CustomText>
                     </View>
                   );

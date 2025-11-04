@@ -1,7 +1,8 @@
-import {StyleSheet, View, ViewStyle} from 'react-native';
+import {ActivityIndicator, StyleSheet, View, ViewStyle} from 'react-native';
 import React from 'react';
 import {sizes} from '../../const';
 import HeartBeatLoad from './HeartBeatLoad';
+import {color} from '../../const/color';
 
 interface LoadingCompoProps {
   minHeight?: number;
@@ -18,8 +19,8 @@ const LoadingCompo: React.FC<LoadingCompoProps> = ({
 }) => {
   return (
     <View style={[styles.container, {minHeight, backgroundColor}, style]}>
-      {/* <ActivityIndicator color={color.mainColor} size={loaderSize} /> */}
-      <HeartBeatLoad />
+      <ActivityIndicator color={color.mainColor} size={loaderSize} />
+      {/* <HeartBeatLoad /> */}
     </View>
   );
 };

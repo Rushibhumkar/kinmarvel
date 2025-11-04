@@ -9,11 +9,8 @@ import {
 import React, {useState} from 'react';
 import CustomSearch from '../../components/CustomSearch';
 import {myConsole} from '../../utils/myConsole';
-import LoadingCompo from '../../components/LoadingCompo/LoadingCompo';
-import {useNavigation} from '@react-navigation/native';
-import {chatRoute, homeRoute} from '../AuthScreens/routeName';
+import {chatRoute} from '../AuthScreens/routeName';
 import {useGetAllUsers} from '../../api/user/userFunc';
-import {capitalizeFirstLetter} from '../../utils/commonFunction';
 import {useQueryClient} from '@tanstack/react-query';
 
 const ChatsSearchScreen = ({navigation}: any) => {
@@ -29,9 +26,9 @@ const ChatsSearchScreen = ({navigation}: any) => {
     isLoading: allUsersLoading,
     isError: allUsersError,
     error,
-  } = useGetAllUsers(searchValue, 10);
+  } = useGetAllUsers(searchValue, 40);
 
-  // myConsole('Fetched users:', allUsersData);
+  myConsole('Fetched users:', allUsersData);
 
   // Handle empty data or error
   const renderEmptyState = () => {
@@ -66,13 +63,16 @@ const ChatsSearchScreen = ({navigation}: any) => {
   };
 
   const renderUserItem = ({item}: any) => {
-    const {firstName, middleName, lastName} = item;
+    const {firstName, middleName, lastName, _id} = item;
+
     return (
       <TouchableOpacity
         style={styles.userCard}
         onPress={() => {
-          navigation.navigate(chatRoute.ChattingScreen, {data: item});
-          queryClient.invalidateQueries({queryKey: ['recentChats']});
+          navigation.navigate(chatRoute.ChattingScreen, {
+            data: {receiver: {_id: item._id, ...item}},
+            isComeFromAnotherScreen: true,
+          });
         }}>
         <Text
           style={

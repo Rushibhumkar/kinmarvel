@@ -21,7 +21,7 @@ import {color} from '../../const/color';
 import {sizes} from '../../const';
 
 import {useGetMyData} from '../../api/profile/profileFunc';
-import {uesGetRecentChats} from '../../api/chats/chatFunc';
+import {useGetRecentChats} from '../../api/chats/chatFunc';
 
 import {SOCKET_SERVER_URL} from '../../api/axiosInstance';
 import {getData} from '../../hooks/useAsyncStorage';
@@ -111,7 +111,7 @@ const ChatsList = ({navigation, route}: any) => {
     isLoading: recentChatsLoad,
     isError: recentChatsErr,
     refetch: recentChatsRefetch,
-  } = uesGetRecentChats('');
+  } = useGetRecentChats(myId || '');
 
   // ---- Socket setup (register/refetch on new messages) ----
   useEffect(() => {
@@ -203,8 +203,11 @@ const ChatsList = ({navigation, route}: any) => {
       !debug.hasNavigated
     ) {
       const match = chats.find(
-        (c: any) => c?.receiver?._id === debug.receiverId,
+        (c: any) =>
+          c?.receiver?._id === debug.receiverId ||
+          c?.sender?._id === debug.receiverId,
       );
+
       myConsole('ChatsList:navigateMatchFound', !!match);
 
       hasNavigatedRef.current = true;
@@ -231,7 +234,7 @@ const ChatsList = ({navigation, route}: any) => {
 
     return [...list].sort((a, b) => toTime(b) - toTime(a));
   }, [recentChats]);
-
+  myConsole('recentChatssss', recentChats);
   // ------------------------------- Renderers --------------------------------
   const renderItem = ({item}: {item: RecentChatItem}) => {
     const peer = getPeer(item, myId);
@@ -299,15 +302,16 @@ const ChatsList = ({navigation, route}: any) => {
       </TouchableOpacity>
     );
   };
-
+  myConsole('sortedChats', sortedChats);
   // --------------------------------- UI -------------------------------------
   return (
     <MainContainer
       title="Chats"
       bgColor={'#fff'}
       showRightIcon={[
-        ...(sortedChats.length > 0
-          ? [
+        ...(true
+          ? // ...(sortedChats.length > 0
+            [
               {
                 imageSource: require('../../assets/animatedIcons/search.png'),
                 onPress: () => navigation.navigate(chatRoute.ChatsSearchScreen),

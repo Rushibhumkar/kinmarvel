@@ -19,6 +19,8 @@ import {myStyle} from '../../sharedStyles';
 import {useGetUserById} from '../../api/user/userFunc';
 import {getValue} from '../../utils/commonFunction';
 import {useAppToast} from '../../components/toast/AppToast';
+import UserPosts from './UserPosts';
+import ProfPostsDetails from '../ProfileScreens/ProfPostsDetails';
 
 const UsersProfileDetails = ({navigation, route}: any) => {
   const {
@@ -47,7 +49,8 @@ const UsersProfileDetails = ({navigation, route}: any) => {
     isError: userDataErr,
     refetch: userDataRefetch,
   } = useGetUserById(id ? id : null);
-
+  myConsole('userData', userData);
+  myConsole('iddssssss', id);
   // const handleSendFollowRequest = async () => {
   //   setFollowReqLoading(true);
   //   try {
@@ -363,6 +366,12 @@ const UsersProfileDetails = ({navigation, route}: any) => {
             data={fullDetails}
             customViewStyling={styles.listingContainer}
           />
+        )}
+        {/* ====== User's Posts Section (Bottom) ====== */}
+        {id && (
+          <View style={{flex: 1}}>
+            <ProfPostsDetails userId={id} />
+          </View>
         )}
       </ScrollView>
     </View>

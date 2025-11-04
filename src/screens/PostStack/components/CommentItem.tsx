@@ -242,12 +242,13 @@ const CommentItem = ({
               _id: comment?.by?._id,
               userName: comment?.by?.userName,
             }}
-            onSubmitted={(res: any) =>
-              handleAddReply({
-                content: res?.reply?.content,
-                replyTo: res?.reply?.replyTo ?? comment?.by?._id ?? null,
-              })
-            }
+            // onSubmitted={(res: any) =>
+            //   handleAddReply({
+            //     content: res?.reply?.content,
+            //     replyTo: res?.reply?.replyTo ?? comment?.by?._id ?? null,
+            //   })
+            // }
+            onSubmitted={handleAddReply}
           />
         </View>
       ) : null}

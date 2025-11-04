@@ -48,6 +48,7 @@ const AccountDetails = ({navigation}: any) => {
   const lastName = user.lastName || 'N/A';
   const phone = user.phone || 'N/A';
   const gender = capitalizeFirstLetter(user.gender) || 'N/A';
+  const userName = user.userName || 'N/A';
   const createdAt = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString()
     : 'N/A';
@@ -58,6 +59,7 @@ const AccountDetails = ({navigation}: any) => {
       value: value || 'N/A',
     }),
   );
+  myConsole('user', user);
   // Data for listing
   const datam = [
     {label: 'First name', value: firstName},
@@ -65,6 +67,7 @@ const AccountDetails = ({navigation}: any) => {
     {label: 'Last name', value: lastName},
     {label: 'Phone', value: phone},
     {label: 'Gender', value: gender},
+    {label: 'User name', value: userName},
     ...dynamicDataEntries,
     // {label: 'Account Created', value: createdAt},
   ];

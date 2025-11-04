@@ -5,6 +5,7 @@ import {Image, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {color} from '../const/color';
 import {
+  callRoute,
   chatRoute,
   commonRoute,
   homeRoute,
@@ -157,9 +158,10 @@ const getRouteName = (route: any) => {
     routeName === profileRoute.AccountDetails ||
     routeName === homeRoute.AddStory ||
     routeName === profileRoute.ProfileSetup ||
+    routeName === profileRoute.FollowersFollowing ||
     routeName === profileRoute.CallScreen ||
     routeName === profileRoute.RateUs ||
-    routeName === profileRoute.CallingUsersList ||
+    routeName === callRoute.CallingUsersList ||
     routeName === profileRoute.ProfPostsDetails ||
     routeName === profileRoute.AddMember ||
     routeName === homeRoute.ViewStory ||
@@ -172,6 +174,7 @@ const getRouteName = (route: any) => {
     routeName === chatRoute.ChattingScreen ||
     routeName === postRoute.AddPostMedia ||
     routeName === postRoute.ComposePost ||
+    routeName === callRoute.CallingMain ||
     routeName === chatRoute.MapScreen
   ) {
     return 'none';

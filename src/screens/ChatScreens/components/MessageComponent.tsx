@@ -29,8 +29,7 @@ const MessageComponent = ({
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [isPaused, setIsPaused] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  myConsole('iscomeddd', isComeFromAnotherScreen);
-  myConsole('imedd', media);
+
   const handleImageClick = (uri: string) => {
     setSelectedImage(uri);
     setViewFullImg(true);

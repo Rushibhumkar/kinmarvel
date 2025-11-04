@@ -25,6 +25,7 @@ import {useQueryClient} from '@tanstack/react-query';
 import {API_AXIOS, fileViewURL} from '../../api/axiosInstance';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {useAppToast} from '../../components/toast/AppToast';
+import {myConsole} from '../../utils/myConsole';
 
 const ProfileSetup = ({navigation}: any) => {
   const {
@@ -38,6 +39,8 @@ const ProfileSetup = ({navigation}: any) => {
     isLoading: myDataLoading,
     isError: myDataError,
   } = useGetMyData();
+  myConsole('myDataaaa', myData);
+  myConsole('schemaaa', schema);
 
   useEffect(() => {
     const backAction = () => true;
@@ -69,6 +72,7 @@ const ProfileSetup = ({navigation}: any) => {
         lastName: myData?.data?.lastName || undefined,
         gender: myData?.data?.gender || undefined,
         phone: myData?.data?.phone || undefined,
+        userName: 'sdfdsf',
         profileImageUrl: uploadedFilePath
           ? `${fileViewURL}${uploadedFilePath}`
           : myData?.data?.profileImageUrl,
@@ -140,7 +144,7 @@ const ProfileSetup = ({navigation}: any) => {
               profileImageUrl: `${fileViewURL}${uploadedFilePath}`,
             });
             queryClient.invalidateQueries({queryKey: ['myData']});
-            toast.error('Profile Photo Updated Successfully');
+            toast.success('Profile Photo Updated Successfully');
             navigation.goBack();
           } catch (error) {
             console.error('Failed to update profile photo:', error);

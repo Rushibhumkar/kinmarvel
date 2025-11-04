@@ -19,6 +19,7 @@ import {API_AXIOS} from '../../api/axiosInstance';
 import {useQueryClient} from '@tanstack/react-query';
 import Video from 'react-native-video';
 import {useAppToast} from '../../components/toast/AppToast';
+import {myConsole} from '../../utils/myConsole';
 
 const AddStory = ({navigation}: any) => {
   const toast = useAppToast();
@@ -109,6 +110,7 @@ const AddStory = ({navigation}: any) => {
         mediaType: file.mediaType,
         caption: caption || undefined,
       });
+      myConsole('responsess', response);
 
       queryClient.invalidateQueries({queryKey: ['userStories']});
       setFile(null);

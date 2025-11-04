@@ -11,6 +11,7 @@ import {shadow} from '../../sharedStyles';
 import {popUpConfToast, showWarningToast} from '../../utils/toastModalFunction';
 import {homeRoute} from '../AuthScreens/routeName';
 import {showConfirmAlert} from '../../utils/alertHelper';
+import { useAppToast } from '../../components/toast/AppToast';
 
 type RootStackParamList = {
   ComposePost: {media: {uri: string; type: string}[]};
@@ -25,7 +26,7 @@ const AddPostMediaScreen: React.FC = () => {
   const [mediaSizeMode, setMediaSizeMode] = useState<
     'portrait' | 'square' | 'mixed'
   >('portrait');
-  myConsole('sldkjflkdsf', selectedMedia);
+    const toast = useAppToast();
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -53,7 +54,7 @@ const AddPostMediaScreen: React.FC = () => {
           onRightPress={() => {
             selectedMedia.length > 0
               ? navigation.navigate('ComposePost', {media: selectedMedia})
-              : showWarningToast({description: 'Please select the media'});
+              : toast.error({description: 'Please select the media'});
           }}
         />
 

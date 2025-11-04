@@ -11,6 +11,8 @@ import {fetchPosts, likePost} from '../api/posts/postFunc';
 import PostCard from '../screens/PostStack/components/PostCard';
 import {myConsole} from '../utils/myConsole';
 import CommentSheet from '../screens/PostStack/components/CommentSheet';
+import CustomText from './CustomText';
+import {sizes} from '../const';
 
 type ApiPost = any; // your PostCard already expects `post` prop; keep flexible
 type ApiResponse = {
@@ -48,7 +50,6 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
     },
     [],
   );
-
   const loadPage = useCallback(
     async (nextPage: number, opts?: {refresh?: boolean}) => {
       if (nextPage > totalPages && !opts?.refresh) return;
@@ -61,12 +62,10 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
           limit: 10,
           page: nextPage,
           type: 'post',
-          forceRefresh: !!opts?.refresh,
         })) as ApiResponse;
 
         const newPosts = res?.data?.posts ?? [];
         const newTotalPages = res?.data?.pagination?.totalPages ?? 1;
-
         setTotalPages(newTotalPages);
         setPosts(prev =>
           nextPage === 1
@@ -95,7 +94,7 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('post:added', () => {
       // pull fresh list when a new post is created
-      loadPage(1, {refresh: true});
+      loadPage(1);
     });
     return () => sub.remove();
   }, [loadPage]);
@@ -103,7 +102,7 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
     try {
       onExternalRefresh?.();
     } catch {}
-    loadPage(1, {refresh: true});
+    loadPage(1);
   }, [loadPage, onExternalRefresh]);
 
   const onEndReached = useCallback(() => {
@@ -158,13 +157,18 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
     [applyLikeLocally],
   );
 
-  if (initialLoading && posts.length === 0) {
+  if (!initialLoading && posts.length === 0) {
     return (
-      <View style={styles.initialLoader}>
-        <ActivityIndicator size="large" />
+      <View style={styles.emptyContainer}>
+        <ActivityIndicator animating={false} />
+        <View style={{alignItems: 'center'}}>
+          <CustomText style={styles.emptyEmoji}>📭</CustomText>
+          <CustomText style={styles.emptyText}>No posts available</CustomText>
+        </View>
       </View>
     );
   }
+
   return (
     <View style={{flex: 1}}>
       <FlatList
@@ -213,5 +217,20 @@ const styles = StyleSheet.create({
   footerLoading: {
     paddingVertical: 12,
     alignItems: 'center',
+  },
+  emptyContainer: {
+    minHeight: sizes.height - 280,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: 'grey',
   },
 });

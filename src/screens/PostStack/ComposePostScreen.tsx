@@ -54,6 +54,7 @@ const ComposePostScreen = () => {
     useLocationPermission();
 
   const handleCreatePost = async () => {
+    console.log('comestopostscreen');
     try {
       setLoading(true);
 
@@ -80,15 +81,17 @@ const ComposePostScreen = () => {
         collaborators: collaboratorIds,
         ...(locationForApi ? {location: locationForApi} : {}),
         files,
-        visible_to: visibility,
+        visible_to: visibility || 'public',
       };
       myConsole('Creating post with data:', JSON.stringify(postData, null, 2));
       const response = await createPost(postData);
       myConsole('Create post API response:', JSON.stringify(response, null, 2));
 
       toast.success('Post added successfully');
+
       queryClient.invalidateQueries({queryKey: ['postsByUser']});
-      // @ts-ignore
+      queryClient.invalidateQueries({queryKey: ['posts']});
+
       navigation.navigate('HomeStack', {screen: homeRoute.AllStories});
     } catch (err) {
       console.error(err);

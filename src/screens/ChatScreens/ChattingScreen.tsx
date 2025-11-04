@@ -74,6 +74,7 @@ const ChattingScreen = ({navigation, route}: any) => {
 
   // Resolve peer id (always the other person's _id)
   const receiverId: string | undefined = useMemo(() => {
+    // If chat object came from ChatsList
     const sId = getId(data?.sender);
     const rId = getId(data?.receiver);
     if (senderId && sId === senderId) return rId;
@@ -144,6 +145,10 @@ const ChattingScreen = ({navigation, route}: any) => {
   // Initial load + whenever chat peer changes
   useEffect(() => {
     if (!senderId || !receiverId) return;
+    if (!data?._id) {
+      setMessages([]);
+      return;
+    }
     setMessages([]); // reset thread when switching peer
     setPage(1);
     fetchMessages(1);
@@ -280,6 +285,8 @@ const ChattingScreen = ({navigation, route}: any) => {
           }
         : {}),
     };
+    myConsole('sendMessage:payload', newMessage);
+
     s.emit('sendMessage', newMessage);
 
     // Reset composers
@@ -424,7 +431,6 @@ const ChattingScreen = ({navigation, route}: any) => {
     ),
     [handleToggleSelect, senderId, selectedSet],
   );
-  myConsole('rrrr', data?.receiver);
   return (
     <MainContainer
       title={
@@ -517,9 +523,9 @@ const ChattingScreen = ({navigation, route}: any) => {
           Platform.OS === 'ios' ? 90 : Math.max(0, keyboardHeight / 2 - 44)
         }
         style={chatScreenStyles.container}>
-        {fetchError ? (
+        {false ? (
           <CustomErrorMessage
-            message={fetchError}
+            message={'sss'}
             onRetry={() => fetchMessages(1)}
           />
         ) : messages.length === 0 && !isFetching ? (
@@ -564,7 +570,8 @@ const ChattingScreen = ({navigation, route}: any) => {
           />
         )}
 
-        {!fetchError && (
+        {/* {!fetchError && ( */}
+        {true && (
           <MessageInputBar
             message={message}
             onChangeMessage={setMessage}

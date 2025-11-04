@@ -45,7 +45,6 @@ export const profileRoute = {
   Hierarchy: 'Hierarchy',
   AddMember: 'AddMember',
   CallingMain: 'CallingMain',
-  CallingUsersList: 'CallingUsersList',
   CallScreen: 'CallScreen',
 };
 
@@ -67,4 +66,5 @@ export const postRoute = {
 
 export const callRoute = {
   CallingMain: 'CallingMain',
+  CallingUsersList: 'CallingUsersList',
 };

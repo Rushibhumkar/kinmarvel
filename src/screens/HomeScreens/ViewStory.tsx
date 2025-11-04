@@ -35,13 +35,15 @@ const {width, height} = Dimensions.get('window');
 
 const ViewStory = ({route, navigation}: any) => {
   const toast = useAppToast();
-  const {data, user} = route.params;
+  const {data = [], user = null} = route.params || {};
+  myConsole('userrr', user);
+  myConsole('dateaa', data);
   const {data: myData} = useGetMyData();
   const {
     data: userData,
     isLoading: userLoading,
     isError: userErr,
-  } = useGetUserById(data[0]?.user?._id || user?._id);
+  } = useGetUserById(data?.[0]?.user?._id || user?._id || '');
 
   const queryClient = useQueryClient();
 
@@ -57,7 +59,10 @@ const ViewStory = ({route, navigation}: any) => {
 
   const flatListRef = useRef<FlatList>(null);
   const timeoutRef = useRef<any | null>(null);
-  const isMe = myData?.data?._id === data[0]?.user?._id;
+  const isMe =
+    myData?.data?._id && data?.[0]?.user?._id
+      ? myData.data._id === data[0].user._id
+      : false;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const animatedSec = 10000; // 10 seconds for image stories
   const handleCloseStory = useCallback(() => {
@@ -126,7 +131,7 @@ const ViewStory = ({route, navigation}: any) => {
       setLoadError(false);
       setVideoDuration(0);
 
-      const storyId = data[index]?._id;
+      const storyId = data?.[index]?._id;
       if (storyId) {
         markStoryAsSeen(storyId);
       }
@@ -582,7 +587,7 @@ const ViewStory = ({route, navigation}: any) => {
           data={data}
           numColumns={2}
           contentContainerStyle={styles.gridContainer}
-          keyExtractor={item => item._id}
+          keyExtractor={(item, idx) => item?._id || String(idx)}
           renderItem={renderStoryListItem}
         />
       ) : (
@@ -594,7 +599,7 @@ const ViewStory = ({route, navigation}: any) => {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           renderItem={renderStoryContent}
-          keyExtractor={item => item._id}
+          keyExtractor={(item, idx) => item?._id || String(idx)}
           onScroll={handleScroll}
           initialScrollIndex={selectedStoryIndex}
           getItemLayout={(_, index) => ({
@@ -626,7 +631,9 @@ const ViewStory = ({route, navigation}: any) => {
           selectedStory.views.map((viewer: any) => (
             <View key={viewer._id} style={{marginBottom: 12}}>
               <CustomText>
-                {viewer.firstName} {viewer.middleName} {viewer.lastName}
+                {viewer?.firstName || ''} {viewer?.middleName || ''}
+                {viewer?.lastName || ''}
+                <CustomText>{viewer?.phone || 'No phone'}</CustomText>
               </CustomText>
               <CustomText>{viewer.phone}</CustomText>
             </View>

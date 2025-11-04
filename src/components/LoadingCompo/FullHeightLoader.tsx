@@ -7,8 +7,8 @@ import HeartBeatLoad from './HeartBeatLoad';
 const FullHeightLoader = () => {
   return (
     <View style={styles.loaderContainer}>
-      {/* <ActivityIndicator size="large" color={color.mainColor} /> */}
-      <HeartBeatLoad />
+      <ActivityIndicator size="large" color={color.mainColor} />
+      {/* <HeartBeatLoad /> */}
     </View>
   );
 };

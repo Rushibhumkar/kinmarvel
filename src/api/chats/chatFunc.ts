@@ -103,7 +103,7 @@ export const getRecentChats = async (searchValue = '') => {
   }
 };
 
-export const uesGetRecentChats = (searchValue = '') => {
+export const useGetRecentChats = (searchValue = '') => {
   return useQuery({
     queryKey: ['recentChats', searchValue],
     queryFn: () => getRecentChats(searchValue),

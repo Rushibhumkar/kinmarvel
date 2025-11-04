@@ -3,15 +3,14 @@ import {getData} from '../hooks/useAsyncStorage';
 
 export const appName = 'Kinmarvel';
 
-export const SOCKET_SERVER_URL = 'https://fameely-backend.onrender.com';
+export const SOCKET_SERVER_URL = 'https://fameely-api.deliciousdabbas.com';
 export const Google_Maps_Api_Key = `AIzaSyC8oQ4dsrPXmPNjJ85YO1KWzaVY2Lt7Uh4`;
 export const fileViewURL =
-  'https://fameely-backend.onrender.com/api/file/fetch/';
+  'https://fameely-api.deliciousdabbas.com/api/file/fetch/';
 
-let isLive = false;
 let testUrl = `https://fameely-api.deliciousdabbas.com/api`;
 
-export const baseUrl: string = isLive ? '' : testUrl;
+export const baseUrl: string = testUrl;
 
 // Standard Axios Instance
 const API_AXIOS: AxiosInstance = axios.create({

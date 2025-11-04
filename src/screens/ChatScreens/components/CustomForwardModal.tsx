@@ -11,7 +11,7 @@ import {
 import CustomModal from '../../../components/CustomModal';
 import CustomAvatar from '../../../components/CustomAvatar';
 import {color} from '../../../const/color';
-import {uesGetRecentChats} from '../../../api/chats/chatFunc';
+import {useGetRecentChats} from '../../../api/chats/chatFunc';
 import {myConsole} from '../../../utils/myConsole';
 import CustomText from '../../../components/CustomText';
 import {useNavigation} from '@react-navigation/native';
@@ -35,7 +35,7 @@ const CustomForwardModal = ({
     isLoading: recentChatsLoad,
     isError: recentChatsErr,
     refetch: recentChatsRefetch,
-  } = uesGetRecentChats('');
+  } = useGetRecentChats('');
 
   const filteredChats =
     recentChats?.data?.chats?.filter((chat: any) =>

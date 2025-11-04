@@ -1,3 +1,4 @@
+import {myConsole} from '../../utils/myConsole';
 import {API_AXIOS} from '../axiosInstance';
 import {useQuery} from '@tanstack/react-query';
 

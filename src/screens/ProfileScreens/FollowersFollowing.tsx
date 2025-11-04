@@ -16,7 +16,6 @@ import {sizes} from '../../const';
 
 const FollowersFollowing = ({route, navigation}: any) => {
   const {data, titleName} = route.params;
-  myConsole('dataaa', data);
   return (
     <MainContainer title={capitalizeFirstLetter(titleName)} isBack>
       <View style={styles.container}>

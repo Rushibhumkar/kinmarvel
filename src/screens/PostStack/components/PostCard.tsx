@@ -2,6 +2,7 @@ import React, {useRef, useState} from 'react';
 import {
   Dimensions,
   Image,
+  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,6 +11,8 @@ import {
 import Video from 'react-native-video';
 import Carousel from 'react-native-reanimated-carousel';
 import {myConsole} from '../../../utils/myConsole';
+import {useNavigation} from '@react-navigation/native';
+import {renderTextWithLinks} from '../../../utils/renderTextWithLinks';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const H_MARGIN = 12; // card marginHorizontal
@@ -37,11 +40,12 @@ const formatWhen = (iso: any) => {
 const MediaCarousel = ({items}: any) => {
   if (!items || items.length === 0) return null;
   const [activeIndex, setActiveIndex] = useState(0);
+
   return (
     <View style={styles.mediaWrap}>
       <Carousel
         width={ITEM_WIDTH}
-        height={280}
+        height={420}
         data={items}
         panGestureHandlerProps={{activeOffsetX: [-10, 10]}}
         onProgressChange={(_, absProgress) => {
@@ -81,6 +85,7 @@ const MediaCarousel = ({items}: any) => {
 };
 
 const PostCard = ({post, onOpenComments, onLikePress}: any) => {
+  const navigation = useNavigation();
   const author = post?.createdBy || {};
   const name =
     author?.fullName ||
@@ -110,10 +115,18 @@ const PostCard = ({post, onOpenComments, onLikePress}: any) => {
       {/* Header */}
       <View style={styles.headerRow}>
         <Image source={{uri: avatarSrc}} style={styles.avatar} />
-        <View style={{flex: 1}}>
+        <TouchableOpacity
+          style={{flex: 1}}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate('UsersProfileDetails', {
+              id: post?.createdBy?._id,
+              showBasicDetails: true,
+            })
+          }>
           <Text style={styles.name}>{name}</Text>
           <Text style={styles.when}>{formatWhen(post?.createdAt)}</Text>
-        </View>
+        </TouchableOpacity>
         <Text style={styles.visibility}>
           {post?.visible_to === 'self'
             ? '🔒'
@@ -124,8 +137,12 @@ const PostCard = ({post, onOpenComments, onLikePress}: any) => {
       </View>
 
       {/* Caption */}
-      {post?.desc ? <Text style={styles.caption}>{post.desc}</Text> : null}
-
+      {post?.desc
+        ? renderTextWithLinks(post.desc, {
+            textStyle: styles.caption,
+            linkColor: '#1D4ED8',
+          })
+        : null}
       {/* Location */}
       {hasLocation ? (
         <View style={styles.locationRow}>
@@ -159,21 +176,21 @@ const PostCard = ({post, onOpenComments, onLikePress}: any) => {
           style={styles.footerBtn}
           activeOpacity={0.7}
           onPress={() => {
+            myConsole('[PostCard] open comments', {postId: post?._id});
+            onOpenComments?.(post);
+          }}>
+          <Text style={styles.footerBtnText}>💬 {post?.commentCount ?? 0}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.footerBtn}
+          activeOpacity={0.7}
+          onPress={() => {
             const action = post?.isLikedByMe ? 'unlike' : 'like';
             onLikePress?.(post, action);
           }}>
           <Text style={styles.footerBtnText}>
             {post?.isLikedByMe ? '❤️' : '🤍'} {post?.likeCount ?? 0}
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.footerBtn}
-          activeOpacity={0.7}
-          onPress={() => {
-            myConsole('[PostCard] open comments', {postId: post?._id});
-            onOpenComments?.(post);
-          }}>
-          <Text style={styles.footerBtnText}>💬 {post?.commentCount ?? 0}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -220,16 +237,18 @@ const styles = StyleSheet.create({
   locationText: {fontSize: 13.5, color: '#444', flexShrink: 1},
 
   mediaWrap: {
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
     backgroundColor: '#f5f5f5',
     marginBottom: 8,
     alignSelf: 'center',
+    marginHorizontal: -6, // reduce horizontal gap
   },
   media: {
-    width: ITEM_WIDTH,
-    height: 280,
+    width: '100%',
+    aspectRatio: 0.75,
     backgroundColor: '#000',
+    // resizeMode: 'cover',
   },
   carouselDotsRow: {
     position: 'absolute',
@@ -259,11 +278,13 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#eee',
-    justifyContent: 'space-between',
+    alignSelf: 'flex-end',
+    gap: 12,
+    // justifyContent: 'space-between',
   },
   footerBtn: {
     paddingVertical: 8,
     paddingHorizontal: 6,
   },
-  footerBtnText: {fontSize: 14.5, color: '#111'},
+  footerBtnText: {fontSize: 16, color: '#111'},
 });
