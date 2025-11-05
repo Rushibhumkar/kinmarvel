@@ -104,6 +104,7 @@ const ChatsList = ({navigation, route}: any) => {
 
   const {data: myData} = useGetMyData();
   const myId = myData?.data?._id as string | undefined;
+  // myConsole('myDataaaadd', myData);
 
   // API: recent chats
   const {
@@ -111,7 +112,7 @@ const ChatsList = ({navigation, route}: any) => {
     isLoading: recentChatsLoad,
     isError: recentChatsErr,
     refetch: recentChatsRefetch,
-  } = useGetRecentChats(myId || '');
+  } = useGetRecentChats('');
 
   // ---- Socket setup (register/refetch on new messages) ----
   useEffect(() => {
@@ -192,7 +193,7 @@ const ChatsList = ({navigation, route}: any) => {
       hasNavigated: hasNavigatedRef.current,
     };
 
-    myConsole('ChatsList:navigateDebug', debug);
+    // myConsole('ChatsList:navigateDebug', debug);
     const chats: RecentChatItem[] = recentChats?.data?.chats || [];
 
     if (
@@ -302,7 +303,7 @@ const ChatsList = ({navigation, route}: any) => {
       </TouchableOpacity>
     );
   };
-  myConsole('sortedChats', sortedChats);
+  // myConsole('sortedChats', sortedChats);
   // --------------------------------- UI -------------------------------------
   return (
     <MainContainer

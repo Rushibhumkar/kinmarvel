@@ -287,7 +287,10 @@ const ChattingScreen = ({navigation, route}: any) => {
     };
     myConsole('sendMessage:payload', newMessage);
 
-    s.emit('sendMessage', newMessage);
+    s.emit('sendMessage', newMessage, (ack: any) => {
+      console.log('✅ Server ACK for sendMessage:', ack);
+      myConsole('sendMessage:response', ack);
+    });
 
     // Reset composers
     setMessage('');
