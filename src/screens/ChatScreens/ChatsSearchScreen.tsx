@@ -28,7 +28,7 @@ const ChatsSearchScreen = ({navigation}: any) => {
     error,
   } = useGetAllUsers(searchValue, 40);
 
-  myConsole('Fetched users:', allUsersData);
+  // myConsole('Fetched users:', allUsersData);
 
   // Handle empty data or error
   const renderEmptyState = () => {

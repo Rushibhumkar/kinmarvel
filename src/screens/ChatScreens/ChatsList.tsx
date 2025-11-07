@@ -9,7 +9,8 @@ import {
   Image,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
-import {io, Socket} from 'socket.io-client';
+import socket from '../../calling/services/socket'; // ✅ use the shared connected instance
+import {Socket} from 'socket.io-client';
 
 import MainContainer from '../../components/MainContainer';
 import CustomAvatar from '../../components/CustomAvatar';
@@ -100,11 +101,8 @@ const isUnread = (chat: RecentChatItem, myId?: string) =>
 
 const ChatsList = ({navigation, route}: any) => {
   const [refreshing, setRefreshing] = useState(false);
-  const [socket, setSocket] = useState<Socket | undefined>(undefined);
-
   const {data: myData} = useGetMyData();
   const myId = myData?.data?._id as string | undefined;
-  // myConsole('myDataaaadd', myData);
 
   // API: recent chats
   const {
@@ -114,70 +112,84 @@ const ChatsList = ({navigation, route}: any) => {
     refetch: recentChatsRefetch,
   } = useGetRecentChats('');
 
-  // ---- Socket setup (register/refetch on new messages) ----
-  useEffect(() => {
-    let newSocket: Socket | undefined;
+  /* ---------------- Socket Connection ---------------- */
+  useFocusEffect(
+    React.useCallback(() => {
+      (async () => {
+        const token = await getData('authToken');
+        if (!token || !myId) return;
 
-    const setup = async () => {
-      if (!myId) return;
+        if (!socket.connected) {
+          socket.auth = {token};
+          socket.connect();
+          socket.once('connect', () =>
+            myConsole('socket', '✅ connected (ChatsList)'),
+          );
+        } else {
+          myConsole('socket', 'already connected (ChatsList)');
+        }
 
-      newSocket = io(SOCKET_SERVER_URL, {
-        transports: ['websocket'],
-        query: {userId: myId},
-      });
+        socket.emit('register', myId, token);
 
-      setSocket(newSocket);
+        +(
+          // --- Add other socket listeners for debugging ---
+          socket.on('getMessage', (_newMessage: any) => {
+            myConsole(
+              'socket:getMessage',
+              '📩 received -> refetch recent chats',
+            );
+            recentChatsRefetch();
+          })
+        );
 
-      newSocket.on('connect', () => {
-        myConsole('socket', 'connected');
-      });
+        socket.on('disconnect', reason => {
+          myConsole('socket:disconnected', reason);
+        });
 
-      const token = await getData('authToken');
-      newSocket.emit('register', myId, token);
+        socket.on('error', err => {
+          myConsole('socket:error', err);
+        });
 
-      // When a new message arrives, simply refetch the list so it stays canonical
-      newSocket.on('getMessage', (_newMessage: any) => {
-        myConsole('socket:getMessage', 'received -> refetch recent chats');
-        recentChatsRefetch();
-      });
+        socket.on('register', res => {
+          myConsole('socket:register', res);
+        });
 
-      newSocket.on('error', (err: any) => {
-        myConsole('socket:error', err);
-      });
+        socket.io.on('reconnect_attempt', attempt => {
+          myConsole('socket:reconnect_attempt', attempt);
+        });
 
-      newSocket.on('register', (res: any) => {
-        myConsole('socket:register', res);
-      });
-    };
+        socket.io.on('reconnect_failed', () => {
+          myConsole('socket:reconnect_failed ❌');
+        });
 
-    setup();
+        socket.io.on('connect_error', err => {
+          myConsole('socket:connect_error', err?.message || err);
+        });
+      })();
 
-    return () => {
-      if (newSocket) {
-        newSocket.removeAllListeners();
-        newSocket.disconnect();
-      }
-    };
-  }, [myId, recentChatsRefetch]);
+      return () => {
+        socket.removeAllListeners();
+      };
+    }, [myId]),
+  );
 
-  // Pull to refresh
+  /* ---------------- Refresh ---------------- */
   const onRefresh = () => {
     setRefreshing(true);
     recentChatsRefetch().finally(() => setRefreshing(false));
   };
 
-  // Refetch whenever screen focuses
+  /* ---------------- Refetch on Focus ---------------- */
   useFocusEffect(
     React.useCallback(() => {
       recentChatsRefetch();
     }, [recentChatsRefetch]),
   );
 
-  // ------------- Auto-navigate flow (from another screen) -------------------
+  /* ---------------- Reset Guard ---------------- */
   const {data, isComeFromAnotherScreen = false} = route?.params || {};
   const hasNavigatedRef = useRef(false);
 
-  // Reset guard when screen is (re)focused
   useFocusEffect(
     React.useCallback(() => {
       hasNavigatedRef.current = false;
@@ -235,7 +247,7 @@ const ChatsList = ({navigation, route}: any) => {
 
     return [...list].sort((a, b) => toTime(b) - toTime(a));
   }, [recentChats]);
-  myConsole('recentChatssss', recentChats);
+  // myConsole('recentChatssss', recentChats);
   // ------------------------------- Renderers --------------------------------
   const renderItem = ({item}: {item: RecentChatItem}) => {
     const peer = getPeer(item, myId);

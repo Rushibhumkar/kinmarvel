@@ -195,7 +195,7 @@ const ChattingScreen = ({navigation, route}: any) => {
       });
 
       s.on('error', (err: any) => myConsole('socket:error', err));
-      s.on('register', (res: any) => myConsole('socket:register', res));
+      // s.on('register', (res: any) => myConsole('socket:register', res));
     };
 
     setup();
