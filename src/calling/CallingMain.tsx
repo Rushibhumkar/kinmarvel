@@ -75,17 +75,36 @@ const CallingMain = () => {
     });
 
   // show modal only when NOT already in a call
-  const showIncomingModal = !!incomingCall && !inCall;
+  const showIncomingModal = !!incomingCall && !inCall && !isDialing;
 
-  // play ring only while incoming & not connected
+  // ✅ Improved watcher to prevent reopening after disconnect
   useEffect(() => {
-    if (remoteStream && !inCall) {
+    if (!remoteStream) return;
+
+    // Guard: ignore inactive or ended streams
+    if (
+      !remoteStream.active ||
+      remoteStream.getTracks().every(t => t.readyState === 'ended')
+    ) {
+      console.log('[CallState] Ignored stale remote stream');
+      return;
+    }
+
+    if (!inCall) {
       console.log('[CallState] remoteStream detected → enter inCall');
       setInCall(true);
       setIncomingCall(null);
       stopIncomingTone();
     }
   }, [remoteStream, inCall, setIncomingCall, stopIncomingTone]);
+
+  useEffect(() => {
+    if (!remoteStream && inCall) {
+      console.log('[CallState] remoteStream cleared → exit inCall');
+      const t = setTimeout(() => setInCall(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [remoteStream, inCall]);
 
   // ensure modal closes immediately on accept/reject even if signaling is slow
   const onAcceptIncoming = React.useCallback(() => {
@@ -105,15 +124,6 @@ const CallingMain = () => {
     handleReject();
     setIncomingCall(null);
   }, [handleReject, setIncomingCall]);
-
-  useEffect(() => {
-    if (remoteStream && !inCall) {
-      console.log('[CallState] remoteStream detected → enter inCall');
-      setInCall(true);
-      setIncomingCall(null);
-      stopIncomingTone();
-    }
-  }, [remoteStream, inCall, setIncomingCall, stopIncomingTone]);
 
   useEffect(() => {
     const handleGlobalIncomingCall = (payload: any) => {

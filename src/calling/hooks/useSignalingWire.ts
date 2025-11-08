@@ -1,5 +1,6 @@
 import {useEffect} from 'react';
 import socket from '../services/socket';
+import InCallManager from 'react-native-incall-manager';
 
 type UseSignalingWireParams = {
   userId?: string;
@@ -25,9 +26,20 @@ export default function useSignalingWire({
   endCall,
 }: UseSignalingWireParams) {
   useEffect(() => {
-    const onRejected = () => {
-      stopOutgoingTone();
-      stopIncomingTone();
+    const onRejected = (payload?: any) => {
+      console.log('[SignalWire] → onRejected triggered:', payload);
+      try {
+        console.log('[SignalWire] → Calling stopOutgoingTone()');
+        stopOutgoingTone();
+        console.log('[SignalWire] → Calling stopIncomingTone()');
+        stopIncomingTone();
+        InCallManager.stopRingback();
+        InCallManager.stopRingtone();
+        InCallManager.stop();
+      } catch (err) {
+        console.log('[SignalWire] → stopTone error', err);
+      }
+      console.log('[SignalWire] → Resetting call state now');
       setIncomingCall(null);
       setIsDialing(false);
       setInCall(false);
@@ -35,13 +47,23 @@ export default function useSignalingWire({
       endCall();
     };
 
-    const onAnswered = ({from}: {from?: string}) => {
+    const onAnswered = ({
+      from,
+      mediaType,
+    }: {
+      from?: string;
+      mediaType?: 'audio' | 'video';
+    }) => {
       stopOutgoingTone();
       setPeerId(from ?? peerId);
       setIsDialing(false);
-      setInCall(true);
       setIncomingCall(null);
+      setInCall(true);
+
+      // ✅ emit back to confirm answer for video
+      socket.emit('call-answered', {to: from, from: userId, mediaType});
     };
+
     const onEnded = (payload?: {from?: string}) => {
       stopOutgoingTone();
       stopIncomingTone();

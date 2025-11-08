@@ -1,8 +1,8 @@
-// src/calling/hooks/useCallControls.ts
 import React, {useEffect} from 'react';
 import {Alert} from 'react-native';
 import socket from '../services/socket';
 import {myConsole} from '../../utils/myConsole';
+import InCallManager from 'react-native-incall-manager';
 
 type MediaType = 'audio' | 'video';
 
@@ -14,18 +14,15 @@ type UseCallControlsParams = {
   setInCall: (v: boolean) => void;
   setIncomingCall: (v: any) => void;
 
-  // from useCall(userId)
   startCall: (toUserId: string, mediaType: MediaType) => Promise<void>;
   answerCall: () => Promise<void>;
   endCall: () => void;
 
-  // audio helpers
   playOutgoingTone: () => void;
   stopOutgoingTone: () => void;
-  playIncomingTone?: () => void; // optional
+  playIncomingTone?: () => void;
   stopIncomingTone: () => void;
 
-  // state needed for reject flow
   incomingCall?: {from?: string; mediaType?: MediaType} | null;
 };
 
@@ -44,18 +41,16 @@ export default function useCallControls({
   stopIncomingTone,
   incomingCall,
 }: UseCallControlsParams) {
-  // -----------------------
-  // Refs & Idempotency Guards
-  // -----------------------
   const peerIdRef = React.useRef<string | null>(null);
   const cleanedUpRef = React.useRef(false);
   const endingRef = React.useRef(false);
 
+  // keep latest peerId reference
   useEffect(() => {
-    peerIdRef.current = peerId;
+    if (peerId) peerIdRef.current = peerId;
   }, [peerId]);
 
-  // Reset guards when a new call starts (peerId switches from null -> value)
+  // reset guards whenever a call actually begins
   useEffect(() => {
     if (peerId) {
       cleanedUpRef.current = false;
@@ -66,22 +61,33 @@ export default function useCallControls({
   myConsole('peerIdReffff', peerIdRef);
   myConsole('incomingCallll', incomingCall);
 
+  // -----------------------
+  // Safe Cleanup
+  // -----------------------
   const safeCleanup = (reason: string) => {
     if (cleanedUpRef.current) return;
     cleanedUpRef.current = true;
-
     console.log('[CallEnd] cleanup reason:', reason);
 
     try {
-      stopOutgoingTone();
-      stopIncomingTone();
-      endCall();
-    } catch {}
+      stopOutgoingTone?.();
+      stopIncomingTone?.();
+      endCall?.();
+    } catch (err) {
+      console.warn('[CallEnd] cleanup error', err);
+    }
 
+    // reset states
     setIncomingCall(null);
     setIsDialing(false);
     setInCall(false);
-    setPeerId(null);
+
+    // defer reset slightly to allow outgoing events to finish
+    setTimeout(() => {
+      setPeerId(null);
+      peerIdRef.current = null;
+      setInCall(false);
+    }, 400);
   };
 
   // -----------------------
@@ -91,6 +97,7 @@ export default function useCallControls({
     try {
       await startCall(toUserId, mediaType);
       setPeerId(toUserId);
+      peerIdRef.current = toUserId; // ✅ ensure immediate reference update
       setIsDialing(true);
       playOutgoingTone();
     } catch (err) {
@@ -105,65 +112,103 @@ export default function useCallControls({
   const handleAnswer = async () => {
     try {
       await answerCall();
+      const fromId = incomingCall?.from ?? peerId ?? null;
+      if (fromId) {
+        setPeerId(fromId);
+        peerIdRef.current = fromId;
+      }
+      socket.emit('call-answered', {
+        to: incomingCall?.from,
+        from: userId,
+        mediaType: incomingCall?.mediaType,
+      });
       stopIncomingTone();
       setIncomingCall(null);
-      // avoid flipping if already true
-      setInCall(prev => (prev ? prev : true));
-      setPeerId(incomingCall?.from ?? peerId ?? null);
+      setInCall(true);
     } catch (err) {
       Alert.alert('Answer Error', 'Could not answer call');
     }
   };
 
   // -----------------------
-  // End Call (local)
+  // End Call (Local)
   // -----------------------
   const handleEnd = () => {
-    if (endingRef.current) return;
+    if (endingRef.current) {
+      console.log('[CallEnd] Skipped duplicate end');
+      return;
+    }
     endingRef.current = true;
 
     const to = peerIdRef.current || incomingCall?.from || peerId;
+    console.log('[CallEnd][Local] Button pressed. To:', to, 'UserId:', userId);
+
     if (to && userId) {
-      console.log('[CallEnd] emitting end-call', {to, from: userId});
+      console.log('[CallEnd][Emit] Sending end-call event →', {
+        to,
+        from: userId,
+      });
       socket.emit('end-call', {to, from: userId});
     } else {
-      console.warn('[CallEnd] Skipping emit: peerId or userId missing');
+      console.warn('[CallEnd][Warn] Missing peerId or userId');
     }
 
     safeCleanup('self-end');
   };
 
   // -----------------------
-  // Reject Incoming
+  // Reject Incoming Call
   // -----------------------
   const handleReject = () => {
+    // 🔇 Stop ringtone instantly before cleanup
+    try {
+      // 🔇 stop tone instantly before emit
+      stopIncomingTone?.();
+      stopOutgoingTone?.();
+      InCallManager.stopRingback();
+      InCallManager.stopRingtone();
+      InCallManager.stop();
+    } catch (err) {
+      console.log('[CallReject] tone stop error', err);
+    }
+
     if (incomingCall?.from) {
       socket.emit('reject-call', {
         to: incomingCall.from,
         reason: 'User declined the call',
       });
     }
+
     safeCleanup('reject');
+    stopIncomingTone?.();
   };
 
   // -----------------------
-  // Socket listeners for peer end
+  // Peer Ended Listener
   // -----------------------
-  const onPeerEnded = (payload?: any) => {
-    if (cleanedUpRef.current) {
-      console.log('[CallEnd] peer-ended ignored (already cleaned)');
-      return;
-    }
+  useEffect(() => {
+    const onPeerEnded = (payload?: any) => {
+      console.log('[Socket] peer-ended event received:', payload);
+      if (cleanedUpRef.current) {
+        console.log('[CallEnd] peer-ended ignored (already cleaned)');
+        return;
+      }
+      safeCleanup('peer-end');
+    };
 
-    if (!peerIdRef.current) {
-      console.warn('[CallEnd] peer-ended but peerIdRef.current is null');
-      safeCleanup('peer-end (peerId null)');
-      return;
-    }
+    socket.on('call-ended', onPeerEnded);
+    socket.on('end-call', onPeerEnded);
 
-    console.log('[CallEnd] peer-ended event', payload);
-    safeCleanup('peer-end');
+    return () => {
+      socket.off('call-ended', onPeerEnded);
+      socket.off('end-call', onPeerEnded);
+    };
+  }, []);
+
+  return {
+    handleStartCall,
+    handleAnswer,
+    handleEnd,
+    handleReject,
   };
-
-  return {handleStartCall, handleAnswer, handleEnd, handleReject};
 }
