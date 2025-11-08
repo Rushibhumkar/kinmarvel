@@ -86,6 +86,15 @@ export const useCall = (userId: string) => {
       );
       playIncomingTone();
       setIncomingCall({from, offer, mediaType});
+
+      try {
+        const CallEventEmitter =
+          require('../services/CallEventEmitter').default;
+        CallEventEmitter.emit('incoming-call', {from, offer, mediaType});
+        console.log('[useCall] 🔔 Emitted global incoming-call event');
+      } catch (err) {
+        console.warn('[useCall] Failed to emit global event:', err);
+      }
     });
 
     socket.on('answer-made', async ({from, answer}) => {
@@ -151,6 +160,16 @@ export const useCall = (userId: string) => {
       endCall();
     });
 
+    socket.on('reject-call', ({from, reason}) => {
+      console.log('[DEBUG] reject-call received from peer:', from, reason);
+      stopAllTones();
+      InCallManager.stopRingback();
+      InCallManager.stopRingtone();
+      InCallManager.stop();
+      setIncomingCall(null);
+      endCall();
+    });
+
     return () => {
       console.log('[useCall] Cleaning up socket listeners');
       socket.off('call-made');
@@ -160,6 +179,7 @@ export const useCall = (userId: string) => {
       socket.off('end-call', handlePeerEnded);
       socket.off('error');
       socket.off('call-rejected');
+      socket.off('reject-call');
     };
   }, []);
 

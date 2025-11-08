@@ -6636,6 +6636,11 @@ react-native-video@^6.14.1:
   resolved "https://registry.npmjs.org/react-native-video/-/react-native-video-6.14.1.tgz"
   integrity sha512-nTPHqg+GKu6UV6Hr5Ph48Hn2jod963bHCt0wWtlK9jv9lE1FDGyDdX0Jl15lky8v7VhNdqjqb9DX0EUhMontWg==
 
+react-native-volume-manager@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/react-native-volume-manager/-/react-native-volume-manager-2.0.8.tgz#4217c00e975043cdc10f908c8aba2c77a05d2b46"
+  integrity sha512-aZM47/mYkdQ4CbXpKYO6Ajiczv7fxbQXZ9c0H8gRuQUaS3OCz/MZABer6o9aDWq0KMNsQ7q7GVFLRPnSSeeMmw==
+
 react-native-webrtc@^124.0.5:
   version "124.0.6"
   resolved "https://registry.npmjs.org/react-native-webrtc/-/react-native-webrtc-124.0.6.tgz"

@@ -61,6 +61,7 @@
     "react-native-svg": "^15.12.0",
     "react-native-toast-notifications": "^3.4.0",
     "react-native-video": "^6.14.1",
+    "react-native-volume-manager": "^2.0.8",
     "react-native-webrtc": "^124.0.5",
     "react-native-webview": "^13.16.0",
     "socket.io-client": "^4.8.1",

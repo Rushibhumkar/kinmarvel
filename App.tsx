@@ -26,6 +26,8 @@ import {sizes} from './src/const';
 import socket from './src/calling/services/socket';
 import {ToastProvider} from 'react-native-toast-notifications';
 import CallEventEmitter from './src/calling/services/CallEventEmitter';
+import GlobalCallListener from './src/calling/GlobalCallListener';
+import {navigationRef} from './src/navigation/NavigationRef';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator();
@@ -190,11 +192,10 @@ const App = () => {
 
     socket.on('incoming-call', payload => {
       myConsole('[Socket] Incoming Call Event:', payload);
-
-      // Broadcast the incoming call event globally
-      // E.g., via a state management solution (Redux, Context API, or an event emitter)
-      // Example (using EventEmitter):
-      CallEventEmitter.emit('incoming-call', payload);
+      setTimeout(() => {
+        console.log('[App] 🔔 Emitting delayed incoming-call event');
+        CallEventEmitter.emit('incoming-call', payload);
+      }, 300);
     });
 
     return () => {
@@ -255,7 +256,8 @@ const App = () => {
   return (
     <GestureHandlerRootView style={{flex: 1, backgroundColor: '#fff'}}>
       <QueryClientProvider client={queryClient}>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
+          <GlobalCallListener />
           <ToastProvider
             placement="top"
             offset={16}
@@ -263,6 +265,7 @@ const App = () => {
             swipeEnabled>
             <PopupRootProvider>
               <AppStack userToken={userToken} />
+              {/* <GlobalCallListener /> */}
             </PopupRootProvider>
           </ToastProvider>
         </NavigationContainer>

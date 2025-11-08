@@ -105,17 +105,12 @@ export default function useCallAudio({inCall}: UseCallAudioParams) {
 
   // ✅ Play incoming ringtone
   const playIncomingTone = () => {
-    if (incomingToneRef.current) {
-      console.log(
-        '[SoundPlay-Incoming] → Cleaning up old instance before replay',
-      );
-      incomingToneRef.current.stop();
-      incomingToneRef.current.release();
-      incomingToneRef.current = null;
-    }
     const s = incomingToneRef.current;
     console.log('[SoundPlay-Incoming] Attempting play:', !!s);
-    if (!s) return;
+    if (!s) {
+      console.warn('[SoundPlay-Incoming] ⚠️ Incoming sound not loaded yet');
+      return;
+    }
     try {
       s.setVolume(1.0);
       s.setCurrentTime(0);

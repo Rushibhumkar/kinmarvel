@@ -173,8 +173,10 @@ export default function useCallControls({
     }
 
     if (incomingCall?.from) {
+      // ✅ match backend: send 'reject-call' event, include both to/from
       socket.emit('reject-call', {
         to: incomingCall.from,
+        from: userId,
         reason: 'User declined the call',
       });
     }
@@ -198,10 +200,14 @@ export default function useCallControls({
 
     socket.on('call-ended', onPeerEnded);
     socket.on('end-call', onPeerEnded);
+    socket.on('call-rejected', onPeerEnded);
+    socket.on('reject-call', onPeerEnded);
 
     return () => {
       socket.off('call-ended', onPeerEnded);
       socket.off('end-call', onPeerEnded);
+      socket.off('call-rejected', onPeerEnded);
+      socket.off('reject-call', onPeerEnded);
     };
   }, []);
 
