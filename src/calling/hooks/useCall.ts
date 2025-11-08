@@ -213,12 +213,20 @@ export const useCall = (userId: string) => {
         '[PeerConnection] Connection state changed:',
         pc.connectionState,
       );
-      if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
+      if (['failed', 'closed'].includes(pc.connectionState)) {
         console.log(
           '[PeerConnection] Auto-ending due to state:',
           pc.connectionState,
         );
         endCall();
+      } else if (pc.connectionState === 'disconnected') {
+        console.log('[PeerConnection] Disconnected — waiting before ending...');
+        setTimeout(() => {
+          if (pc.connectionState === 'disconnected') {
+            console.log('[PeerConnection] Still disconnected → ending call');
+            endCall();
+          }
+        }, 3000); // 3s grace period
       }
     };
 

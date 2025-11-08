@@ -46,19 +46,22 @@ const CallScreen = ({localStream, remoteStream, onEndCall}: any) => {
 
   return (
     <View style={styles.container}>
-      {hasRemote ? (
-        <RTCView
-          streamURL={remoteStream.toURL()}
-          style={styles.remoteVideo}
-          objectFit="cover"
-        />
-      ) : (
-        <View style={styles.remoteVideoPlaceholder}>
-          <Text style={styles.placeholderTitle}>Connecting…</Text>
-          <Text style={styles.placeholderSub}>Waiting for the other user</Text>
-        </View>
-      )}
-
+      <View style={styles.videoContainer}>
+        {hasRemote ? (
+          <RTCView
+            streamURL={remoteStream.toURL()}
+            style={[styles.remoteVideo, {flex: 1}]}
+            objectFit="cover"
+          />
+        ) : (
+          <View style={styles.remoteVideoPlaceholder}>
+            <Text style={styles.placeholderTitle}>Connecting…</Text>
+            <Text style={styles.placeholderSub}>
+              Waiting for the other user
+            </Text>
+          </View>
+        )}
+      </View>
       {hasLocal && (
         <View style={styles.localPreviewWrap}>
           <RTCView
@@ -121,20 +124,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000', // opaque background
+    height: '100%',
   },
 
   // Remote video fills the screen
   remoteVideo: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    left: 0,
-    bottom: 0,
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#000',
   },
 
   remoteVideoPlaceholder: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#000000ff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -236,5 +239,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 16,
     letterSpacing: 0.3,
+  },
+  videoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
   },
 });

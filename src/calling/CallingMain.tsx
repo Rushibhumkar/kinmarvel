@@ -1,7 +1,14 @@
 // src/calling/CallingMain.tsx
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, Text, TouchableOpacity, Image} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  SafeAreaView,
+  Image,
+} from 'react-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 
 import CallScreen from './components/CallScreen';
 import IncomingCallModal from './components/IncomingCallModal';
@@ -17,6 +24,8 @@ import CallEventEmitter from './services/CallEventEmitter';
 import {useCall} from './hooks/useCall';
 
 const CallingMain = () => {
+  const route = useRoute();
+  const routeIncoming = route?.params?.incomingCall;
   const navigation = useNavigation();
   const {data: myData} = useGetMyData();
   const userId = myData?.data?._id;
@@ -24,6 +33,7 @@ const CallingMain = () => {
   const [inCall, setInCall] = useState(false);
   const [peerId, setPeerId] = useState<string | null>(null);
   const [isDialing, setIsDialing] = useState(false);
+  const [noResponse, setNoResponse] = useState(false);
 
   const {
     localStream,
@@ -98,6 +108,18 @@ const CallingMain = () => {
     }
   }, [remoteStream, inCall, setIncomingCall, stopIncomingTone]);
 
+  // 🔔 Auto timeout if call not picked within 15 seconds
+  useEffect(() => {
+    if (isDialing && !inCall) {
+      const timer = setTimeout(() => {
+        setNoResponse(true);
+        setIsDialing(false);
+      }, 15000); // 15 seconds
+      return () => clearTimeout(timer);
+    } else {
+      setNoResponse(false);
+    }
+  }, [isDialing, inCall]);
   useEffect(() => {
     if (!remoteStream && inCall) {
       console.log('[CallState] remoteStream cleared → exit inCall');
@@ -126,6 +148,28 @@ const CallingMain = () => {
   }, [handleReject, setIncomingCall]);
 
   useEffect(() => {
+    // const handleGlobalIncomingCall = (payload: any) => {
+    //   console.log('[Global Incoming Call]', payload);
+    //   setIncomingCall(payload);
+    //   playIncomingTone();
+    // };
+
+    // CallEventEmitter.on('incoming-call', handleGlobalIncomingCall);
+
+    // return () => {
+    //   CallEventEmitter.off('incoming-call', handleGlobalIncomingCall);
+    // };
+
+    if (routeIncoming) {
+      console.log('[Nav Incoming Call]', routeIncoming);
+      // ✅ first set the call, then answer after slight delay
+      setIncomingCall(routeIncoming);
+      setTimeout(() => {
+        console.log('[Nav Incoming Call] → Triggering handleAnswer after set');
+        handleAnswer();
+      }, 300);
+    }
+    // 🔔 Case 2: Event-driven (normal socket-based)
     const handleGlobalIncomingCall = (payload: any) => {
       console.log('[Global Incoming Call]', payload);
       setIncomingCall(payload);
@@ -133,16 +177,15 @@ const CallingMain = () => {
     };
 
     CallEventEmitter.on('incoming-call', handleGlobalIncomingCall);
-
     return () => {
       CallEventEmitter.off('incoming-call', handleGlobalIncomingCall);
     };
-  }, [setIncomingCall, playIncomingTone]);
+  }, []);
 
   myConsole('inCallsss', inCall);
   return (
-    <View style={styles.container}>
-      {!inCall && (
+    <View style={styles.root}>
+      {!inCall && !isDialing && (
         <>
           {/* Top Bar */}
           <View style={styles.topBar}>
@@ -168,11 +211,15 @@ const CallingMain = () => {
       )}
 
       {(inCall || isDialing) && (
-        <CallScreen
-          localStream={localStream}
-          remoteStream={remoteStream}
-          onEndCall={handleEnd}
-        />
+        <View style={styles.callWrapper}>
+          <CallScreen
+            localStream={localStream}
+            remoteStream={remoteStream}
+            isDialing={isDialing}
+            noResponse={noResponse}
+            onEndCall={handleEnd}
+          />
+        </View>
       )}
       <IncomingCallModal
         visible={showIncomingModal}
@@ -190,9 +237,21 @@ export default CallingMain;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#ffffffff', // keeps dark background
+    width: '100%',
+    height: '100%',
   },
 
+  root: {
+    flex: 1,
+    backgroundColor: '#ffffffff',
+  },
+
+  callWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000', // differentiate call screen visually
+    zIndex: 999, // ensures it overlays the user list completely
+  },
   // Top bar
   topBar: {
     height: 56,

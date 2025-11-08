@@ -99,11 +99,15 @@ const GlobalCallListener = React.memo(function GlobalCallListener() {
     console.log('[GlobalCallListener] ▶️ Accept pressed');
     stopIncomingTone();
     setShowModal(false);
+    // ✅ slight delay ensures useCall context is ready
     setTimeout(() => {
       console.log('[GlobalCallListener] Navigating to CallingMain');
-      navigate(callRoute.CallingMain); // ✅ use global navigation ref
-    }, 300);
-  }, [stopIncomingTone]); // ✅ remove navigation dependency
+      navigate('CallStack', {
+        screen: 'CallingMain',
+        params: {incomingCall: incomingCall},
+      });
+    }, 500);
+  }, [stopIncomingTone, incomingCall]);
 
   // ❌ Reject call
   const handleReject = useCallback(() => {
