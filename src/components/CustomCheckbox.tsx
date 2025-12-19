@@ -6,19 +6,25 @@ import {
   StyleSheet,
   Animated,
   Image,
+  ViewStyle,
 } from 'react-native';
 import {color} from '../const/color';
+import CustomText from './CustomText';
 
 interface CustomCheckboxProps {
   label?: string;
   onChange: (checked: boolean) => void;
   checked: boolean;
+  checkBoxStyle?: ViewStyle;
+  containerStyle?: ViewStyle;
 }
 
 const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
   label,
   onChange,
   checked,
+  checkBoxStyle,
+  containerStyle,
 }) => {
   const [animation] = useState(new Animated.Value(0));
 
@@ -54,9 +60,9 @@ const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
   return (
     <TouchableOpacity
       activeOpacity={0.6}
-      style={styles.container}
+      style={[styles.container, containerStyle]}
       onPress={handlePress}>
-      <View style={styles.checkbox}>
+      <View style={[styles.checkbox, checkBoxStyle]}>
         {checked && (
           <Animated.View style={tickStyle}>
             <Image
@@ -70,7 +76,7 @@ const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
           </Animated.View>
         )}
       </View>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <CustomText style={styles.label}>{label}</CustomText>}
     </TouchableOpacity>
   );
 };

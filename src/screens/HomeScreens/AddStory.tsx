@@ -177,7 +177,7 @@ const AddStory = ({navigation}: any) => {
                     styles.viewImg,
                     {
                       width: sizes.width / 1.2,
-                      height: keyboardHeight ? 180 : 400,
+                      height: keyboardHeight ? 160 : 300,
                     },
                   ]}
                   controls={true} // You can use controls to allow playback controls like pause, play, etc.
@@ -190,7 +190,7 @@ const AddStory = ({navigation}: any) => {
                     styles.viewImg,
                     {
                       width: sizes.width / 1.2,
-                      height: keyboardHeight ? 180 : 400,
+                      height: keyboardHeight ? 160 : 300,
                     },
                   ]}
                   resizeMode="contain"

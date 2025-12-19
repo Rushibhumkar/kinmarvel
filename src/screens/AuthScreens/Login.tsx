@@ -17,6 +17,10 @@ const Login = ({navigation, onLogin}: any) => {
     initialValues: {
       phoneOremail: '',
       password: '',
+      // phoneOremail: '7972755589',
+      // password: 'uuuuuuuu',
+      // phoneOremail: '9822544067',
+      // password: 'asdfasdf',
     },
     validationSchema: Yup.object({
       phoneOremail: Yup.string().trim().required('Phone number is required'),

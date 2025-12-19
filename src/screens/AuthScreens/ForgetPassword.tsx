@@ -43,9 +43,9 @@ const ForgotPassword = ({navigation}: any) => {
         account.
       </Text>
       <CustomTextInput
-        label="Email/Phone number"
+        label="Phone number"
         name="phoneOremail"
-        placeholder="Enter Email/Phone number"
+        placeholder="Enter Phone number"
         formik={formik}
       />
       <CustomButton

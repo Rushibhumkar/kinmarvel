@@ -1,13 +1,6 @@
 // src/calling/CallingMain.tsx
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  SafeAreaView,
-  Image,
-} from 'react-native';
+import {View, StyleSheet, TouchableOpacity, Text, Image} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 
 import CallScreen from './components/CallScreen';
@@ -21,11 +14,10 @@ import useSignalingWire from './hooks/useSignalingWire';
 import useCallControls from './hooks/useCallControls';
 import {myConsole} from '../utils/myConsole';
 import CallEventEmitter from './services/CallEventEmitter';
-import {useCall} from './hooks/useCall';
+import {useCallContext} from './context/CallProvider';
 
 const CallingMain = () => {
   const route = useRoute();
-  const routeIncoming = route?.params?.incomingCall;
   const navigation = useNavigation();
   const {data: myData} = useGetMyData();
   const userId = myData?.data?._id;
@@ -43,7 +35,7 @@ const CallingMain = () => {
     answerCall,
     endCall,
     setIncomingCall,
-  } = useCall(userId);
+  } = useCallContext();
 
   // audio (ringtone / ringback + category switching)
   const {
@@ -148,27 +140,6 @@ const CallingMain = () => {
   }, [handleReject, setIncomingCall]);
 
   useEffect(() => {
-    // const handleGlobalIncomingCall = (payload: any) => {
-    //   console.log('[Global Incoming Call]', payload);
-    //   setIncomingCall(payload);
-    //   playIncomingTone();
-    // };
-
-    // CallEventEmitter.on('incoming-call', handleGlobalIncomingCall);
-
-    // return () => {
-    //   CallEventEmitter.off('incoming-call', handleGlobalIncomingCall);
-    // };
-
-    if (routeIncoming) {
-      console.log('[Nav Incoming Call]', routeIncoming);
-      // ✅ first set the call, then answer after slight delay
-      setIncomingCall(routeIncoming);
-      setTimeout(() => {
-        console.log('[Nav Incoming Call] → Triggering handleAnswer after set');
-        handleAnswer();
-      }, 300);
-    }
     // 🔔 Case 2: Event-driven (normal socket-based)
     const handleGlobalIncomingCall = (payload: any) => {
       console.log('[Global Incoming Call]', payload);

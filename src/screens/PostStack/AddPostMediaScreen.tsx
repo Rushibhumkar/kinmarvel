@@ -5,13 +5,11 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import HeaderBar from './components/HeaderBar';
 import MediaPicker from './components/MediaPicker';
-import {myConsole} from '../../utils/myConsole';
-import CustomText from '../../components/CustomText';
 import {shadow} from '../../sharedStyles';
-import {popUpConfToast, showWarningToast} from '../../utils/toastModalFunction';
 import {homeRoute} from '../AuthScreens/routeName';
 import {showConfirmAlert} from '../../utils/alertHelper';
-import { useAppToast } from '../../components/toast/AppToast';
+import {useAppToast} from '../../components/toast/AppToast';
+import MainContainer from '../../components/MainContainer';
 
 type RootStackParamList = {
   ComposePost: {media: {uri: string; type: string}[]};
@@ -26,9 +24,9 @@ const AddPostMediaScreen: React.FC = () => {
   const [mediaSizeMode, setMediaSizeMode] = useState<
     'portrait' | 'square' | 'mixed'
   >('portrait');
-    const toast = useAppToast();
+  const toast = useAppToast();
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <MainContainer>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       <View style={styles.screen}>
@@ -82,7 +80,7 @@ const AddPostMediaScreen: React.FC = () => {
           </TouchableOpacity>
         )} */}
       </View>
-    </SafeAreaView>
+    </MainContainer>
   );
 };
 

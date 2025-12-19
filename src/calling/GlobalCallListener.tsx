@@ -1,7 +1,6 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {View, Text, DeviceEventEmitter} from 'react-native';
 import CallEventEmitter from './services/CallEventEmitter';
-import {useCall} from './hooks/useCall';
 import useCallAudio from './hooks/useCallAudio';
 import useSignalingWire from './hooks/useSignalingWire';
 import IncomingCallModal from './components/IncomingCallModal';
@@ -11,6 +10,7 @@ import {navigate} from '../navigation/NavigationRef'; // ✅ use global ref, not
 import socket from './services/socket';
 import InCallManager from 'react-native-incall-manager';
 import {VolumeManager} from 'react-native-volume-manager';
+import {useCallContext} from './context/CallProvider';
 
 const GlobalCallListener = React.memo(function GlobalCallListener() {
   console.log('[GlobalCallListener] Mounted ✅');
@@ -29,7 +29,7 @@ const GlobalCallListener = React.memo(function GlobalCallListener() {
   const userId = myData?.data?._id;
 
   const {incomingCall, setIncomingCall, startCall, answerCall, endCall} =
-    useCall(userId);
+    useCallContext();
 
   const {
     playIncomingTone,
@@ -99,15 +99,13 @@ const GlobalCallListener = React.memo(function GlobalCallListener() {
     console.log('[GlobalCallListener] ▶️ Accept pressed');
     stopIncomingTone();
     setShowModal(false);
-    // ✅ slight delay ensures useCall context is ready
+
+    // ✅ Give a small delay to ensure navigation + context sync
     setTimeout(() => {
       console.log('[GlobalCallListener] Navigating to CallingMain');
-      navigate('CallStack', {
-        screen: 'CallingMain',
-        params: {incomingCall: incomingCall},
-      });
-    }, 500);
-  }, [stopIncomingTone, incomingCall]);
+      navigate('CallStack', {screen: 'CallingMain'});
+    }, 300);
+  }, [stopIncomingTone, incomingCall, setIncomingCall]);
 
   // ❌ Reject call
   const handleReject = useCallback(() => {

@@ -26,6 +26,9 @@ import {API_AXIOS, fileViewURL} from '../../api/axiosInstance';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {useAppToast} from '../../components/toast/AppToast';
 import {myConsole} from '../../utils/myConsole';
+import DropdownRNE from '../../components/DropdownRNE';
+import CustomCheckbox from '../../components/CustomCheckbox';
+import {MAHARASHTRA_CASTES} from '../../const';
 
 const ProfileSetup = ({navigation}: any) => {
   const {
@@ -40,7 +43,6 @@ const ProfileSetup = ({navigation}: any) => {
     isError: myDataError,
   } = useGetMyData();
   myConsole('myDataaaa', myData);
-  myConsole('schemaaa', schema);
 
   useEffect(() => {
     const backAction = () => true;
@@ -72,13 +74,14 @@ const ProfileSetup = ({navigation}: any) => {
         lastName: myData?.data?.lastName || undefined,
         gender: myData?.data?.gender || undefined,
         phone: myData?.data?.phone || undefined,
-        userName: 'sdfdsf',
+        userName: myData?.data?.userName,
         profileImageUrl: uploadedFilePath
           ? `${fileViewURL}${uploadedFilePath}`
           : myData?.data?.profileImageUrl,
         dynamicData: {...values},
       };
       setDataLoading(true);
+      myConsole('fomarttvalues', formattedValues);
       try {
         await updateUserData(myData?.data?._id, formattedValues);
         queryClient.invalidateQueries({queryKey: ['myData']});
@@ -230,6 +233,23 @@ const ProfileField = React.memo(({field, formik, handleChange}: any) => {
           maxDate={new Date(2016, 0, 1)}
           placeholder={`Select ${convertToLowerCase(field.label)}`}
         />
+      ) : field.type === 'dropdown' ? (
+        <DropdownRNE
+          field={field}
+          formik={formik}
+          items={MAHARASHTRA_CASTES}
+          placeholder={`Select ${convertToLowerCase(field.label)}`}
+        />
+      ) : field.type === 'checkbox' ? (
+        formik.values.caste === 'maratha' ? (
+          <CustomCheckbox
+            checkBoxStyle={{height: 22, width: 22}}
+            containerStyle={{marginTop: 12}}
+            label={field.label}
+            checked={formik.values[field.name] || false}
+            onChange={v => formik.setFieldValue(field.name, v)}
+          />
+        ) : null
       ) : (
         <CustomTextInput
           field={field}

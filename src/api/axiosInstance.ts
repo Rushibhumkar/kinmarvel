@@ -1,16 +1,22 @@
 import axios, {AxiosInstance, AxiosRequestConfig} from 'axios';
 import {getData} from '../hooks/useAsyncStorage';
 
+export const Google_Maps_Api_Key = `AIzaSyC8oQ4dsrPXmPNjJ85YO1KWzaVY2Lt7Uh4`;
 export const appName = 'Kinmarvel';
 
-export const SOCKET_SERVER_URL = 'https://fameely-api.deliciousdabbas.com';
-export const Google_Maps_Api_Key = `AIzaSyC8oQ4dsrPXmPNjJ85YO1KWzaVY2Lt7Uh4`;
-export const fileViewURL =
-  'https://fameely-api.deliciousdabbas.com/api/file/fetch/';
+const isLive = true;
 
-let testUrl = `https://fameely-api.deliciousdabbas.com/api`;
+export const SOCKET_SERVER_URL = isLive
+  ? 'https://fameely-api.deliciousdabbas.com'
+  : 'http://192.168.0.103:3000';
 
-export const baseUrl: string = testUrl;
+export const baseUrl = isLive
+  ? 'https://fameely-api.deliciousdabbas.com/api'
+  : 'http://192.168.0.103:3000/api';
+
+export const fileViewURL = isLive
+  ? 'https://fameely-api.deliciousdabbas.com/api/file/fetch/'
+  : 'http://192.168.0.103:3000/api/file/fetch/';
 
 // Standard Axios Instance
 const API_AXIOS: AxiosInstance = axios.create({

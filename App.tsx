@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import {NavigationContainer, useNavigation} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import RootNavigator from './src/navigation/RootNavigator';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -28,6 +28,7 @@ import {ToastProvider} from 'react-native-toast-notifications';
 import CallEventEmitter from './src/calling/services/CallEventEmitter';
 import GlobalCallListener from './src/calling/GlobalCallListener';
 import {navigationRef} from './src/navigation/NavigationRef';
+import {CallProvider} from './src/calling/context/CallProvider';
 
 const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator();
@@ -45,7 +46,7 @@ const App = () => {
   const [userToken, setUserToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ------- Auth & token boot -------
+  // Auth & token boot
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -63,7 +64,7 @@ const App = () => {
     checkLoginStatus();
   }, []);
 
-  // ------- Device ID (optional debug) -------
+  // Device ID (optional debug)
   useEffect(() => {
     const fetchDeviceId = async () => {
       try {
@@ -76,7 +77,7 @@ const App = () => {
     fetchDeviceId();
   }, []);
 
-  // ------- Android 13+ notification permission -------
+  // Android 13+ notification permission
   useEffect(() => {
     reqPermissionAndroid();
   }, []);
@@ -97,7 +98,7 @@ const App = () => {
     }
   };
 
-  // ------- Disconnect call socket when app backgrounds -------
+  // Disconnect call socket when app backgrounds
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'inactive' || state === 'background') {
@@ -112,9 +113,8 @@ const App = () => {
     return () => sub.remove();
   }, []);
 
-  // ------- Get FCM token & register with backend -------
+  // Get FCM token & register with backend
   const getFCMToken = async () => {
-    console.log('getfcmtokenfunctioncall');
     try {
       const fcmToken = await messaging().getToken();
       myConsole('fcmTokennn', fcmToken);
@@ -140,43 +140,51 @@ const App = () => {
     return unsubscribe;
   }, []);
 
-  // ------- Foreground FCM messages -------
+  // Foreground FCM messages
   useEffect(() => {
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
-      console.log('[FG] message:', JSON.stringify(remoteMessage));
-      await onDisplayNotification(remoteMessage);
       const event = remoteMessage?.data?.event;
-      if (event) myConsole('[FG] event', event);
+
+      if (event === 'CALL_RECEIVED') {
+        // Suppress local notification, show call modal instead
+        CallEventEmitter.emit('incoming-call', remoteMessage.data);
+      } else {
+        await onDisplayNotification(remoteMessage);
+      }
     });
-    return () => {
-      unsubscribeForeground();
-    };
+    return () => unsubscribeForeground();
   }, []);
 
-  // ------- When user opens the app via a notification -------
+  // When user opens app via notification
   useEffect(() => {
-    const unsubscribeNotificationOpened = messaging().onNotificationOpenedApp(
+    const unsubscribeOpened = messaging().onNotificationOpenedApp(
       remoteMessage => {
-        console.log('[OPENED from background]:', JSON.stringify(remoteMessage));
-        // TODO: navigate based on remoteMessage?.data if needed
+        if (remoteMessage?.data?.event === 'CALL_RECEIVED') {
+          navigationRef.current?.navigate('CallStack');
+
+          setTimeout(() => {
+            CallEventEmitter.emit('incoming-call', remoteMessage.data);
+          }, 200);
+        }
       },
     );
 
     messaging()
       .getInitialNotification()
       .then(remoteMessage => {
-        if (remoteMessage) {
-          console.log('[OPENED from quit]:', JSON.stringify(remoteMessage));
-          // TODO: navigate based on remoteMessage?.data if needed
+        if (remoteMessage?.data?.event === 'CALL_RECEIVED') {
+          navigationRef.current?.navigate('CallStack');
+
+          setTimeout(() => {
+            CallEventEmitter.emit('incoming-call', remoteMessage.data);
+          }, 200);
         }
       });
 
-    return () => {
-      unsubscribeNotificationOpened();
-    };
+    return () => unsubscribeOpened();
   }, []);
 
-  // ------- Notifee foreground events (tap, etc.) -------
+  // Notifee foreground events (tap, etc.)
   useEffect(() => {
     const sub = notifee.onForegroundEvent(({type, detail}) => {
       if (type === EventType.PRESS) {
@@ -193,7 +201,6 @@ const App = () => {
     socket.on('incoming-call', payload => {
       myConsole('[Socket] Incoming Call Event:', payload);
       setTimeout(() => {
-        console.log('[App] 🔔 Emitting delayed incoming-call event');
         CallEventEmitter.emit('incoming-call', payload);
       }, 300);
     });
@@ -203,7 +210,7 @@ const App = () => {
     };
   }, [userToken]);
 
-  // ------- Show a local notification with Notifee -------
+  // Show local notification with Notifee
   const onDisplayNotification = async (remoteMessage: any) => {
     try {
       await notifee.requestPermission();
@@ -211,7 +218,7 @@ const App = () => {
       const channelId = await notifee.createChannel({
         id: 'default',
         name: 'Default Channel',
-        importance: AndroidImportance.HIGH, // heads-up
+        importance: AndroidImportance.HIGH,
       });
 
       const title =
@@ -224,12 +231,16 @@ const App = () => {
         remoteMessage?.data?.body ||
         'You have a new message.';
 
+      const event = remoteMessage?.data?.event;
+
       await notifee.displayNotification({
         title,
         body,
         android: {
           channelId,
           smallIcon: 'ic_launcher',
+          sound:
+            event === 'CALL_RECEIVED' ? 'default_ringtone' : 'message_tone',
           pressAction: {id: 'default'},
         },
         data: remoteMessage?.data || {},
@@ -256,19 +267,20 @@ const App = () => {
   return (
     <GestureHandlerRootView style={{flex: 1, backgroundColor: '#fff'}}>
       <QueryClientProvider client={queryClient}>
-        <NavigationContainer ref={navigationRef}>
-          <GlobalCallListener />
-          <ToastProvider
-            placement="top"
-            offset={16}
-            duration={2500}
-            swipeEnabled>
-            <PopupRootProvider>
-              <AppStack userToken={userToken} />
-              {/* <GlobalCallListener /> */}
-            </PopupRootProvider>
-          </ToastProvider>
-        </NavigationContainer>
+        <CallProvider userId={userToken}>
+          <NavigationContainer ref={navigationRef}>
+            <GlobalCallListener />
+            <ToastProvider
+              placement="top"
+              offset={16}
+              duration={2500}
+              swipeEnabled>
+              <PopupRootProvider>
+                <AppStack userToken={userToken} />
+              </PopupRootProvider>
+            </ToastProvider>
+          </NavigationContainer>
+        </CallProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

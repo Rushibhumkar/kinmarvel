@@ -177,7 +177,7 @@ const ComposePostScreen = () => {
             lng: place.lng,
           });
         }}
-        modalHeight={600}
+        modalHeight={400}
         placeholder="Search location..."
         initialValue={selectedLocation?.address || ''}
       />

@@ -104,7 +104,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
           onBlur={() => formik?.setFieldTouched(name)}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           keyboardType={
-            field?.subType === 'number'
+            field?.subType === 'number' || field?.subType === 'phone'
               ? 'number-pad'
               : field?.subType === 'email'
               ? 'email-address'

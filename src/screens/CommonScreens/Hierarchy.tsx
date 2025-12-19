@@ -43,11 +43,16 @@ const RelativeItem = ({
 }: any) => {
   const isMatch =
     matchedName && info.name.toLowerCase() === matchedName.toLowerCase();
-  const isMe = myData?.data?._id === 's';
-  myConsole('infooooo', info);
+  const isMe = myData?.data?._id === info?._id;
+  myConsole('isverfieedd', info.isVerified);
   return (
     <TouchableOpacity
-      style={[styles.item, style, isMatch && {backgroundColor: '#4a5'}]}
+      style={[
+        styles.item,
+        style,
+        isMatch && {backgroundColor: '#4a5'},
+        !info.isVerified && {backgroundColor: '#C9C9C9'}, // <---- disabled grey
+      ]}
       // disabled={!info.isVerified}
       // disabled={showingParent}
       onPress={() => onSelectPerson(info)}>
@@ -58,6 +63,11 @@ const RelativeItem = ({
         {info.relation ? `(${info.relation})` : ''}
       </Text>
       {/* <Text style={{fontSize: 12, color: '#fff'}}>({level})</Text> */}
+      {info.kunbiMaratha === true && (
+        <Text style={{fontSize: 10, color: '#21983fff', fontWeight: '600'}}>
+          कुणबी मराठा
+        </Text>
+      )}
     </TouchableOpacity>
   );
 };
@@ -84,7 +94,6 @@ const Hierarchy = ({navigation}: any) => {
   } = useGetMyTree();
 
   const parentTreeId = myTreeData?.data?.parentTreeId;
-  myConsole('myTreeData', myTreeData);
 
   const {
     data: treeByIdData,
@@ -92,8 +101,10 @@ const Hierarchy = ({navigation}: any) => {
     isError: treeByIdErr,
     refetch: treeByIdRefetch,
   } = useGetTreeByUserId(showingParent ? parentTreeId : null);
-  // myConsole('myTreeData', myTreeData);
-  // myConsole('treeByIdData', treeByIdData);
+
+  myConsole('myTreeData', myTreeData);
+  myConsole('treeByIdData', treeByIdData);
+
   const onRefresh = async () => {
     setRefreshing(true);
     if (showingParent) {
@@ -131,7 +142,10 @@ const Hierarchy = ({navigation}: any) => {
   const transformTreeData = (node: any): any => {
     myConsole('nodeeee', node);
     return {
-      _id: node.userId || node.memberTreeId?.userId?._id || '',
+      // _id:
+      //   node?.userId?._id || node?.memberTreeId?.userId?._id || '',
+      _id:
+        node?.userId?._id || node?.memberTreeId?.userId?._id || node?._id || '',
       name:
         node.name ||
         node.memberTreeId?.userId?.fullName ||
@@ -140,13 +154,23 @@ const Hierarchy = ({navigation}: any) => {
         node.memberTreeId?.firstName ||
         '',
       relation: node.relation || '',
-      dob: node.dob || node.memberId?.dob || '',
+      // dob: node.dob || node.memberId?.dob || '',
+      dob:
+        node?.dob ||
+        node?.userId?.dynamicData?.dob ||
+        node?.memberTreeId?.dob ||
+        '',
+
       gender: node.gender || node.memberId?.gender || '',
       isVerified:
         node.isVerified ??
         node.memberTreeId?.isVerified ??
         node.memberTreeId?.userId?.isVerified ??
         false,
+      kunbiMaratha:
+        node?.userId?.dynamicData?.kunbiMaratha ??
+        node?.memberTreeId?.userId?.dynamicData?.kunbiMaratha ??
+        null,
       spouse: node.spouse?.length ? node.spouse[0] : null,
       children: (node.children || node.memberTreeId?.children || []).map(
         (child: any) => transformTreeData(child),
@@ -158,17 +182,27 @@ const Hierarchy = ({navigation}: any) => {
   const parsedTreeData = transformTreeData(activeTree || {});
   const searchTree = (nodes: any[]): boolean => {
     for (const node of nodes) {
+      // if (
+      //   node.name.toLowerCase() === searchQuery.toLowerCase() ||
+      //   node.memberTreeId?.userId?.fullName?.toLowerCase() ===
+      //     searchQuery.toLowerCase() ||
+      //   node.memberTreeId?.userId?.firstName?.toLowerCase() ===
+      //     searchQuery.toLowerCase()
+      // ) {
+      //   setMatchedName(
+      //     node.name ||
+      //       node.memberTreeId?.userId?.fullName ||
+      //       node.memberTreeId?.userId?.firstName,
+      //   );
+      //   return true;
+      // }
       if (
-        node.name.toLowerCase() === searchQuery.toLowerCase() ||
-        node.memberTreeId?.userId?.fullName?.toLowerCase() ===
-          searchQuery.toLowerCase() ||
-        node.memberTreeId?.userId?.firstName?.toLowerCase() ===
-          searchQuery.toLowerCase()
+        node?.name?.toLowerCase() === searchQuery.toLowerCase() ||
+        node?.userId?.fullName?.toLowerCase() === searchQuery.toLowerCase() ||
+        node?.userId?.firstName?.toLowerCase() === searchQuery.toLowerCase()
       ) {
         setMatchedName(
-          node.name ||
-            node.memberTreeId?.userId?.fullName ||
-            node.memberTreeId?.userId?.firstName,
+          node?.name || node?.userId?.fullName || node?.userId?.firstName,
         );
         return true;
       }
@@ -346,13 +380,35 @@ const Hierarchy = ({navigation}: any) => {
       </View>
 
       {parentTreeId && (
-        <TouchableOpacity
-          onPress={() => setShowingParent(prev => !prev)}
-          style={styles.showParentTreeBtn}>
-          <Text style={{color: '#fff'}}>
-            {showingParent ? 'Hide Parent Tree' : 'Show Parent Tree'}
-          </Text>
-        </TouchableOpacity>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            // alignSelf: 'flex-end',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+            paddingHorizontal: 12,
+          }}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+            <View
+              style={{
+                width: 16,
+                height: 16,
+                backgroundColor: '#C9C9C9',
+                borderRadius: 4,
+              }}
+            />
+            <Text style={{color: '#555'}}>Not Verified</Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => setShowingParent(prev => !prev)}
+            style={styles.showParentTreeBtn}>
+            <Text style={{color: '#fff'}}>
+              {showingParent ? 'Hide Parent Tree' : 'Show Parent Tree'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
       {/* <TouchableOpacity
         onPress={() => null}
@@ -481,8 +537,6 @@ const styles = StyleSheet.create({
   },
   showParentTreeBtn: {
     alignSelf: 'flex-end',
-    marginHorizontal: 10,
-    marginBottom: 10,
     backgroundColor: color.mainColor,
     justifyContent: 'center',
     alignItems: 'center',

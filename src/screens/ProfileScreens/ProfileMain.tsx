@@ -19,6 +19,7 @@ import {myConsole} from '../../utils/myConsole';
 import {showConfirmAlert} from '../../utils/alertHelper';
 import CustomModal from '../../components/CustomModal';
 import {useAppToast} from '../../components/toast/AppToast';
+import Share from 'react-native-share';
 
 const ProfileMain: React.FC = ({navigation}: any) => {
   const toast = useAppToast();
@@ -46,6 +47,18 @@ const ProfileMain: React.FC = ({navigation}: any) => {
           toast.error('Error logging out. Please try again.');
         }
       },
+    });
+  };
+
+  const handleShareApp = () => {
+    Share.open({
+      title: 'Share KinMarvel App',
+      message: 'Check out this amazing Family Tree App – KinMarvel!',
+      url: 'https://play.google.com/store/search?q=kinmarvel&c=apps&hl=en',
+    }).catch(err => {
+      if (err?.message !== 'User did not share') {
+        toast.error('Failed to share');
+      }
     });
   };
 
@@ -99,15 +112,15 @@ const ProfileMain: React.FC = ({navigation}: any) => {
             })
           }
         />
-        <CustomListing
+        {/* <CustomListing
           icon={require('../../assets/animatedIcons/like.png')}
           title="Calling"
           onPress={() => navigation.navigate('CallingMain')}
-        />
+        /> */}
         <CustomListing
           icon={require('../../assets/animatedIcons/share.png')}
           title="Share app"
-          onPress={() => null}
+          onPress={handleShareApp}
         />
         <CustomListing
           icon={require('../../assets/animatedIcons/blockRed.png')}

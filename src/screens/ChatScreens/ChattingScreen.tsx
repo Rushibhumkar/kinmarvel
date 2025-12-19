@@ -522,9 +522,7 @@ const ChattingScreen = ({navigation, route}: any) => {
       }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={
-          Platform.OS === 'ios' ? 90 : Math.max(0, keyboardHeight / 2 - 44)
-        }
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 100}
         style={chatScreenStyles.container}>
         {false ? (
           <CustomErrorMessage
@@ -554,11 +552,7 @@ const ChattingScreen = ({navigation, route}: any) => {
             keyboardShouldPersistTaps="handled"
             renderItem={renderItem}
             extraData={selectedMessages}
-            ListFooterComponent={
-              <View
-                style={{height: keyboardHeight ? keyboardHeight + 20 : 20}}
-              />
-            }
+            ListFooterComponent={<View style={{height: 40}} />}
             onEndReached={() => {
               const now = Date.now();
               if (isFetchingRef.current || now - endReachedTsRef.current < 800)

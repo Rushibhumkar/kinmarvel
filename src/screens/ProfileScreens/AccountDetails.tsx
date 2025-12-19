@@ -41,6 +41,7 @@ const AccountDetails = ({navigation}: any) => {
     isError: myDataErr,
     refetch: myDataRefetch,
   } = useGetMyData();
+  myConsole('myDataaaaa', myData);
 
   const user = myData?.data || {};
   const firstName = user.firstName || 'N/A';
@@ -49,17 +50,20 @@ const AccountDetails = ({navigation}: any) => {
   const phone = user.phone || 'N/A';
   const gender = capitalizeFirstLetter(user.gender) || 'N/A';
   const userName = user.userName || 'N/A';
+
   const createdAt = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString()
     : 'N/A';
 
-  const dynamicDataEntries = Object.entries(user.dynamicData || {}).map(
-    ([key, value]) => ({
+  const dynamicDataEntries = Object.entries(user.dynamicData || {})
+    .filter(([key, value]) => !(key === 'kunbiMaratha' && value !== true))
+    .map(([key, value]) => ({
       label: capitalizeFirstLetter(key.replace(/([A-Z])/g, ' $1').trim()),
-      value: value || 'N/A',
-    }),
-  );
-  myConsole('user', user);
+      value: key === 'kunbiMaratha' ? '✅' : value || 'N/A',
+    }));
+
+  myConsole('userrrr', user);
+  myConsole('dynamicDataEntrieseee', dynamicDataEntries);
   // Data for listing
   const datam = [
     {label: 'First name', value: firstName},
