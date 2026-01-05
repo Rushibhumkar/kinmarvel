@@ -38,7 +38,6 @@ const ProfPostsDetails = ({userId: propUserId}: {userId?: string}) => {
     useRoute<RouteProp<Record<string, ProfPostsRouteParams>, string>>();
 
   const {data: myData} = useGetMyData();
-  myConsole('myDataddd', myData);
   const routeUserId = route.params?.userId || myData?.data?._id;
   const userId = propUserId || routeUserId || myData?.data?._id;
 
@@ -71,8 +70,6 @@ const ProfPostsDetails = ({userId: propUserId}: {userId?: string}) => {
 
   const {width} = Dimensions.get('window');
 
-  myConsole('User ID:', userId);
-
   const {
     data: postsData,
     isLoading,
@@ -85,11 +82,11 @@ const ProfPostsDetails = ({userId: propUserId}: {userId?: string}) => {
   } as any);
 
   const {comments} = useComments({postId: selectedPost?._id, limit: 10});
-  myConsole('comments', comments);
   if (isLoading) return <LoadingCompo />;
   if (isError) return <CustomText>Error loading posts</CustomText>;
 
   const allPosts = postsData?.data?.posts ?? [];
+  myConsole('postsDataaaa', postsData);
 
   const handleDeletePost = (postId: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -100,12 +97,10 @@ const ProfPostsDetails = ({userId: propUserId}: {userId?: string}) => {
         onPress: () => {
           deletePost(postId)
             .then(() => {
-              myConsole('Post deleted', postId);
               toast.success('Post deleted successfully!');
               q.invalidateQueries({queryKey: ['postsByUser', userId]});
             })
             .catch(err => {
-              myConsole('Delete failed', err);
               toast.error('Failed to delete post');
             });
         },
@@ -336,7 +331,7 @@ const ProfPostsDetails = ({userId: propUserId}: {userId?: string}) => {
                       flex: 1,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: '#9f0000ff',
+                      backgroundColor: '#c6c2c2ff',
                     }}>
                     <Image
                       source={require('../../assets/icons/image.png')}

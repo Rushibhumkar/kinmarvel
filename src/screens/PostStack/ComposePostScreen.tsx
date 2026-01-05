@@ -1,5 +1,11 @@
 import React, {useState} from 'react';
-import {FlatList, Image, TouchableOpacity, View} from 'react-native';
+import {
+  DeviceEventEmitter,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import HeaderBar from './components/HeaderBar';
 import PostComposer from './components/PostComposer';
@@ -41,7 +47,7 @@ const ComposePostScreen = () => {
     Array.isArray(routeMedia) ? routeMedia : [],
   );
   const [visibility, setVisibility] = useState<'self' | 'public' | 'followers'>(
-    'followers',
+    'public',
   );
 
   const [tagModalVisible, setTagModalVisible] = useState(false);
@@ -54,7 +60,6 @@ const ComposePostScreen = () => {
     useLocationPermission();
 
   const handleCreatePost = async () => {
-    console.log('comestopostscreen');
     try {
       setLoading(true);
 
@@ -74,7 +79,6 @@ const ComposePostScreen = () => {
             address: selectedLocation.address || '',
           }
         : undefined;
-      myConsole('collaboratorIds', collaboratorIds);
       const postData = {
         type: 'post' as const,
         desc: caption,
@@ -83,19 +87,24 @@ const ComposePostScreen = () => {
         files,
         visible_to: visibility || 'public',
       };
-      myConsole('Creating post with data:', JSON.stringify(postData, null, 2));
-      const response = await createPost(postData);
-      myConsole('Create post API response:', JSON.stringify(response, null, 2));
+      if (postData?.desc.trim().length === 0 && postData?.files.length === 0) {
+        toast.error('Please upload at least one file or add a description.');
+      } else {
+        myConsole('postDataaa', postData);
+        const response = await createPost(postData);
+        myConsole('responseeeee', response);
 
-      toast.success('Post added successfully');
+        toast.success('Post added successfully');
+        // DeviceEventEmitter.emit('post:added');
 
-      queryClient.invalidateQueries({queryKey: ['postsByUser']});
-      queryClient.invalidateQueries({queryKey: ['posts']});
+        queryClient.invalidateQueries({queryKey: ['postsByUser']});
+        queryClient.invalidateQueries({queryKey: ['posts']});
 
-      navigation.navigate('HomeStack', {screen: homeRoute.AllStories});
+        navigation.navigate('HomeStack', {screen: homeRoute.AllStories});
+      }
     } catch (err) {
       console.error(err);
-      toast.error('Failed to create post');
+      toast.error(err || 'Failed to create post');
     } finally {
       setLoading(false);
     }

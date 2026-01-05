@@ -10,14 +10,14 @@ export async function postCommentFunc({postId, content}: any) {
   const payload = {content};
 
   try {
-    myConsole('[postCommentFunc] -> POST', {url, payload});
+    // myConsole('[postCommentFunc] -> POST', {url, payload});
     const {data} = await API_AXIOS.post(url, payload);
-    myConsole('[postCommentFunc] <- RESPONSE', data);
+    // myConsole('[postCommentFunc] <- RESPONSE', data);
     return data;
   } catch (error: any) {
     const status = error?.response?.status;
     const errData = error?.response?.data;
-    myConsole('[postCommentFunc] !! ERROR', {status, errData});
+    // myConsole('[postCommentFunc] !! ERROR', {status, errData});
     throw error;
   }
 }
@@ -220,14 +220,14 @@ export async function patchCommentFunc({commentId, action, content}: any) {
   }
 
   try {
-    myConsole('[patchCommentFunc] -> PATCH', {url, payload});
+    // myConsole('[patchCommentFunc] -> PATCH', {url, payload});
     const {data} = await API_AXIOS.patch(url, payload);
-    myConsole('[patchCommentFunc] <- RESPONSE', data);
+    // myConsole('[patchCommentFunc] <- RESPONSE', data);
     return data;
   } catch (error: any) {
     const status = error?.response?.status;
     const errData = error?.response?.data;
-    myConsole('[patchCommentFunc] !! ERROR', {status, errData});
+    // myConsole('[patchCommentFunc] !! ERROR', {status, errData});
     throw error;
   }
 }
@@ -256,14 +256,14 @@ export async function likeUnlikeCommentFunc({commentId, action}: any) {
   const payload: any = {action: normalized};
 
   try {
-    myConsole('[likeUnlikeCommentFunc] -> PATCH', {url, payload});
+    // myConsole('[likeUnlikeCommentFunc] -> PATCH', {url, payload});
     const {data} = await API_AXIOS.patch(url, payload);
-    myConsole('[likeUnlikeCommentFunc] <- RESPONSE', data);
+    // myConsole('[likeUnlikeCommentFunc] <- RESPONSE', data);
     return data;
   } catch (error: any) {
     const status = error?.response?.status;
     const errData = error?.response?.data;
-    myConsole('[likeUnlikeCommentFunc] !! ERROR', {status, errData});
+    // myConsole('[likeUnlikeCommentFunc] !! ERROR', {status, errData});
     throw error;
   }
 }
@@ -292,14 +292,14 @@ export async function postReplyToCommentFunc({
   if (replyTo !== undefined) payload.replyTo = replyTo;
 
   try {
-    myConsole('[postReplyToCommentFunc] -> POST', {url, payload});
+    // myConsole('[postReplyToCommentFunc] -> POST', {url, payload});
     const {data} = await API_AXIOS.post(url, payload);
-    myConsole('[postReplyToCommentFunc] <- RESPONSE', data);
+    // myConsole('[postReplyToCommentFunc] <- RESPONSE', data);
     return data; // { success, message, reply }
   } catch (error: any) {
     const status = error?.response?.status;
     const errData = error?.response?.data;
-    myConsole('[postReplyToCommentFunc] !! ERROR', {status, errData});
+    // myConsole('[postReplyToCommentFunc] !! ERROR', {status, errData});
     throw error;
   }
 }
@@ -353,14 +353,14 @@ export async function patchCommentReplyFunc({
   }
 
   try {
-    myConsole('[patchCommentReplyFunc] -> PATCH', {url, payload});
+    // myConsole('[patchCommentReplyFunc] -> PATCH', {url, payload});
     const {data} = await API_AXIOS.patch(url, payload);
-    myConsole('[patchCommentReplyFunc] <- RESPONSE', data);
+    // myConsole('[patchCommentReplyFunc] <- RESPONSE', data);
     return data; // { success, message, reply }
   } catch (error: any) {
     const status = error?.response?.status;
     const errData = error?.response?.data;
-    myConsole('[patchCommentReplyFunc] !! ERROR', {status, errData});
+    // myConsole('[patchCommentReplyFunc] !! ERROR', {status, errData});
     throw error;
   }
 }
@@ -412,14 +412,14 @@ export async function likeUnlikeCommentReplyFunc({
   const payload: any = {action: normalized};
 
   try {
-    myConsole('[likeUnlikeCommentReplyFunc] -> PATCH', {url, payload});
+    // myConsole('[likeUnlikeCommentReplyFunc] -> PATCH', {url, payload});
     const {data} = await API_AXIOS.patch(url, payload);
-    myConsole('[likeUnlikeCommentReplyFunc] <- RESPONSE', data);
+    // myConsole('[likeUnlikeCommentReplyFunc] <- RESPONSE', data);
     return data; // { success, message, likeCount }
   } catch (error: any) {
     const status = error?.response?.status;
     const errData = error?.response?.data;
-    myConsole('[likeUnlikeCommentReplyFunc] !! ERROR', {status, errData});
+    // myConsole('[likeUnlikeCommentReplyFunc] !! ERROR', {status, errData});
     throw error;
   }
 }
@@ -446,12 +446,12 @@ export async function getCommentRepliesFunc({
   const params: any = {page, limit};
   try {
     const {data} = await API_AXIOS.get(url, {params});
-    myConsole('[getCommentRepliesFunc] <- RESPONSE', data);
+    // myConsole('[getCommentRepliesFunc] <- RESPONSE', data);
     return data;
   } catch (error: any) {
     const status = error?.response?.status;
     const errData = error?.response?.data;
-    myConsole('[getCommentRepliesFunc] !! ERROR', {status, errData});
+    // myConsole('[getCommentRepliesFunc] !! ERROR', {status, errData});
     throw error;
   }
 }

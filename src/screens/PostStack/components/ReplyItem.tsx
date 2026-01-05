@@ -43,7 +43,6 @@ const ReplyItem = ({
 
   const authorName = useMemo(() => {
     const by = reply?.by;
-    myConsole('byyyyy', by);
     if (by && typeof by === 'object') {
       return (
         by.fullName ||
@@ -88,7 +87,6 @@ const ReplyItem = ({
       // rollback
       setLiked(liked);
       setLikeCount(initialCount);
-      myConsole('[ReplyItem] like error', e);
     }
   };
 
@@ -107,7 +105,7 @@ const ReplyItem = ({
             });
             onAfterDelete?.(reply?._id);
           } catch (e) {
-            myConsole('[ReplyItem] delete error', e);
+            // myConsole('[ReplyItem] delete error', e);
           }
         },
       },
@@ -136,7 +134,7 @@ const ReplyItem = ({
       );
       setIsEditing(false);
     } catch (e) {
-      myConsole('[ReplyItem] edit error', e);
+      // myConsole('[ReplyItem] edit error', e);
     }
   };
 

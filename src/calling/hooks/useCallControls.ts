@@ -58,23 +58,20 @@ export default function useCallControls({
     }
   }, [peerId]);
 
-  myConsole('peerIdReffff', peerIdRef);
-  myConsole('incomingCallll', incomingCall);
-
   // -----------------------
   // Safe Cleanup
   // -----------------------
   const safeCleanup = (reason: string) => {
     if (cleanedUpRef.current) return;
     cleanedUpRef.current = true;
-    console.log('[CallEnd] cleanup reason:', reason);
+    // console.log('[CallEnd] cleanup reason:', reason);
 
     try {
       stopOutgoingTone?.();
       stopIncomingTone?.();
       endCall?.();
     } catch (err) {
-      console.warn('[CallEnd] cleanup error', err);
+      // console.warn('[CallEnd] cleanup error', err);
     }
 
     // reset states
@@ -135,22 +132,22 @@ export default function useCallControls({
   // -----------------------
   const handleEnd = () => {
     if (endingRef.current) {
-      console.log('[CallEnd] Skipped duplicate end');
+      // console.log('[CallEnd] Skipped duplicate end');
       return;
     }
     endingRef.current = true;
 
     const to = peerIdRef.current || incomingCall?.from || peerId;
-    console.log('[CallEnd][Local] Button pressed. To:', to, 'UserId:', userId);
+    // console.log('[CallEnd][Local] Button pressed. To:', to, 'UserId:', userId);
 
     if (to && userId) {
-      console.log('[CallEnd][Emit] Sending end-call event →', {
-        to,
-        from: userId,
-      });
+      // console.log('[CallEnd][Emit] Sending end-call event →', {
+      //   to,
+      //   from: userId,
+      // });
       socket.emit('end-call', {to, from: userId});
     } else {
-      console.warn('[CallEnd][Warn] Missing peerId or userId');
+      // console.warn('[CallEnd][Warn] Missing peerId or userId');
     }
 
     safeCleanup('self-end');
@@ -169,7 +166,7 @@ export default function useCallControls({
       InCallManager.stopRingtone();
       InCallManager.stop();
     } catch (err) {
-      console.log('[CallReject] tone stop error', err);
+      // console.log('[CallReject] tone stop error', err);
     }
 
     if (incomingCall?.from) {
@@ -190,9 +187,9 @@ export default function useCallControls({
   // -----------------------
   useEffect(() => {
     const onPeerEnded = (payload?: any) => {
-      console.log('[Socket] peer-ended event received:', payload);
+      // console.log('[Socket] peer-ended event received:', payload);
       if (cleanedUpRef.current) {
-        console.log('[CallEnd] peer-ended ignored (already cleaned)');
+        // console.log('[CallEnd] peer-ended ignored (already cleaned)');
         return;
       }
       safeCleanup('peer-end');

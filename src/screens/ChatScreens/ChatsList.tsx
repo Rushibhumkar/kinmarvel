@@ -134,16 +134,16 @@ const ChatsList = ({navigation, route}: any) => {
         +(
           // --- Add other socket listeners for debugging ---
           socket.on('getMessage', (_newMessage: any) => {
-            myConsole(
-              'socket:getMessage',
-              '📩 received -> refetch recent chats',
-            );
+            // myConsole(
+            //   'socket:getMessage',
+            //   '📩 received -> refetch recent chats',
+            // );
             recentChatsRefetch();
           })
         );
 
         socket.on('disconnect', reason => {
-          myConsole('socket:disconnected', reason);
+          // myConsole('socket:disconnected', reason);
         });
 
         socket.on('error', err => {
@@ -151,19 +151,19 @@ const ChatsList = ({navigation, route}: any) => {
         });
 
         socket.on('register', res => {
-          myConsole('socket:register', res);
+          // myConsole('socket:register', res);
         });
 
         socket.io.on('reconnect_attempt', attempt => {
-          myConsole('socket:reconnect_attempt', attempt);
+          // myConsole('socket:reconnect_attempt', attempt);
         });
 
         socket.io.on('reconnect_failed', () => {
-          myConsole('socket:reconnect_failed ❌');
+          // myConsole('socket:reconnect_failed ❌');
         });
 
         socket.io.on('connect_error', err => {
-          myConsole('socket:connect_error', err?.message || err);
+          // myConsole('socket:connect_error', err?.message || err);
         });
       })();
 

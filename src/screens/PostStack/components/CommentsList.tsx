@@ -51,7 +51,6 @@ const CommentsList = ({postId, limit = 10}: any) => {
     () => comments.filter((c: any) => !localHidden[c?._id]),
     [comments, localHidden],
   );
-  myConsole('commentsssee', comments);
   const onRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
@@ -88,11 +87,9 @@ const CommentsList = ({postId, limit = 10}: any) => {
           currentUser={currentUser}
           onAfterDelete={(id: string) => {
             setLocalHidden(prev => ({...prev, [id]: true}));
-            myConsole('[CommentsList] removed comment', id);
           }}
           onAfterReplyAdded={(updated: any) => {
             // nothing else needed; query will be invalidated by mutation hook
-            myConsole('[CommentsList] reply added', updated?.reply?._id);
           }}
         />
       )}

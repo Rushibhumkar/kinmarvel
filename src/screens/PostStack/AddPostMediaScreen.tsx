@@ -26,7 +26,7 @@ const AddPostMediaScreen: React.FC = () => {
   >('portrait');
   const toast = useAppToast();
   return (
-    <MainContainer>
+    <MainContainer borderBottom={false}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       <View style={styles.screen}>
@@ -52,7 +52,7 @@ const AddPostMediaScreen: React.FC = () => {
           onRightPress={() => {
             selectedMedia.length > 0
               ? navigation.navigate('ComposePost', {media: selectedMedia})
-              : toast.error({description: 'Please select the media'});
+              : navigation.navigate('ComposePost', {media: selectedMedia});
           }}
         />
 

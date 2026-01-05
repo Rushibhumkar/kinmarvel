@@ -36,12 +36,12 @@ const LocationPickerBottomSheet: React.FC<Props> = ({
   // Log sheet visibility changes + key status
   useEffect(() => {
     const keyMasked = (Google_Maps_Api_Key || '').replace(/.(?=.{4})/g, '*');
-    console.log('[PlacesSheet] visible:', visible, ' | key:', keyMasked);
+    // console.log('[PlacesSheet] visible:', visible, ' | key:', keyMasked);
   }, [visible]);
 
   // Log mount
   useEffect(() => {
-    console.log('[PlacesSheet] mounted with initialValue:', initialValue || '');
+    // console.log('[PlacesSheet] mounted with initialValue:', initialValue || '');
     return () => console.log('[PlacesSheet] unmounted');
   }, []);
 
@@ -57,9 +57,9 @@ const LocationPickerBottomSheet: React.FC<Props> = ({
           }
           return originalOpen.apply(this, args);
         };
-        console.log('[PlacesSheet] XHR timeout patch applied');
+        // console.log('[PlacesSheet] XHR timeout patch applied');
       } catch (e) {
-        console.log('[PlacesSheet] XHR timeout patch failed:', e);
+        // console.log('[PlacesSheet] XHR timeout patch failed:', e);
       }
     }
   }, []);
@@ -76,7 +76,7 @@ const LocationPickerBottomSheet: React.FC<Props> = ({
     <CustomBottomModal
       visible={visible}
       onClose={() => {
-        console.log('[PlacesSheet] onClose called');
+        // console.log('[PlacesSheet] onClose called');
         onClose();
       }}
       modalHeight={modalHeight}>
@@ -113,25 +113,25 @@ const LocationPickerBottomSheet: React.FC<Props> = ({
                 raw: {data, details},
               };
 
-              console.log('[PlacesSheet:onPress] selecting place:', payload);
+              // console.log('[PlacesSheet:onPress] selecting place:', payload);
               onSelect(payload);
               onClose();
             } catch (err) {
-              console.log('[PlacesSheet:onPress] ERROR:', err);
+              // console.log('[PlacesSheet:onPress] ERROR:', err);
             }
           }}
           onFail={error => {
-            console.log('[GooglePlacesAutocomplete] onFail:', error);
+            // console.log('[GooglePlacesAutocomplete] onFail:', error);
           }}
           onNotFound={() => {
-            console.log('[GooglePlacesAutocomplete] No results');
+            // console.log('[GooglePlacesAutocomplete] No results');
           }}
           // Make input text black + controlled value
           textInputProps={{
             value: searchText,
             onChangeText: (t: string) => {
               setSearchText(t);
-              console.log('[PlacesSheet:input] text:', t);
+              // console.log('[PlacesSheet:input] text:', t);
             },
             placeholderTextColor: '#888',
             returnKeyType: 'search',

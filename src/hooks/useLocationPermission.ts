@@ -64,7 +64,7 @@ const useLocationPermission = () => {
     Geolocation.getCurrentPosition(
       position => {
         setLocation(position.coords);
-        console.log('Current Location:', position.coords); // Log location data
+        // console.log('Current Location:', position.coords);
       },
       error => {
         console.error(error);

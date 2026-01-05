@@ -24,7 +24,7 @@ import Share from 'react-native-share';
 const ProfileMain: React.FC = ({navigation}: any) => {
   const toast = useAppToast();
   const queryClient = useQueryClient();
-  const [postNextScrModal, setPostNextScrModal] = useState<boolean>(false);
+  // const [postNextScrModal, setPostNextScrModal] = useState<boolean>(false);
   const isNewUpdate = false;
   const handleLogout = async () => {
     showConfirmAlert({
@@ -101,7 +101,8 @@ const ProfileMain: React.FC = ({navigation}: any) => {
         <CustomListing
           icon={require('../../assets/icons/post.png')}
           title="Posts"
-          onPress={() => setPostNextScrModal(true)}
+          onPress={() => navigation.navigate(profileRoute.ProfPostsDetails)}
+          // onPress={() => setPostNextScrModal(true)}
         />
         <CustomListing
           icon={require('../../assets/animatedIcons/hierarchy-structure.png')}
@@ -133,7 +134,7 @@ const ProfileMain: React.FC = ({navigation}: any) => {
           onPress={() => null}
         /> */}
       </ScrollView>
-      <CustomModal
+      {/* <CustomModal
         visible={postNextScrModal}
         onClose={() => setPostNextScrModal(false)}>
         <View>
@@ -167,7 +168,7 @@ const ProfileMain: React.FC = ({navigation}: any) => {
             </TouchableOpacity>
           ))}
         </View>
-      </CustomModal>
+      </CustomModal> */}
 
       <View style={styles.bottomView}>
         <TouchableOpacity activeOpacity={0.6}>

@@ -27,19 +27,19 @@ export default function useSignalingWire({
 }: UseSignalingWireParams) {
   useEffect(() => {
     const onRejected = (payload?: any) => {
-      console.log('[SignalWire] → onRejected triggered:', payload);
+      // console.log('[SignalWire] → onRejected triggered:', payload);
       try {
-        console.log('[SignalWire] → Calling stopOutgoingTone()');
+        // console.log('[SignalWire] → Calling stopOutgoingTone()');
         stopOutgoingTone();
-        console.log('[SignalWire] → Calling stopIncomingTone()');
+        // console.log('[SignalWire] → Calling stopIncomingTone()');
         stopIncomingTone();
         InCallManager.stopRingback();
         InCallManager.stopRingtone();
         InCallManager.stop();
       } catch (err) {
-        console.log('[SignalWire] → stopTone error', err);
+        // console.log('[SignalWire] → stopTone error', err);
       }
-      console.log('[SignalWire] → Resetting call state now');
+      // console.log('[SignalWire] → Resetting call state now');
       setIncomingCall(null);
       setIsDialing(false);
       setInCall(false);

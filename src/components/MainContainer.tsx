@@ -43,6 +43,7 @@ export type HeaderObjType = {
   titleOnpress?: any;
   customStyle?: ViewStyle;
   showRightTxt?: string | number;
+  borderBottom?: boolean;
 };
 const noop = () => {};
 
@@ -60,6 +61,7 @@ const MainContainer: React.FC<HeaderObjType> = ({
   bgColor,
   customStyle,
   showRightTxt,
+  borderBottom = true,
 }) => {
   const navigation = useNavigation();
   const handleBackPress = () => {
@@ -91,7 +93,11 @@ const MainContainer: React.FC<HeaderObjType> = ({
       style={[styles.container, customStyle]}
       edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <View style={styles.headerContainer}>
+      <View
+        style={[
+          styles.headerContainer,
+          {borderBottomWidth: borderBottom ? 1 : 0},
+        ]}>
         {isBack && (
           <TouchableOpacity
             onPress={handleBackPress}

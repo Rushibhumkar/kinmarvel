@@ -35,7 +35,6 @@ const IncomingCallModal: React.FC<Props> = ({
   } = useGetUserById(visible && callerId ? callerId : ('' as any));
 
   // myConsole('userData', userData);
-  console.log('renderingaaa');
   const displayName = useMemo(() => {
     const u = userData?.data || {};
     // Prefer explicit fullName if API provides it

@@ -14,7 +14,7 @@ import CommentSheet from '../screens/PostStack/components/CommentSheet';
 import CustomText from './CustomText';
 import {sizes} from '../const';
 
-type ApiPost = any; // your PostCard already expects `post` prop; keep flexible
+type ApiPost = any;
 type ApiResponse = {
   success: boolean;
   message: string;
@@ -24,7 +24,11 @@ type ApiResponse = {
   };
 };
 
-const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
+const PostsFeed: React.FC = ({
+  headerComponent,
+  onExternalRefresh,
+  externalRefreshKey,
+}: any) => {
   const [posts, setPosts] = useState<ApiPost[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -35,7 +39,6 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
 
   const handleOpenComments = useCallback((post: ApiPost) => {
     setActivePost(post);
-    myConsole('[PostsFeed] open comments for', {postId: post?._id});
   }, []);
 
   const handleCommentCountChange = useCallback(
@@ -50,6 +53,13 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
     },
     [],
   );
+
+  useEffect(() => {
+    if (externalRefreshKey) {
+      loadPage(1, {refresh: true});
+    }
+  }, [externalRefreshKey]);
+
   const loadPage = useCallback(
     async (nextPage: number, opts?: {refresh?: boolean}) => {
       if (nextPage > totalPages && !opts?.refresh) return;
@@ -77,7 +87,7 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
         );
         setPage(nextPage);
       } catch (e) {
-        console.log('[PostsFeed] loadPage error:', e);
+        // console.log('[PostsFeed] loadPage error:', e);
       } finally {
         setInitialLoading(false);
         setLoadingMore(false);
@@ -93,11 +103,11 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('post:added', () => {
-      // pull fresh list when a new post is created
       loadPage(1);
     });
     return () => sub.remove();
   }, [loadPage]);
+
   const onRefresh = useCallback(() => {
     try {
       onExternalRefresh?.();
@@ -116,7 +126,7 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
     () =>
       loadingMore ? (
         <View style={styles.footerLoading}>
-          <ActivityIndicator size="small" />
+          <ActivityIndicator size="small" color="#667eea" />
         </View>
       ) : (
         <View style={{height: 16}} />
@@ -143,15 +153,12 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
       const currentLiked = !!post?.isLikedByMe;
       const targetAction = explicitAction ?? (currentLiked ? 'unlike' : 'like');
       const nextLiked = targetAction === 'like';
-
-      // optimistic update
       applyLikeLocally(post._id, nextLiked);
       try {
         await likePost(post._id, targetAction);
       } catch (e) {
-        // rollback on failure
         applyLikeLocally(post._id, currentLiked);
-        console.log('[PostsFeed] like toggle failed:', e);
+        // console.log('[PostsFeed] like toggle failed:', e);
       }
     },
     [applyLikeLocally],
@@ -164,13 +171,16 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
         <View style={{alignItems: 'center'}}>
           <CustomText style={styles.emptyEmoji}>📭</CustomText>
           <CustomText style={styles.emptyText}>No posts available</CustomText>
+          <CustomText style={styles.emptySubText}>
+            Be the first to create a post!
+          </CustomText>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={{flex: 1}}>
+    <View style={styles.container}>
       <FlatList
         data={posts}
         keyExtractor={keyExtractor}
@@ -184,7 +194,12 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
         )}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadPage(1, {refresh: true})}
+            colors={['#667eea', '#764ba2']}
+            tintColor="#667eea"
+          />
         }
         ListHeaderComponent={headerComponent || null}
         onEndReachedThreshold={0.4}
@@ -205,6 +220,10 @@ const PostsFeed: React.FC = ({headerComponent, onExternalRefresh}: any) => {
 export default PostsFeed;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f7ff',
+  },
   listContent: {
     paddingBottom: 120,
     paddingTop: 10,
@@ -215,7 +234,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   footerLoading: {
-    paddingVertical: 12,
+    paddingVertical: 20,
     alignItems: 'center',
   },
   emptyContainer: {
@@ -224,13 +243,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
+    backgroundColor: '#f5f7ff',
   },
   emptyEmoji: {
-    fontSize: 40,
-    marginBottom: 8,
+    fontSize: 48,
+    marginBottom: 12,
   },
   emptyText: {
-    fontSize: 16,
-    color: 'grey',
+    fontSize: 18,
+    color: '#333',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#666',
   },
 });

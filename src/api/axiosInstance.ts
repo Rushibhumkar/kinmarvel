@@ -8,15 +8,15 @@ const isLive = true;
 
 export const SOCKET_SERVER_URL = isLive
   ? 'https://fameely-api.deliciousdabbas.com'
-  : 'http://192.168.0.103:3000';
+  : 'http://192.168.0.122:3000';
 
 export const baseUrl = isLive
   ? 'https://fameely-api.deliciousdabbas.com/api'
-  : 'http://192.168.0.103:3000/api';
+  : 'http://192.168.0.122:3000/api';
 
 export const fileViewURL = isLive
   ? 'https://fameely-api.deliciousdabbas.com/api/file/fetch/'
-  : 'http://192.168.0.103:3000/api/file/fetch/';
+  : 'http://192.168.0.122:3000/api/file/fetch/';
 
 // Standard Axios Instance
 const API_AXIOS: AxiosInstance = axios.create({

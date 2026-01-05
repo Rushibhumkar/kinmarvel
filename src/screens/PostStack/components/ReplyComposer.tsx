@@ -50,12 +50,12 @@ const ReplyComposer = ({
         content: finalContent,
         replyTo: replyingUser?._id ?? replyTo,
       });
-      myConsole('[ReplyComposer] submitted', res);
+      // myConsole('[ReplyComposer] submitted', res);
       setText('');
       Keyboard.dismiss();
       onSubmitted?.(res);
     } catch (e) {
-      myConsole('[ReplyComposer] error', e);
+      // myConsole('[ReplyComposer] error', e);
     }
   };
 

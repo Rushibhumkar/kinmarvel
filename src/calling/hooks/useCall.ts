@@ -287,7 +287,7 @@ export const useCall = (userId: string) => {
   // -------------------- ANSWER CALL --------------------
   const answerCall = async () => {
     if (!incomingCall) {
-      console.warn('[Answer] No incoming call to answer');
+      // console.warn('[Answer] No incoming call to answer');
       return;
     }
     stopAllTones();
@@ -318,7 +318,7 @@ export const useCall = (userId: string) => {
         try {
           await pcRef.current?.addIceCandidate(c);
         } catch (e) {
-          console.warn('[PeerConnection] late ICE add failed', e);
+          // console.warn('[PeerConnection] late ICE add failed', e);
         }
       }
       pendingCandidates.current = [];

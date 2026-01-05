@@ -110,7 +110,6 @@ const CustomForwardModal = ({
             style={{maxHeight: 300}}
             renderItem={({item}) => {
               const isSelected = selectedUsers.includes(item.receiver._id);
-              myConsole('item', item);
               return (
                 <TouchableOpacity
                   onPress={() => handleToggleUser(item.receiver._id)}

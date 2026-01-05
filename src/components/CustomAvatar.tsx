@@ -10,6 +10,7 @@ import {
   ImageStyle,
 } from 'react-native';
 import OnlyLoader from './LoadingCompo/OnlyLoader';
+import {myConsole} from '../utils/myConsole';
 
 interface CustomAvatarProps {
   name: string;
@@ -73,7 +74,7 @@ const CustomAvatar: React.FC<CustomAvatarProps> = ({
   const isAlphabet = /^[A-Z]$/.test(initial);
 
   const {bg, text} = isAlphabet ? colorMapping[initial] : numberSymbolColor;
-
+  myConsole('imgUrllll', imgUrl);
   return (
     <TouchableOpacity
       activeOpacity={0.6}

@@ -102,6 +102,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
     color: '#000',
+    maxHeight: 200,
+    // borderWidth: 1,
+    // borderRadius: 12,
   },
   linkRow: {
     flexDirection: 'row',

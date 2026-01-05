@@ -18,7 +18,7 @@ const Login = ({navigation, onLogin}: any) => {
       phoneOremail: '',
       password: '',
       // phoneOremail: '7972755589',
-      // password: 'uuuuuuuu',
+      // password: 'yyyyyyyy',
       // phoneOremail: '9822544067',
       // password: 'asdfasdf',
     },

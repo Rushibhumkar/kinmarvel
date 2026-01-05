@@ -90,6 +90,15 @@ const AllStories = ({navigation}: any) => {
   const filteredStories = allStories?.data?.filter(
     (storyGroup: any) => storyGroup.user._id !== senderId,
   );
+  myConsole('storyById?.dataaa', storyById?.data);
+
+  const lastMediaKey =
+    storyById?.data?.length > 0 &&
+    storyById.data[storyById.data.length - 1].mediaType === 'image'
+      ? storyById.data[storyById.data.length - 1].mediaKey
+      : null;
+
+  myConsole('lastMediaKeyvvvv', lastMediaKey);
 
   return (
     <MainContainer
@@ -149,7 +158,11 @@ const AllStories = ({navigation}: any) => {
                         })
                       }
                       name={`${myData.data.firstName} ${myData.data.lastName}`}
-                      imgUrl={myData.data.profileImageUrl}
+                      imgUrl={
+                        lastMediaKey
+                          ? `${fileViewURL}${lastMediaKey}`
+                          : myData.data.profileImageUrl
+                      }
                       imgStyle={{
                         height: 70,
                         width: 70,
@@ -222,7 +235,7 @@ const AllStories = ({navigation}: any) => {
             </ScrollView>
           </View>
           <View style={{marginTop: 10}}>
-            <PostsFeed />
+            <PostsFeed externalRefreshKey={refreshing} />
           </View>
         </ScrollView>
       )}

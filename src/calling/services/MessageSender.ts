@@ -55,22 +55,22 @@ export const initChatSocket = async (userId: string): Promise<Socket> => {
     });
 
     socket.on('connect', () => {
-      console.log('[MessageSender] connect', {id: socket?.id});
+      // console.log('[MessageSender] connect', {id: socket?.id});
       // 🔑 Backend expects: register(userObjId, jwt token)
       socket?.emit('register', userId, token);
     });
 
     socket.on('reconnect', attempt => {
-      console.log('[MessageSender] reconnect', {attempt});
+      // console.log('[MessageSender] reconnect', {attempt});
       socket?.emit('register', userId, token);
     });
 
     socket.on('connect_error', err => {
-      console.log('[MessageSender] connect_error', err?.message || err);
+      // console.log('[MessageSender] connect_error', err?.message || err);
     });
 
     socket.on('error', err => {
-      console.log('[MessageSender] error', err);
+      // console.log('[MessageSender] error', err);
     });
 
     if (!socket.connected) {

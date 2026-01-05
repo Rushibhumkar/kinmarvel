@@ -2,22 +2,23 @@ import React, {useRef, useState} from 'react';
 import {
   Dimensions,
   Image,
-  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import Video from 'react-native-video';
-import Carousel from 'react-native-reanimated-carousel';
 import {myConsole} from '../../../utils/myConsole';
 import {useNavigation} from '@react-navigation/native';
 import {renderTextWithLinks} from '../../../utils/renderTextWithLinks';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
-const H_MARGIN = 12; // card marginHorizontal
-const CARD_PADDING = 12; // card padding left/right
-const ITEM_WIDTH = SCREEN_WIDTH - H_MARGIN * 2 - CARD_PADDING * 2;
+const H_MARGIN = 16;
+const CARD_PADDING = 16;
+const ITEM_WIDTH = SCREEN_WIDTH - H_MARGIN * 2;
 
 const AVATAR_FALLBACK =
   'https://ui-avatars.com/api/?background=EEE&color=111&name=';
@@ -37,54 +38,121 @@ const formatWhen = (iso: any) => {
   return d.toDateString().slice(4);
 };
 
-const MediaCarousel = ({items}: any) => {
-  if (!items || items.length === 0) return null;
+const CustomCarousel = ({items, onDoubleTap}: any) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true); // Default muted
+  const flatListRef = useRef<FlatList>(null);
+  const lastTapRef = useRef<number>(0);
+  const videoRefs = useRef<Array<any>>([]);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffsetX / ITEM_WIDTH);
+    setActiveIndex(index);
+
+    // Pause all other videos when scrolling
+    videoRefs.current.forEach((ref, i) => {
+      if (ref && i !== index && items[i]?.type === 'video') {
+        try {
+          ref.seek(0); // Reset to beginning
+        } catch (e) {}
+      }
+    });
+  };
+
+  const handleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      onDoubleTap?.();
+    }
+    lastTapRef.current = now;
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
+
+  const setVideoRef = (ref: any, index: number) => {
+    videoRefs.current[index] = ref;
+  };
+
+  if (!items || items.length === 0) return null;
+
+  const currentItem = items[activeIndex];
+  const isVideo = currentItem?.type === 'video';
 
   return (
-    <View style={styles.mediaWrap}>
-      <Carousel
-        width={ITEM_WIDTH}
-        height={420}
-        data={items}
-        panGestureHandlerProps={{activeOffsetX: [-10, 10]}}
-        onProgressChange={(_, absProgress) => {
-          const idx = Math.round(absProgress);
-          if (idx !== activeIndex) setActiveIndex(idx);
-        }}
-        renderItem={({item, index}: any) => {
-          if (item?.type === 'video') {
+    <View style={styles.carouselContainer}>
+      <TouchableOpacity activeOpacity={1} onPress={handleTap}>
+        <FlatList
+          ref={flatListRef}
+          data={items}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          renderItem={({item, index}) => {
+            if (item?.type === 'video') {
+              return (
+                <View style={styles.mediaItem}>
+                  <Video
+                    ref={ref => setVideoRef(ref, index)}
+                    source={{uri: item.url}}
+                    style={styles.media}
+                    resizeMode="cover"
+                    repeat
+                    muted={isMuted || activeIndex !== index}
+                    controls={false} // Hide default controls
+                    paused={activeIndex !== index}
+                    onLoad={() => {
+                      // Auto-play when loaded
+                      if (activeIndex === index) {
+                        // Video is ready
+                      }
+                    }}
+                  />
+                </View>
+              );
+            }
             return (
-              <Video
-                source={{uri: item.url}}
-                style={styles.media}
-                resizeMode="cover"
-                repeat
-                muted={false}
-                controls
-                paused={activeIndex !== index}
-              />
+              <View style={styles.mediaItem}>
+                <Image source={{uri: item?.url}} style={styles.media} />
+              </View>
             );
-          }
-          return <Image source={{uri: item?.url}} style={styles.media} />;
-        }}
-      />
-      <View style={styles.carouselDotsRow}>
-        {items.map((_, i) => (
-          <View
-            key={`dot-${i}`}
-            style={[
-              styles.carouselDot,
-              i === activeIndex && styles.carouselDotActive,
-            ]}
-          />
-        ))}
-      </View>
+          }}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      </TouchableOpacity>
+
+      {/* Mute/Unmute Button - Only for video */}
+      {isVideo && (
+        <TouchableOpacity
+          style={styles.muteButton}
+          onPress={toggleMute}
+          activeOpacity={0.7}>
+          <Text style={styles.muteButtonText}>{isMuted ? '🔇' : '🔊'}</Text>
+        </TouchableOpacity>
+      )}
+
+      {items.length > 1 && (
+        <View style={styles.paginationContainer}>
+          {items.map((_: any, index: number) => (
+            <View
+              key={`dot-${index}`}
+              style={[
+                styles.paginationDot,
+                index === activeIndex && styles.paginationDotActive,
+              ]}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 };
-
 const PostCard = ({post, onOpenComments, onLikePress}: any) => {
+  const [expanded, setExpanded] = useState(false);
   const navigation = useNavigation();
   const author = post?.createdBy || {};
   const name =
@@ -99,99 +167,117 @@ const PostCard = ({post, onOpenComments, onLikePress}: any) => {
   const hasLocation = !!(loc?.name || loc?.address);
   const tags = Array.isArray(post?.hashTags) ? post.hashTags : [];
 
-  const lastTapRef = useRef<number>(0);
-  const handleMediaTap = () => {
-    const now = Date.now();
-    if (now - (lastTapRef.current || 0) < 300) {
-      // double tap => like only if not already liked
-      if (!post?.isLikedByMe) {
-        onLikePress?.(post, 'like');
-      }
+  const handleDoubleTap = () => {
+    if (!post?.isLikedByMe) {
+      onLikePress?.(post, 'like');
     }
-    lastTapRef.current = now;
   };
+
+  const normalizedDesc = (post?.desc || '').replace(/\n{3,}/g, '\n\n').trim();
+
+  const isLongText =
+    normalizedDesc.split('\n').length > 3 || normalizedDesc.length > 20;
+
   return (
     <View style={styles.card}>
-      {/* Header */}
-      <View style={styles.headerRow}>
+      <View style={styles.cardHeader}>
         <Image source={{uri: avatarSrc}} style={styles.avatar} />
-        <TouchableOpacity
-          style={{flex: 1}}
-          activeOpacity={0.7}
-          onPress={() =>
-            navigation.navigate('UsersProfileDetails', {
-              id: post?.createdBy?._id,
-              showBasicDetails: true,
-            })
-          }>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.when}>{formatWhen(post?.createdAt)}</Text>
-        </TouchableOpacity>
-        <Text style={styles.visibility}>
-          {post?.visible_to === 'self'
-            ? '🔒'
-            : post?.visible_to === 'followers'
-            ? '👥'
-            : '🌐'}
-        </Text>
+        <View style={styles.userInfo}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() =>
+              navigation.navigate('UsersProfileDetails', {
+                id: post?.createdBy?._id,
+                showBasicDetails: true,
+              })
+            }>
+            <Text style={styles.name}>{name}</Text>
+            <View style={styles.timeLocation}>
+              <Text style={styles.when}>{formatWhen(post?.createdAt)}</Text>
+              {hasLocation && <Text style={styles.locationDot}>•</Text>}
+              {hasLocation && (
+                <Text style={styles.locationMini}>
+                  {loc?.name || loc?.address}
+                </Text>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.visibilityContainer}>
+          <Text style={styles.visibility}>
+            {post?.visible_to === 'self'
+              ? '🔒 Private'
+              : post?.visible_to === 'followers'
+              ? '👥 Followers'
+              : '🌐 Public'}
+          </Text>
+        </View>
       </View>
 
-      {/* Caption */}
-      {post?.desc
-        ? renderTextWithLinks(post.desc, {
-            textStyle: styles.caption,
-            linkColor: '#1D4ED8',
-          })
-        : null}
-      {/* Location */}
-      {hasLocation ? (
-        <View style={styles.locationRow}>
-          <Text style={styles.locationPin}>📍</Text>
-          <Text style={styles.locationText}>
-            {loc?.name ? `${loc.name}` : ''}
-            {loc?.name && loc?.address ? ' · ' : ''}
-            {loc?.address ? `${loc.address}` : ''}
-          </Text>
-        </View>
-      ) : null}
-
-      <TouchableOpacity activeOpacity={1} onPress={handleMediaTap}>
-        <MediaCarousel items={media} />
-      </TouchableOpacity>
-
-      {/* Hashtags */}
-      {tags.length ? (
-        <View style={styles.tagsRow}>
-          {tags.map((t: any, i: any) => (
-            <Text key={`${t}-${i}`} style={styles.tagText}>
-              #{t}
-            </Text>
-          ))}
-        </View>
-      ) : null}
-
-      {/* Footer actions */}
-      <View style={styles.footerRow}>
+      {post?.desc && (
         <TouchableOpacity
-          style={styles.footerBtn}
           activeOpacity={0.7}
+          onPress={() => setExpanded(p => !p)}
+          style={styles.captionContainer}>
+          <Text
+            style={styles.caption}
+            numberOfLines={expanded ? undefined : 3}
+            ellipsizeMode="tail">
+            {renderTextWithLinks(normalizedDesc, {
+              linkColor: '#667eea',
+              isClickable: true,
+            })}
+          </Text>
+          {isLongText && (
+            <Text style={styles.moreText}>
+              {expanded ? 'Show less' : 'Show more'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      <CustomCarousel items={media} onDoubleTap={handleDoubleTap} />
+
+      {tags.length > 0 && (
+        <View style={styles.tagsContainer}>
+          <FlatList
+            data={tags}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            renderItem={({item}) => (
+              <TouchableOpacity style={styles.tagItem}>
+                <Text style={styles.tagText}>#{item}</Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item, index) => `${item}-${index}`}
+          />
+        </View>
+      )}
+
+      <View style={styles.statsContainer}>
+        <TouchableOpacity
+          style={styles.statButton}
+          onPress={() => onLikePress?.(post)}>
+          <Text
+            style={[styles.statIcon, post?.isLikedByMe && styles.likedIcon]}>
+            {post?.isLikedByMe ? '❤️' : '🤍'}
+          </Text>
+          <Text style={styles.statText}>{post?.likeCount || 0}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.statButton}
           onPress={() => {
-            myConsole('[PostCard] open comments', {postId: post?._id});
             onOpenComments?.(post);
           }}>
-          <Text style={styles.footerBtnText}>💬 {post?.commentCount ?? 0}</Text>
+          <Text style={styles.statIcon}>💬</Text>
+          <Text style={styles.statText}>{post?.commentCount || 0}</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.footerBtn}
-          activeOpacity={0.7}
-          onPress={() => {
-            const action = post?.isLikedByMe ? 'unlike' : 'like';
-            onLikePress?.(post, action);
-          }}>
-          <Text style={styles.footerBtnText}>
-            {post?.isLikedByMe ? '❤️' : '🤍'} {post?.likeCount ?? 0}
-          </Text>
-        </TouchableOpacity>
+
+        {/* <TouchableOpacity style={styles.statButton}>
+          <Text style={styles.statIcon}>🔄</Text>
+          <Text style={styles.statText}>{post?.shareCount || 0}</Text>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -201,90 +287,177 @@ export default PostCard;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     marginHorizontal: H_MARGIN,
-    marginBottom: 12,
-    borderRadius: 14,
-    padding: CARD_PADDING,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: {width: 0, height: 3},
-    elevation: 2,
+    marginBottom: 16,
+    borderRadius: 20,
+    padding: 0,
+    // shadowColor: '#667eea',
+    // shadowOpacity: 0.08,
+    // shadowRadius: 12,
+    // shadowOffset: {width: 0, height: 6},
+    // elevation: 4,
+    overflow: 'hidden',
   },
-  headerRow: {
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    padding: CARD_PADDING,
+    paddingBottom: 12,
   },
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    marginRight: 10,
-    backgroundColor: '#eee',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: 12,
+    backgroundColor: '#f0f2ff',
+    borderWidth: 2,
+    borderColor: '#667eea20',
   },
-  name: {fontSize: 15.5, fontWeight: '600', color: '#111'},
-  when: {fontSize: 12, color: '#888'},
-  visibility: {fontSize: 16, color: '#666', marginLeft: 8},
-  caption: {fontSize: 15, color: '#222', lineHeight: 21, marginBottom: 8},
-  locationRow: {
+  userInfo: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a2e',
+    marginBottom: 2,
+  },
+  timeLocation: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  locationPin: {fontSize: 14, marginRight: 4},
-  locationText: {fontSize: 13.5, color: '#444', flexShrink: 1},
+  when: {
+    fontSize: 12,
+    color: '#667eea',
+    fontWeight: '500',
+  },
+  locationDot: {
+    fontSize: 12,
+    color: '#667eea',
+    marginHorizontal: 4,
+  },
+  locationMini: {
+    fontSize: 12,
+    color: '#667eea',
+    fontWeight: '500',
+  },
+  visibilityContainer: {
+    backgroundColor: '#f0f2ff',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  visibility: {
+    fontSize: 11,
+    color: '#667eea',
+    fontWeight: '600',
+  },
+  captionContainer: {
+    paddingHorizontal: CARD_PADDING,
+    paddingBottom: 12,
+  },
+  caption: {
+    fontSize: 14.5,
+    color: '#2d3748',
+    lineHeight: 22,
+    letterSpacing: 0.2,
+  },
+  moreText: {
+    color: '#667eea',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  tagsContainer: {
+    paddingHorizontal: CARD_PADDING,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  tagItem: {
+    backgroundColor: '#f0f2ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  tagText: {
+    color: '#667eea',
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f2ff',
+    paddingHorizontal: CARD_PADDING,
+    paddingVertical: 12,
+  },
+  statButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 24,
+  },
+  statIcon: {
+    fontSize: 20,
+    marginRight: 6,
+  },
+  likedIcon: {
+    color: '#ff4757',
+  },
+  statText: {
+    fontSize: 14,
+    color: '#4a5568',
+    fontWeight: '600',
+  },
 
-  mediaWrap: {
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: '#f5f5f5',
-    marginBottom: 8,
-    alignSelf: 'center',
-    marginHorizontal: -6, // reduce horizontal gap
+  carouselContainer: {
+    position: 'relative',
+    backgroundColor: '#000',
+  },
+  mediaItem: {
+    width: ITEM_WIDTH,
+    height: 450,
   },
   media: {
     width: '100%',
-    aspectRatio: 0.75,
-    backgroundColor: '#000',
-    // resizeMode: 'cover',
+    height: '100%',
   },
-  carouselDotsRow: {
+  paginationContainer: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 16,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  carouselDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginHorizontal: 4,
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: 'rgba(255,255,255,0.5)',
+    marginHorizontal: 3,
   },
-  carouselDotActive: {
-    backgroundColor: '#fff',
+  paginationDotActive: {
+    width: 24,
+    backgroundColor: '#ffffff',
   },
-
-  tagsRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2},
-  tagText: {color: '#3b82f6', marginRight: 8, fontSize: 13},
-
-  footerRow: {
-    flexDirection: 'row',
-    paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#eee',
-    alignSelf: 'flex-end',
-    gap: 12,
-    // justifyContent: 'space-between',
+  muteButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
-  footerBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 6,
+  muteButtonText: {
+    fontSize: 20,
+    color: '#fff',
   },
-  footerBtnText: {fontSize: 16, color: '#111'},
 });

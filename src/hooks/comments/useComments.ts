@@ -21,7 +21,7 @@ export function useComments({postId, limit = 10}: any) {
         const totalPages = lastPage?.data?.pagination?.totalPages ?? 1;
         return page < totalPages ? page + 1 : undefined;
       } catch (e) {
-        myConsole('[useComments] getNextPageParam error', e);
+        // myConsole('[useComments] getNextPageParam error', e);
         return undefined;
       }
     },

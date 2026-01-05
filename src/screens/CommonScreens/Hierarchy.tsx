@@ -44,7 +44,6 @@ const RelativeItem = ({
   const isMatch =
     matchedName && info.name.toLowerCase() === matchedName.toLowerCase();
   const isMe = myData?.data?._id === info?._id;
-  myConsole('isverfieedd', info.isVerified);
   return (
     <TouchableOpacity
       style={[
@@ -102,9 +101,6 @@ const Hierarchy = ({navigation}: any) => {
     refetch: treeByIdRefetch,
   } = useGetTreeByUserId(showingParent ? parentTreeId : null);
 
-  myConsole('myTreeData', myTreeData);
-  myConsole('treeByIdData', treeByIdData);
-
   const onRefresh = async () => {
     setRefreshing(true);
     if (showingParent) {
@@ -140,7 +136,7 @@ const Hierarchy = ({navigation}: any) => {
   }, [myTreeData]);
 
   const transformTreeData = (node: any): any => {
-    myConsole('nodeeee', node);
+    // myConsole('nodeeee', node);
     return {
       // _id:
       //   node?.userId?._id || node?.memberTreeId?.userId?._id || '',
@@ -234,9 +230,7 @@ const Hierarchy = ({navigation}: any) => {
 
   const handleAddMember = async () => {
     try {
-      myConsole('pendingNewMemberrr', pendingNewMember);
       const response = await addMemberToTree(pendingNewMember);
-      myConsole('Add Member API Response:', response);
 
       queryClient.invalidateQueries({queryKey: ['myTree']});
       queryClient.invalidateQueries({queryKey: ['treeByUser']});
@@ -254,7 +248,6 @@ const Hierarchy = ({navigation}: any) => {
     }
   };
   // myConsole('myData?.data?._id', myData?.data?._id);
-  myConsole('selectedPerso', selectedPerson);
   return (
     <SafeAreaView style={styles.main}>
       <HierarchyHeader />

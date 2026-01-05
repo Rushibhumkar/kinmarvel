@@ -36,8 +36,6 @@ const {width, height} = Dimensions.get('window');
 const ViewStory = ({route, navigation}: any) => {
   const toast = useAppToast();
   const {data = [], user = null} = route.params || {};
-  myConsole('userrr', user);
-  myConsole('dateaa', data);
   const {data: myData} = useGetMyData();
   const {
     data: userData,

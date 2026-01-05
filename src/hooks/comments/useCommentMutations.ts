@@ -16,7 +16,6 @@ export function useCreateComment({postId, limit = 10}: any) {
   return useMutation({
     mutationFn: ({content}: any) => postCommentFunc({postId, content}),
     onSuccess: (data: any) => {
-      myConsole('[useCreateComment] success', data);
       qc.invalidateQueries({queryKey: ['postComments', postId, limit]});
     },
     onError: (err: any) => myConsole('[useCreateComment] error', err),
@@ -33,7 +32,6 @@ export function usePatchComment({postId, limit = 10}: any) {
     mutationFn: ({commentId, action, content}: any) =>
       patchCommentFunc({commentId, action, content}),
     onSuccess: (data: any) => {
-      myConsole('[usePatchComment] success', data);
       qc.invalidateQueries({queryKey: ['postComments', postId, limit]});
     },
     onError: (err: any) => myConsole('[usePatchComment] error', err),
@@ -50,7 +48,6 @@ export function useLikeUnlikeComment({postId, limit = 10}: any) {
     mutationFn: ({commentId, action}: any) =>
       likeUnlikeCommentFunc({commentId, action}),
     onSuccess: (data: any) => {
-      myConsole('[useLikeUnlikeComment] success', data);
       qc.invalidateQueries({queryKey: ['postComments', postId, limit]});
     },
     onError: (err: any) => myConsole('[useLikeUnlikeComment] error', err),

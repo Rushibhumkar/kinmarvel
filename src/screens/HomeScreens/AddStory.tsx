@@ -110,7 +110,6 @@ const AddStory = ({navigation}: any) => {
         mediaType: file.mediaType,
         caption: caption || undefined,
       });
-      myConsole('responsess', response);
 
       queryClient.invalidateQueries({queryKey: ['userStories']});
       setFile(null);

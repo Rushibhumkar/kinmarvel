@@ -41,7 +41,6 @@ const AccountDetails = ({navigation}: any) => {
     isError: myDataErr,
     refetch: myDataRefetch,
   } = useGetMyData();
-  myConsole('myDataaaaa', myData);
 
   const user = myData?.data || {};
   const firstName = user.firstName || 'N/A';
@@ -62,8 +61,6 @@ const AccountDetails = ({navigation}: any) => {
       value: key === 'kunbiMaratha' ? '✅' : value || 'N/A',
     }));
 
-  myConsole('userrrr', user);
-  myConsole('dynamicDataEntrieseee', dynamicDataEntries);
   // Data for listing
   const datam = [
     {label: 'First name', value: firstName},

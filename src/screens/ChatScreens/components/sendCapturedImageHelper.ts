@@ -53,7 +53,7 @@ export const sendCapturedImageHelper = async ({
     if (!isAlreadyInDownload) {
       await RNFS.moveFile(srcPath, destPath);
     } else {
-      myConsole('sendCapturedImageHelper:skipMove', {destPath});
+      // myConsole('sendCapturedImageHelper:skipMove', {destPath});
     }
 
     // Try to get file size
@@ -62,7 +62,7 @@ export const sendCapturedImageHelper = async ({
       const stat = await RNFS.stat(destPath);
       if (stat?.size != null) sizeStr = String(stat.size);
     } catch (e) {
-      myConsole('sendCapturedImageHelper:stat:error', e);
+      // myConsole('sendCapturedImageHelper:stat:error', e);
     }
 
     // Upload

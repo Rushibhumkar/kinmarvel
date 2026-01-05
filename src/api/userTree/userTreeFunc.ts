@@ -9,7 +9,6 @@ import {useQuery} from '@tanstack/react-query';
 export const getMyTree = async () => {
   try {
     const {data} = await API_AXIOS.get('/u-tree/my-tree');
-    myConsole('dataaa', data);
     return data;
   } catch (error: any) {
     console.error('Error fetching my tree:', error.response || error);
@@ -24,7 +23,6 @@ export const getMyTree = async () => {
 export const createUserTree = async () => {
   try {
     const {data} = await API_AXIOS.post('/u-tree');
-    myConsole('called');
     return data;
   } catch (error: any) {
     console.error('Error creating user tree:', error.response || error);

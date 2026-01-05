@@ -58,7 +58,6 @@ export const createPost = async (postData: CreatePostPayload) => {
     const {data} = await API_AXIOS.post('/post', formData, {
       headers: {'Content-Type': 'multipart/form-data'},
     });
-    myConsole('[createPost] API response shape', JSON.stringify(data, null, 2));
     return data;
   } catch (error: any) {
     console.error('Error creating post:', error?.response || error);

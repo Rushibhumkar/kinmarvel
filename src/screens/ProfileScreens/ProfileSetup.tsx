@@ -42,7 +42,6 @@ const ProfileSetup = ({navigation}: any) => {
     isLoading: myDataLoading,
     isError: myDataError,
   } = useGetMyData();
-  myConsole('myDataaaa', myData);
 
   useEffect(() => {
     const backAction = () => true;
@@ -81,7 +80,6 @@ const ProfileSetup = ({navigation}: any) => {
         dynamicData: {...values},
       };
       setDataLoading(true);
-      myConsole('fomarttvalues', formattedValues);
       try {
         await updateUserData(myData?.data?._id, formattedValues);
         queryClient.invalidateQueries({queryKey: ['myData']});

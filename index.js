@@ -14,7 +14,7 @@ import notifee, {AndroidImportance} from '@notifee/react-native';
 
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   try {
-    console.log('[BG] FCM message:', JSON.stringify(remoteMessage));
+    // console.log('[BG] FCM message:', JSON.stringify(remoteMessage));
 
     // Create (or reuse) a high-importance channel for heads-up notifications
     const channelId = await notifee.createChannel({
@@ -44,7 +44,7 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
       data: remoteMessage?.data || {},
     });
   } catch (e) {
-    console.log('[BG] display error:', e);
+    // console.log('[BG] display error:', e);
   }
 });
 
